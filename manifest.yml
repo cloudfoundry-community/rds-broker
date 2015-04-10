@@ -1,0 +1,7 @@
+---
+applications:
+- name: rds-broker
+  memory: 256M
+  env:
+    AUTH_USER: user
+    AUTH_PASS: pass
