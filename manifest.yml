@@ -5,3 +5,8 @@ applications:
   env:
     AUTH_USER: user
     AUTH_PASS: pass
+    DB_URL: 10.244.0.30
+    DB_NAME: rdsbroker
+    DB_USER: rds
+    DB_PASS: rds
+    DB_PORT: 5524

@@ -23,8 +23,20 @@
 			"Rev": "c8425257dee954ab8b116b10ded3070821bcaec6"
 		},
 		{
+			"ImportPath": "github.com/jinzhu/gorm",
+			"Rev": "52ba1858c31dcbe1573f46f994d3cdf334729ff4"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Rev": "7175accbed18058468c07811f76440d6e8d7cf19"
+		},
+		{
 			"ImportPath": "github.com/martini-contrib/auth",
 			"Rev": "fa62c19b7ae87da370242054c8beb11af31d327f"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Rev": "f136f0c8dcab5adb705d1d356685c33983b5210b"
 		}
 	]
 }

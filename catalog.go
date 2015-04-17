@@ -37,10 +37,10 @@ type Service struct {
 func BuildCatalog() []Service {
 	freePlan := Plan{
 		Id:          "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
-		Name:        "shared",
-		Description: "Shared infrastructure for DB",
+		Name:        "shared-psql",
+		Description: "Shared infrastructure for Postgres DB",
 		Metadata: PlanMetadata{
-			Bullets: []string{"Shared RDS Instance"},
+			Bullets: []string{"Shared RDS Instance", "Postgres instance"},
 			Costs: []PlanCost{
 				PlanCost{
 					Amount: map[string]float64{

@@ -14,27 +14,45 @@ import (
 func setup() *martini.ClassicMartini {
 	os.Setenv("AUTH_USER", "default")
 	os.Setenv("AUTH_PASS", "default")
-	m := App()
+	var rds RDS
+	m := App(&rds, "test")
 
 	return m
 }
 
-func TestCatalog(t *testing.T) {
-	m := setup()
-	url := "/v2/catalog"
+func doRequest(m *martini.ClassicMartini, url string, method string, auth bool) (*httptest.ResponseRecorder, *martini.ClassicMartini) {
+	if m == nil {
+		m = setup()
+	}
 
 	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest(method, url, nil)
+	if auth {
+		req.SetBasicAuth("default", "default")
+	}
+
 	m.ServeHTTP(res, req)
+
+	return res, m
+}
+
+func validJson(response []byte, url string, t *testing.T) {
+	var aJson map[string]interface{}
+	if json.Unmarshal(response, &aJson) != nil {
+		t.Error(url, "should return a valid json")
+	}
+}
+
+func TestCatalog(t *testing.T) {
+	url := "/v2/catalog"
+	res, _ := doRequest(nil, url, "GET", false)
 
 	// Without auth
 	if res.Code != http.StatusUnauthorized {
 		t.Error(url, "without auth should return 401")
 	}
 
-	res = httptest.NewRecorder()
-	req.SetBasicAuth("default", "default")
-	m.ServeHTTP(res, req)
+	res, _ = doRequest(nil, url, "GET", true)
 
 	// With auth
 	if res.Code != http.StatusOK {
@@ -43,19 +61,12 @@ func TestCatalog(t *testing.T) {
 
 	// Is it a valid JSON?
 	validJson(res.Body.Bytes(), url, t)
-
 }
 
 func TestCreateInstance(t *testing.T) {
-	m := setup()
 	url := "/v2/service_instances/the_instance"
+	res, _ := doRequest(nil, url, "PUT", true)
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", url, nil)
-	req.SetBasicAuth("default", "default")
-	m.ServeHTTP(res, req)
-
-	// With auth
 	if res.Code != http.StatusCreated {
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
@@ -63,22 +74,36 @@ func TestCreateInstance(t *testing.T) {
 	// Is it a valid JSON?
 	validJson(res.Body.Bytes(), url, t)
 
-	// Is it an empty object?
-	if string(res.Body.Bytes()) != "{}" {
-		t.Error(url, "should return an empty JSON")
+	// Does it say "created"?
+	if !strings.Contains(string(res.Body.Bytes()), "created") {
+		t.Error(url, "should return the instance created message")
+	}
+
+	// Is it in the database and has a username and password?
+	i := Instance{}
+	DB.Where("uuid = ?", "the_instance").First(&i)
+	if i.Id == 0 {
+		t.Error("The instance should be saved in the DB")
+	}
+
+	if i.Username == "" || i.Password == "" {
+		t.Error("The instance should have a username and password")
 	}
 }
 
 func TestBindInstance(t *testing.T) {
-	m := setup()
 	url := "/v2/service_instances/the_instance/service_bindings/the_binding"
+	res, m := doRequest(nil, url, "PUT", true)
 
-	res := httptest.NewRecorder()
-	req, _ := http.NewRequest("PUT", url, nil)
-	req.SetBasicAuth("default", "default")
-	m.ServeHTTP(res, req)
+	// Without the instance
+	if res.Code != http.StatusNotFound {
+		t.Error(url, "with auth should return 404 and it returned", res.Code)
+	}
 
-	// With auth
+	// Create the instance and try again
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true)
+
+	res, _ = doRequest(m, url, "PUT", true)
 	if res.Code != http.StatusCreated {
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
@@ -92,37 +117,50 @@ func TestBindInstance(t *testing.T) {
 	}
 }
 
-func TestDeletes(t *testing.T) {
-	m := setup()
-	urls := []string{
-		"/v2/service_instances/the_instance/service_bindings/the_binding",
-		"/v2/service_instances/the_instance",
+func TestUnbind(t *testing.T) {
+	url := "/v2/service_instances/the_instance/service_bindings/the_binding"
+	res, _ := doRequest(nil, url, "DELETE", true)
+
+	if res.Code != http.StatusOK {
+		t.Error(url, "with auth should return 200 and it returned", res.Code)
 	}
 
-	for _, url := range urls {
-		res := httptest.NewRecorder()
-		req, _ := http.NewRequest("DELETE", url, nil)
-		req.SetBasicAuth("default", "default")
-		m.ServeHTTP(res, req)
+	// Is it a valid JSON?
+	validJson(res.Body.Bytes(), url, t)
 
-		if res.Code != http.StatusOK {
-			t.Error(url, "with auth should return 200 and it returned", res.Code)
-		}
-
-		// Is it a valid JSON?
-		validJson(res.Body.Bytes(), url, t)
-
-		// Is it an empty object?
-		if string(res.Body.Bytes()) != "{}" {
-			t.Error(url, "should return an empty JSON")
-		}
+	// Is it an empty object?
+	if string(res.Body.Bytes()) != "{}" {
+		t.Error(url, "should return an empty JSON")
 	}
 }
 
-func validJson(response []byte, url string, t *testing.T) {
-	var aJson map[string]interface{}
-	if json.Unmarshal(response, &aJson) != nil {
-		t.Error(url, "should return a valid json")
+func TestDeleteInstance(t *testing.T) {
+	url := "/v2/service_instances/the_instance"
+	res, m := doRequest(nil, url, "DELETE", true)
+
+	// With no instance
+	if res.Code != http.StatusNotFound {
+		t.Error(url, "with auth should return 404 and it returned", res.Code)
 	}
 
+	// Create the instance and try again
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true)
+	i := Instance{}
+	DB.Where("uuid = ?", "the_instance").First(&i)
+	if i.Id == 0 {
+		t.Error("The instance should be in the DB")
+	}
+
+	res, _ = doRequest(m, url, "DELETE", true)
+
+	if res.Code != http.StatusOK {
+		t.Error(url, "with auth should return 200 and it returned", res.Code)
+	}
+
+	// Is it actually gone from the DB?
+	i = Instance{}
+	DB.Where("uuid = ?", "the_instance").First(&i)
+	if i.Id > 0 {
+		t.Error("The instance shouldn't be in the DB")
+	}
 }
