@@ -8,16 +8,6 @@
 			"Rev": "4b8172520a03fa190f427bbd284db01b459bfce7"
 		},
 		{
-			"ImportPath": "github.com/codegangsta/martini",
-			"Comment": "v1.0-117-g2047b73",
-			"Rev": "2047b7394d319aa3feb49db1452202336fb66fb6"
-		},
-		{
-			"ImportPath": "github.com/codegangsta/martini-contrib/render",
-			"Comment": "v0.1-159-g8ce6181",
-			"Rev": "8ce6181c2609699e4c7cd30994b76a850a9cdadc"
-		},
-		{
 			"ImportPath": "github.com/go-martini/martini",
 			"Comment": "v1.0-52-gc842525",
 			"Rev": "c8425257dee954ab8b116b10ded3070821bcaec6"
@@ -35,8 +25,16 @@
 			"Rev": "fa62c19b7ae87da370242054c8beb11af31d327f"
 		},
 		{
+			"ImportPath": "github.com/martini-contrib/render",
+			"Rev": "b65063311fac6cbf84d3538f5715f7847e648322"
+		},
+		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
 			"Rev": "f136f0c8dcab5adb705d1d356685c33983b5210b"
+		},
+		{
+			"ImportPath": "github.com/oxtoacart/bpool",
+			"Rev": "0f78ff9152c03745d1a47c9023af1b424e202c07"
 		}
 	]
 }

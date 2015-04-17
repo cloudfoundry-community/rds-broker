@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/codegangsta/martini-contrib/render"
 	"github.com/go-martini/martini"
 	"github.com/martini-contrib/auth"
+	"github.com/martini-contrib/render"
 
 	"fmt"
 	"os"
