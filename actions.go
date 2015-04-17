@@ -67,10 +67,11 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, rds *RDS) {
 		return
 	}
 
-	uri := fmt.Sprintf("postgres://%s:%s@%s/%s",
+	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		instance.Username,
 		instance.Password,
 		rds.Url,
+		rds.Port,
 		instance.Database)
 
 	credentials := map[string]string{
