@@ -1,5 +1,7 @@
 ## Cloud Foundry RDS Service Broker
 
+[![wercker status](https://app.wercker.com/status/cbe816f5ae3064d8de81cba5981f2eac/m "wercker status")](https://app.wercker.com/project/bykey/cbe816f5ae3064d8de81cba5981f2eac)
+
 Cloud Foundry Service Broker to manage RDS instances and a shared RDS Database.
 
 ### How to deploy it
