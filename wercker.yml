@@ -1,1 +1,20 @@
-box: wercker/golang
+box: attilaolah/godep
+# Build definition
+build:
+  # The steps that will be executed on build
+  steps:
+    # Sets the go workspace and places you package
+    # at the right place in the workspace tree
+    - setup-go-workspace
+
+    # Build the project
+    - script:
+        name: godep go build
+        code: |
+          godep go build ./...
+
+    # Test the project
+    - script:
+        name: godep go test
+        code: |
+          godep go test ./...
