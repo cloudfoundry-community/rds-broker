@@ -36,7 +36,7 @@ func CreateInstance(p martini.Params, r render.Render, db *gorm.DB) {
 	instance.OrgGuid = p["organization_guid"]
 	instance.SpaceGuid = p["space_guid"]
 
-	instance.Database = randStr(15)
+	instance.Database = "db" + randStr(15)
 	instance.Username = randStr(15)
 	instance.Password = randStr(25)
 
