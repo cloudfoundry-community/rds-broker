@@ -55,3 +55,9 @@ func GenerateIv(size int) []byte {
 
 	return bytes
 }
+
+func GenerateSalt(size int) string {
+	iv := GenerateIv(size)
+
+	return base64.StdEncoding.EncodeToString(iv)
+}

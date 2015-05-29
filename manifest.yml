@@ -10,3 +10,4 @@ applications:
     DB_USER: rds
     DB_PASS: rds
     DB_PORT: 5524
+    ENC_KEY: "12345678901234567890123456789012"

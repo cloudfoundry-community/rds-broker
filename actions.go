@@ -5,6 +5,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/render"
 
+	"crypto/aes"
 	"fmt"
 )
 
@@ -21,7 +22,7 @@ type Response struct {
 //   "organization_guid": "org-guid-here",
 //   "space_guid":        "space-guid-here"
 // }
-func CreateInstance(p martini.Params, r render.Render, db *gorm.DB) {
+func CreateInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 	instance := Instance{}
 
 	db.Where("uuid = ?", p["id"]).First(&instance)
@@ -37,12 +38,19 @@ func CreateInstance(p martini.Params, r render.Render, db *gorm.DB) {
 	instance.SpaceGuid = p["space_guid"]
 
 	instance.Database = "db" + randStr(15)
-	instance.Username = randStr(15)
-	instance.Password = randStr(25)
+	instance.Username = "u" + randStr(15)
+	instance.Salt = GenerateSalt(aes.BlockSize)
+	password := randStr(25)
+	err := instance.SetPassword(password, s.EncryptionKey)
+	if err != nil {
+		desc := "There was an error setting the password" + err.Error()
+		r.JSON(500, Response{desc})
+		return
+	}
 
 	// Create the database
 	db.Exec(fmt.Sprintf("CREATE DATABASE %s;", instance.Database))
-	db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", instance.Username, instance.Password))
+	db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", instance.Username, password))
 	db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", instance.Database, instance.Username))
 
 	db.Save(&instance)
@@ -58,7 +66,7 @@ func CreateInstance(p martini.Params, r render.Render, db *gorm.DB) {
 //   "service_id":     "service-guid-here",
 //   "app_guid":       "app-guid-here"
 // }
-func BindInstance(p martini.Params, r render.Render, db *gorm.DB, rds *RDS) {
+func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 	instance := Instance{}
 
 	db.Where("uuid = ?", p["instance_id"]).First(&instance)
@@ -67,18 +75,23 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, rds *RDS) {
 		return
 	}
 
+	password, err := instance.GetPassword(s.EncryptionKey)
+	if err != nil {
+		r.JSON(500, "")
+	}
+
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		instance.Username,
-		instance.Password,
-		rds.Url,
-		rds.Port,
+		password,
+		s.Rds.Url,
+		s.Rds.Port,
 		instance.Database)
 
 	credentials := map[string]string{
 		"uri":      uri,
 		"username": instance.Username,
-		"password": instance.Password,
-		"host":     rds.Url,
+		"password": password,
+		"host":     s.Rds.Url,
 		"db_name":  instance.Database,
 	}
 

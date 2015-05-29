@@ -7,7 +7,7 @@ Cloud Foundry Service Broker to manage RDS instances and a shared RDS Database.
 ### How to deploy it
 
 1. `cf push`
-1. `cf create-service-broker SERVICE-NAME USER PASS https://BROKER-URL/`
+1. `cf create-service-broker SERVICE-NAME USER PASS https://BROKER-URL`
 1. `cf enable-service-access rds-database`
 
 

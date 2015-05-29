@@ -18,6 +18,11 @@ type RDS struct {
 	Port     string
 }
 
+type Settings struct {
+	EncryptionKey string
+	Rds           *RDS
+}
+
 func LoadRDS() *RDS {
 	rds := RDS{}
 	rds.Url = os.Getenv("DB_URL")
@@ -36,15 +41,22 @@ func LoadRDS() *RDS {
 }
 
 func main() {
-	rds := LoadRDS()
+	var settings Settings
+	settings.Rds = LoadRDS()
 
-	m := App(rds, "prod")
+	settings.EncryptionKey = os.Getenv("ENC_KEY")
+	if settings.EncryptionKey == "" {
+		fmt.Println("An encryption key is required")
+		return
+	}
+
+	m := App(&settings, "prod")
 
 	m.Run()
 }
 
-func App(rds *RDS, env string) *martini.ClassicMartini {
-	err := DBInit(rds, env)
+func App(settings *Settings, env string) *martini.ClassicMartini {
+	err := DBInit(settings.Rds, env)
 	if err != nil {
 		fmt.Println("There was an error with the DB")
 		return nil
@@ -59,7 +71,7 @@ func App(rds *RDS, env string) *martini.ClassicMartini {
 	m.Use(render.Renderer())
 
 	m.Map(&DB)
-	m.Map(rds)
+	m.Map(settings)
 
 	// Serve the catalog with services and plans
 	m.Get("/v2/catalog", func(r render.Render) {

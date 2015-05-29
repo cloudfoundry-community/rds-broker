@@ -14,8 +14,12 @@ import (
 func setup() *martini.ClassicMartini {
 	os.Setenv("AUTH_USER", "default")
 	os.Setenv("AUTH_PASS", "default")
-	var rds RDS
-	m := App(&rds, "test")
+	var s Settings
+	var r RDS
+	s.Rds = &r
+	s.EncryptionKey = "12345678901234567890123456789012"
+
+	m := App(&s, "test")
 
 	return m
 }
@@ -111,9 +115,33 @@ func TestBindInstance(t *testing.T) {
 	// Is it a valid JSON?
 	validJson(res.Body.Bytes(), url, t)
 
-	// Does it contain "crendentials"
-	if !strings.Contains(string(res.Body.Bytes()), "credentials") {
+	type credentials struct {
+		Uri      string
+		Username string
+		Password string
+		Host     string
+		DbName   string
+	}
+
+	type response struct {
+		Credentials credentials
+	}
+
+	var r response
+
+	json.Unmarshal(res.Body.Bytes(), &r)
+
+	// Does it contain "uri"
+	if r.Credentials.Uri == "" {
 		t.Error(url, "should return credentials")
+	}
+
+	instance := Instance{}
+	DB.Where("uuid = ?", "the_instance").First(&instance)
+
+	// Does it return an unencrypted password?
+	if instance.Password == r.Credentials.Password || r.Credentials.Password == "" {
+		t.Error(url, "should return an unencrypted password and it returned", r.Credentials.Password)
 	}
 }
 
