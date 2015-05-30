@@ -6,7 +6,10 @@ import (
 	"github.com/martini-contrib/render"
 
 	"crypto/aes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 )
 
 type Response struct {
@@ -22,7 +25,7 @@ type Response struct {
 //   "organization_guid": "org-guid-here",
 //   "space_guid":        "space-guid-here"
 // }
-func CreateInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
+func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *gorm.DB, s *Settings) {
 	instance := Instance{}
 
 	db.Where("uuid = ?", p["id"]).First(&instance)
@@ -32,10 +35,25 @@ func CreateInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings)
 		return
 	}
 
+	type serviceReq struct {
+		ServiceId        string `json:"service_id"`
+		PlainId          string `json:"plan_id"`
+		OrganizationGuid string `json:"organization_guid"`
+		SpaceGuid        string `json:"space_guid"`
+	}
+
+	var sr serviceReq
+
+	if req.Body != nil {
+		body, _ := ioutil.ReadAll(req.Body)
+
+		json.Unmarshal(body, &sr)
+		instance.PlanId = sr.PlainId
+		instance.OrgGuid = sr.OrganizationGuid
+		instance.SpaceGuid = sr.SpaceGuid
+	}
+
 	instance.Uuid = p["id"]
-	instance.PlanId = p["plan_id"]
-	instance.OrgGuid = p["organization_guid"]
-	instance.SpaceGuid = p["space_guid"]
 
 	instance.Database = "db" + randStr(15)
 	instance.Username = "u" + randStr(15)

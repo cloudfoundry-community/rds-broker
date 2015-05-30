@@ -3,7 +3,9 @@ package main
 import (
 	"github.com/go-martini/martini"
 
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,13 +26,13 @@ func setup() *martini.ClassicMartini {
 	return m
 }
 
-func doRequest(m *martini.ClassicMartini, url string, method string, auth bool) (*httptest.ResponseRecorder, *martini.ClassicMartini) {
+func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, body io.Reader) (*httptest.ResponseRecorder, *martini.ClassicMartini) {
 	if m == nil {
 		m = setup()
 	}
 
 	res := httptest.NewRecorder()
-	req, _ := http.NewRequest(method, url, nil)
+	req, _ := http.NewRequest(method, url, body)
 	if auth {
 		req.SetBasicAuth("default", "default")
 	}
@@ -49,14 +51,14 @@ func validJson(response []byte, url string, t *testing.T) {
 
 func TestCatalog(t *testing.T) {
 	url := "/v2/catalog"
-	res, _ := doRequest(nil, url, "GET", false)
+	res, _ := doRequest(nil, url, "GET", false, nil)
 
 	// Without auth
 	if res.Code != http.StatusUnauthorized {
 		t.Error(url, "without auth should return 401")
 	}
 
-	res, _ = doRequest(nil, url, "GET", true)
+	res, _ = doRequest(nil, url, "GET", true, nil)
 
 	// With auth
 	if res.Code != http.StatusOK {
@@ -69,7 +71,14 @@ func TestCatalog(t *testing.T) {
 
 func TestCreateInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance"
-	res, _ := doRequest(nil, url, "PUT", true)
+	jsonStr := []byte(`{
+  	"service_id":"the-service",
+  	"plan_id":"the-plan",
+  	"organization_guid":"an-org",
+  	"space_guid":"a-space"
+  }`)
+
+	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(jsonStr))
 
 	if res.Code != http.StatusCreated {
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
@@ -93,11 +102,15 @@ func TestCreateInstance(t *testing.T) {
 	if i.Username == "" || i.Password == "" {
 		t.Error("The instance should have a username and password")
 	}
+
+	if i.PlanId != "the-plan" || i.OrgGuid != "an-org" || i.SpaceGuid != "a-space" {
+		t.Error("The instance should have metadata")
+	}
 }
 
 func TestBindInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance/service_bindings/the_binding"
-	res, m := doRequest(nil, url, "PUT", true)
+	res, m := doRequest(nil, url, "PUT", true, nil)
 
 	// Without the instance
 	if res.Code != http.StatusNotFound {
@@ -105,9 +118,9 @@ func TestBindInstance(t *testing.T) {
 	}
 
 	// Create the instance and try again
-	doRequest(m, "/v2/service_instances/the_instance", "PUT", true)
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, nil)
 
-	res, _ = doRequest(m, url, "PUT", true)
+	res, _ = doRequest(m, url, "PUT", true, nil)
 	if res.Code != http.StatusCreated {
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
@@ -147,7 +160,7 @@ func TestBindInstance(t *testing.T) {
 
 func TestUnbind(t *testing.T) {
 	url := "/v2/service_instances/the_instance/service_bindings/the_binding"
-	res, _ := doRequest(nil, url, "DELETE", true)
+	res, _ := doRequest(nil, url, "DELETE", true, nil)
 
 	if res.Code != http.StatusOK {
 		t.Error(url, "with auth should return 200 and it returned", res.Code)
@@ -164,7 +177,7 @@ func TestUnbind(t *testing.T) {
 
 func TestDeleteInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance"
-	res, m := doRequest(nil, url, "DELETE", true)
+	res, m := doRequest(nil, url, "DELETE", true, nil)
 
 	// With no instance
 	if res.Code != http.StatusNotFound {
@@ -172,14 +185,14 @@ func TestDeleteInstance(t *testing.T) {
 	}
 
 	// Create the instance and try again
-	doRequest(m, "/v2/service_instances/the_instance", "PUT", true)
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, nil)
 	i := Instance{}
 	DB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id == 0 {
 		t.Error("The instance should be in the DB")
 	}
 
-	res, _ = doRequest(m, url, "DELETE", true)
+	res, _ = doRequest(m, url, "DELETE", true, nil)
 
 	if res.Code != http.StatusOK {
 		t.Error(url, "with auth should return 200 and it returned", res.Code)
