@@ -12,13 +12,9 @@ import (
 	"net/http"
 )
 
-type Response struct {
-	Description string `json: description`
-}
-
 // CreateInstance
 // URL: /v2/service_instances/:id
-// Params:
+// Request:
 // {
 //   "service_id":        "service-guid-here",
 //   "plan_id":           "plan-guid-here",
@@ -33,13 +29,6 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 	if instance.Id > 0 {
 		r.JSON(409, Response{"The instance already exists"})
 		return
-	}
-
-	type serviceReq struct {
-		ServiceId        string `json:"service_id"`
-		PlainId          string `json:"plan_id"`
-		OrganizationGuid string `json:"organization_guid"`
-		SpaceGuid        string `json:"space_guid"`
 	}
 
 	var sr serviceReq
@@ -67,6 +56,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 	}
 
 	// Create the database
+	// TODO: Move to interface
 	db.Exec(fmt.Sprintf("CREATE DATABASE %s;", instance.Database))
 	db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", instance.Username, password))
 	db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", instance.Database, instance.Username))
@@ -78,7 +68,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 
 // BindInstance
 // URL: /v2/service_instances/:instance_id/service_bindings/:binding_id
-// Params:
+// Request:
 // {
 //   "plan_id":        "plan-guid-here",
 //   "service_id":     "service-guid-here",
@@ -121,7 +111,7 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 
 // DeleteInstance
 // URL: /v2/service_instances/:id
-// Params:
+// Request:
 // {
 //   "service_id": "service-id-here"
 //   "plan_id":    "plan-id-here"
