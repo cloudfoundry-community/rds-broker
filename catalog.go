@@ -22,6 +22,7 @@ type Plan struct {
 	Name        string       `json:"name"`
 	Description string       `json:"description"`
 	Metadata    PlanMetadata `json:"metadata"`
+	Free        bool         `json:"free"`
 }
 
 type Service struct {
@@ -35,7 +36,7 @@ type Service struct {
 }
 
 func BuildCatalog() []Service {
-	freePlan := Plan{
+	sharedPlan := Plan{
 		Id:          "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
 		Name:        "shared-psql",
 		Description: "Shared infrastructure for Postgres DB",
@@ -51,10 +52,50 @@ func BuildCatalog() []Service {
 			},
 			DisplayName: "Free Shared Plan",
 		},
+		Free: true,
 	}
+
+	microPlan := Plan{
+		Id:          "da91e15c-98c9-46a9-b114-02b8d28062c6",
+		Name:        "micro-psql",
+		Description: "Dedicated Micro RDS Postgres DB Instance",
+		Metadata: PlanMetadata{
+			Bullets: []string{"Dedicated Redundant RDS Instance", "Postgres instance"},
+			Costs: []PlanCost{
+				PlanCost{
+					Amount: map[string]float64{
+						"usd": 0.036,
+					},
+					Unit: "HOURLY",
+				},
+			},
+			DisplayName: "Dedicated Micro Postgres",
+		},
+		Free: false,
+	}
+
+	mediumPlan := Plan{
+		Id:          "332e0168-6969-4bd7-b07f-29f08c4bf78e",
+		Name:        "medium-psql",
+		Description: "Dedicated Medium RDS Postgres DB Instance",
+		Metadata: PlanMetadata{
+			Bullets: []string{"Dedicated Redundant RDS Instance", "Postgres instance"},
+			Costs: []PlanCost{
+				PlanCost{
+					Amount: map[string]float64{
+						"usd": 0.190,
+					},
+					Unit: "HOURLY",
+				},
+			},
+			DisplayName: "Dedicated Medium Postgres",
+		},
+		Free: false,
+	}
+
 	service := Service{
 		Id:          "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
-		Name:        "rds-database",
+		Name:        "rds",
 		Description: "RDS Database Broker",
 		Bindable:    true,
 		Tags:        []string{"database", "RDS", "postgresql"},
@@ -62,7 +103,7 @@ func BuildCatalog() []Service {
 			DisplayName:         "RDS Database Broker",
 			ProviderDisplayName: "RDS",
 		},
-		Plans: []Plan{freePlan},
+		Plans: []Plan{sharedPlan, microPlan, mediumPlan},
 	}
 
 	return []Service{service}
