@@ -13,6 +13,13 @@ import (
 	"testing"
 )
 
+var createInstanceReq []byte = []byte(`{
+	"service_id":"the-service",
+	"plan_id":"44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
+	"organization_guid":"an-org",
+	"space_guid":"a-space"
+}`)
+
 func setup() *martini.ClassicMartini {
 	os.Setenv("AUTH_USER", "default")
 	os.Setenv("AUTH_PASS", "default")
@@ -71,14 +78,8 @@ func TestCatalog(t *testing.T) {
 
 func TestCreateInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance"
-	jsonStr := []byte(`{
-  	"service_id":"the-service",
-  	"plan_id":"the-plan",
-  	"organization_guid":"an-org",
-  	"space_guid":"a-space"
-  }`)
 
-	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(jsonStr))
+	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	if res.Code != http.StatusCreated {
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
@@ -103,14 +104,14 @@ func TestCreateInstance(t *testing.T) {
 		t.Error("The instance should have a username and password")
 	}
 
-	if i.PlanId != "the-plan" || i.OrgGuid != "an-org" || i.SpaceGuid != "a-space" {
+	if i.PlanId == "" || i.OrgGuid == "" || i.SpaceGuid == "" {
 		t.Error("The instance should have metadata")
 	}
 }
 
 func TestBindInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance/service_bindings/the_binding"
-	res, m := doRequest(nil, url, "PUT", true, nil)
+	res, m := doRequest(nil, url, "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	// Without the instance
 	if res.Code != http.StatusNotFound {
@@ -118,7 +119,7 @@ func TestBindInstance(t *testing.T) {
 	}
 
 	// Create the instance and try again
-	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, nil)
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	res, _ = doRequest(m, url, "PUT", true, nil)
 	if res.Code != http.StatusCreated {
@@ -185,7 +186,7 @@ func TestDeleteInstance(t *testing.T) {
 	}
 
 	// Create the instance and try again
-	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, nil)
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, bytes.NewBuffer(createInstanceReq))
 	i := Instance{}
 	DB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id == 0 {

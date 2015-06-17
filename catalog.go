@@ -18,11 +18,13 @@ type PlanMetadata struct {
 	DisplayName string     `json:"displayName"`
 }
 type Plan struct {
-	Id          string       `json:"id"`
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Metadata    PlanMetadata `json:"metadata"`
-	Free        bool         `json:"free"`
+	Id           string       `json:"id"`
+	Name         string       `json:"name"`
+	Description  string       `json:"description"`
+	Metadata     PlanMetadata `json:"metadata"`
+	Free         bool         `json:"free"`
+	Adapter      string       `json:"-"`
+	InstanceType string       `json:"-"`
 }
 
 type Service struct {
@@ -36,6 +38,24 @@ type Service struct {
 }
 
 func BuildCatalog() []Service {
+
+	service := Service{
+		Id:          "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
+		Name:        "rds",
+		Description: "RDS Database Broker",
+		Bindable:    true,
+		Tags:        []string{"database", "RDS", "postgresql"},
+		Metadata: Metadata{
+			DisplayName:         "RDS Database Broker",
+			ProviderDisplayName: "RDS",
+		},
+		Plans: GetPlans(),
+	}
+
+	return []Service{service}
+}
+
+func GetPlans() []Plan {
 	sharedPlan := Plan{
 		Id:          "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
 		Name:        "shared-psql",
@@ -52,7 +72,8 @@ func BuildCatalog() []Service {
 			},
 			DisplayName: "Free Shared Plan",
 		},
-		Free: true,
+		Free:    true,
+		Adapter: "shared",
 	}
 
 	microPlan := Plan{
@@ -71,7 +92,9 @@ func BuildCatalog() []Service {
 			},
 			DisplayName: "Dedicated Micro Postgres",
 		},
-		Free: false,
+		Free:         false,
+		Adapter:      "dedicated",
+		InstanceType: "db.t2.micro",
 	}
 
 	mediumPlan := Plan{
@@ -90,21 +113,20 @@ func BuildCatalog() []Service {
 			},
 			DisplayName: "Dedicated Medium Postgres",
 		},
-		Free: false,
+		Free:         false,
+		Adapter:      "dedicated",
+		InstanceType: "db.m3.medium",
 	}
 
-	service := Service{
-		Id:          "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
-		Name:        "rds",
-		Description: "RDS Database Broker",
-		Bindable:    true,
-		Tags:        []string{"database", "RDS", "postgresql"},
-		Metadata: Metadata{
-			DisplayName:         "RDS Database Broker",
-			ProviderDisplayName: "RDS",
-		},
-		Plans: []Plan{sharedPlan, microPlan, mediumPlan},
+	return []Plan{sharedPlan, microPlan, mediumPlan}
+}
+
+func FindPlan(id string) *Plan {
+	for _, p := range GetPlans() {
+		if p.Id == id {
+			return &p
+		}
 	}
 
-	return []Service{service}
+	return nil
 }

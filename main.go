@@ -5,6 +5,7 @@ import (
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
+	"encoding/json"
 	"log"
 	"os"
 )
@@ -21,6 +22,7 @@ type RDS struct {
 type Settings struct {
 	EncryptionKey string
 	Rds           *RDS
+	InstanceTags  map[string]string
 }
 
 func LoadRDS() *RDS {
@@ -52,6 +54,11 @@ func main() {
 	}
 
 	log.Println("Loading app...")
+	tags := os.Getenv("INSTANCE_TAGS")
+	if tags != "" {
+		json.Unmarshal([]byte(tags), &settings.InstanceTags)
+	}
+
 	m := App(&settings, "prod")
 
 	log.Println("Starting app...")

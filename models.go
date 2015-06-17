@@ -21,6 +21,9 @@ type Instance struct {
 	OrgGuid   string `sql:"size(255)"`
 	SpaceGuid string `sql:"size(255)"`
 
+	Tags          map[string]string `sql:"-"`
+	DBSubnetGroup string            `sql:"-"`
+
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt time.Time

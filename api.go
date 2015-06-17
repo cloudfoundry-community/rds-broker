@@ -27,19 +27,30 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 	db.Where("uuid = ?", p["id"]).First(&instance)
 
 	if instance.Id > 0 {
-		r.JSON(409, Response{"The instance already exists"})
+		r.JSON(http.StatusConflict, Response{"The instance already exists"})
 		return
 	}
 
 	var sr serviceReq
+	var plan *Plan
 
-	if req.Body != nil {
-		body, _ := ioutil.ReadAll(req.Body)
+	if req.Body == nil {
+		r.JSON(http.StatusBadRequest, Response{"No request"})
+		return
+	}
 
-		json.Unmarshal(body, &sr)
-		instance.PlanId = sr.PlainId
-		instance.OrgGuid = sr.OrganizationGuid
-		instance.SpaceGuid = sr.SpaceGuid
+	body, _ := ioutil.ReadAll(req.Body)
+
+	json.Unmarshal(body, &sr)
+	instance.PlanId = sr.PlainId
+	instance.OrgGuid = sr.OrganizationGuid
+	instance.SpaceGuid = sr.SpaceGuid
+
+	plan = FindPlan(instance.PlanId)
+
+	if plan == nil {
+		r.JSON(http.StatusBadRequest, Response{"The plan requested does not exist"})
+		return
 	}
 
 	instance.Uuid = p["id"]
@@ -48,22 +59,29 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 	instance.Username = "u" + randStr(15)
 	instance.Salt = GenerateSalt(aes.BlockSize)
 	password := randStr(25)
-	err := instance.SetPassword(password, s.EncryptionKey)
-	if err != nil {
+	if err := instance.SetPassword(password, s.EncryptionKey); err != nil {
 		desc := "There was an error setting the password" + err.Error()
-		r.JSON(500, Response{desc})
+		r.JSON(http.StatusInternalServerError, Response{desc})
 		return
 	}
 
-	// Create the database
-	// TODO: Move to interface
-	db.Exec(fmt.Sprintf("CREATE DATABASE %s;", instance.Database))
-	db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", instance.Username, password))
-	db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", instance.Database, instance.Username))
+	// Create the database instance
+	status, err := CreateDB(plan, &instance, db, password)
+	if err != nil {
+		desc := "There was an error creating the instance" + err.Error()
+		r.JSON(http.StatusInternalServerError, Response{desc})
+		return
+	}
+	switch status {
+	case InstanceInProgress:
+		// Instance creation in progress
+	case InstanceReady:
+		// Instance ready
+	}
 
 	db.Save(&instance)
 
-	r.JSON(201, Response{"The instance was created"})
+	r.JSON(http.StatusCreated, Response{"The instance was created"})
 }
 
 // BindInstance
@@ -85,7 +103,7 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 
 	password, err := instance.GetPassword(s.EncryptionKey)
 	if err != nil {
-		r.JSON(500, "")
+		r.JSON(http.StatusInternalServerError, "")
 	}
 
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
@@ -106,7 +124,7 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 	response := map[string]interface{}{
 		"credentials": credentials,
 	}
-	r.JSON(201, response)
+	r.JSON(http.StatusCreated, response)
 }
 
 // DeleteInstance
@@ -122,7 +140,7 @@ func DeleteInstance(p martini.Params, r render.Render, db *gorm.DB) {
 	db.Where("uuid = ?", p["id"]).First(&instance)
 
 	if instance.Id == 0 {
-		r.JSON(404, Response{"Instance not found"})
+		r.JSON(http.StatusNotFound, Response{"Instance not found"})
 		return
 	}
 
@@ -131,5 +149,5 @@ func DeleteInstance(p martini.Params, r render.Render, db *gorm.DB) {
 
 	db.Delete(&instance)
 
-	r.JSON(200, Response{"The instance was deleted"})
+	r.JSON(http.StatusOK, Response{"The instance was deleted"})
 }
