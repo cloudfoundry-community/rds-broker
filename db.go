@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+
+	"fmt"
+	"log"
 )
 
 // Connection string parameters for Postgres - http://godoc.org/github.com/lib/pq, if you are using another
@@ -32,8 +33,9 @@ func DBInit(rds *RDS, env string) error {
 		// We are doing testing!
 		DB, err = gorm.Open("sqlite3", ":memory:")
 
-		fmt.Println("TEST")
+		log.Println("TEST")
 	} else {
+		log.Println("Connecting to DB")
 		conn := "dbname=%s user=%s password=%s host=%s sslmode=%s port=%s"
 		conn = fmt.Sprintf(conn,
 			rds.DbName,
@@ -45,16 +47,20 @@ func DBInit(rds *RDS, env string) error {
 
 		DB, err = gorm.Open("postgres", conn)
 
+		log.Println("Connected")
+
 		// DB.LogMode(true)
 		DB.DB().SetMaxOpenConns(10)
 	}
 
 	if err != nil {
-		fmt.Println("Error!")
+		log.Println("Error!")
 		return err
 	}
 
+	log.Println("Migrating")
 	// Automigrate!
 	DB.AutoMigrate(Instance{})
+	log.Println("Migrated")
 	return nil
 }

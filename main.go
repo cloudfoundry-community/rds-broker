@@ -5,7 +5,7 @@ import (
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
-	"fmt"
+	"log"
 	"os"
 )
 
@@ -29,7 +29,7 @@ func LoadRDS() *RDS {
 	rds.Username = os.Getenv("DB_USER")
 	rds.Password = os.Getenv("DB_PASS")
 	rds.DbName = os.Getenv("DB_NAME")
-	rds.Sslmode = "disable"
+	rds.Sslmode = "verify-ca"
 
 	if os.Getenv("DB_PORT") != "" {
 		rds.Port = os.Getenv("DB_PORT")
@@ -42,23 +42,27 @@ func LoadRDS() *RDS {
 
 func main() {
 	var settings Settings
+	log.Println("Loading settings")
 	settings.Rds = LoadRDS()
 
 	settings.EncryptionKey = os.Getenv("ENC_KEY")
 	if settings.EncryptionKey == "" {
-		fmt.Println("An encryption key is required")
+		log.Println("An encryption key is required")
 		return
 	}
 
+	log.Println("Loading app...")
 	m := App(&settings, "prod")
 
+	log.Println("Starting app...")
 	m.Run()
 }
 
 func App(settings *Settings, env string) *martini.ClassicMartini {
+
 	err := DBInit(settings.Rds, env)
 	if err != nil {
-		fmt.Println("There was an error with the DB")
+		log.Println("There was an error with the DB")
 		return nil
 	}
 
@@ -72,6 +76,8 @@ func App(settings *Settings, env string) *martini.ClassicMartini {
 
 	m.Map(&DB)
 	m.Map(settings)
+
+	log.Println("Loading Routes")
 
 	// Serve the catalog with services and plans
 	m.Get("/v2/catalog", func(r render.Render) {
