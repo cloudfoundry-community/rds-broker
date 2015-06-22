@@ -59,17 +59,19 @@ func main() {
 		json.Unmarshal([]byte(tags), &settings.InstanceTags)
 	}
 
-	m := App(&settings, "prod")
-
-	log.Println("Starting app...")
-	m.Run()
+	if m := App(&settings, "prod"); m != nil {
+		log.Println("Starting app...")
+		m.Run()
+	} else {
+		log.Println("Unable to setup application. Exiting...")
+	}
 }
 
 func App(settings *Settings, env string) *martini.ClassicMartini {
 
 	err := DBInit(settings.Rds, env)
 	if err != nil {
-		log.Println("There was an error with the DB")
+		log.Println("There was an error with the DB. Error: " + err.Error())
 		return nil
 	}
 

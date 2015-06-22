@@ -53,9 +53,15 @@ type SharedDB struct {
 }
 
 func (d *SharedDB) CreateDB(i *Instance, password string) (int, error) {
-	d.Db.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database))
-	d.Db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password))
-	d.Db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username))
+	if db := d.Db.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+		return InstanceNotCreated, db.Error
+	}
+	if db := d.Db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
+		return InstanceNotCreated, db.Error
+	}
+	if db := d.Db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
+		return InstanceNotCreated, db.Error
+	}
 	return InstanceReady, nil
 }
 

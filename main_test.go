@@ -82,6 +82,7 @@ func TestCreateInstance(t *testing.T) {
 	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	if res.Code != http.StatusCreated {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
 
@@ -123,6 +124,7 @@ func TestBindInstance(t *testing.T) {
 
 	res, _ = doRequest(m, url, "PUT", true, nil)
 	if res.Code != http.StatusCreated {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
 
@@ -196,6 +198,7 @@ func TestDeleteInstance(t *testing.T) {
 	res, _ = doRequest(m, url, "DELETE", true, nil)
 
 	if res.Code != http.StatusOK {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 200 and it returned", res.Code)
 	}
 

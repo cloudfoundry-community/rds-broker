@@ -47,6 +47,11 @@ func DBInit(rds *RDS, env string) error {
 
 		DB, err = gorm.Open("postgres", conn)
 
+		if err = DB.DB().Ping(); err != nil {
+			log.Println("Unable to verify connection to database")
+			return err
+		}
+
 		log.Println("Connected")
 
 		// DB.LogMode(true)
