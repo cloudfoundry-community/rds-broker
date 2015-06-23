@@ -10,15 +10,6 @@ import (
 	"os"
 )
 
-type RDS struct {
-	Url      string
-	Username string
-	Password string
-	DbName   string
-	Sslmode  string
-	Port     string
-}
-
 type Settings struct {
 	EncryptionKey string
 	Rds           *RDS
@@ -27,6 +18,7 @@ type Settings struct {
 
 func LoadRDS() *RDS {
 	rds := RDS{}
+	rds.DbType = os.Getenv("DB_TYPE")
 	rds.Url = os.Getenv("DB_URL")
 	rds.Username = os.Getenv("DB_USER")
 	rds.Password = os.Getenv("DB_PASS")
@@ -69,7 +61,7 @@ func main() {
 
 func App(settings *Settings, env string) *martini.ClassicMartini {
 
-	err := DBInit(settings.Rds, env)
+	err := DBInit(settings.Rds)
 	if err != nil {
 		log.Println("There was an error with the DB. Error: " + err.Error())
 		return nil

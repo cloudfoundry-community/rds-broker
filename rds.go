@@ -9,9 +9,23 @@ import (
 	"fmt"
 )
 
-const InstanceNotCreated = 0
-const InstanceInProgress = 1
-const InstanceReady = 2
+type RDS struct {
+	DbType     string
+	Url      string
+	Username string
+	Password string
+	DbName   string
+	Sslmode  string
+	Port     string
+}
+
+type DBInstanceState uint8
+
+const (
+	InstanceNotCreated DBInstanceState = iota	// 0
+	InstanceInProgress				// 1
+	InstanceReady					// 2
+)
 
 // Main function to create database instances
 // Selects an adapter and depending on the plan
@@ -24,7 +38,7 @@ const InstanceReady = 2
 func CreateDB(plan *Plan,
 	i *Instance,
 	db *gorm.DB,
-	password string) (int, error) {
+	password string) (DBInstanceState, error) {
 
 	var adapter DBAdapter
 	switch plan.Adapter {
@@ -45,14 +59,14 @@ func CreateDB(plan *Plan,
 }
 
 type DBAdapter interface {
-	CreateDB(i *Instance, password string) (int, error)
+	CreateDB(i *Instance, password string) (DBInstanceState, error)
 }
 
 type SharedDB struct {
 	Db *gorm.DB
 }
 
-func (d *SharedDB) CreateDB(i *Instance, password string) (int, error) {
+func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	if db := d.Db.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
 		return InstanceNotCreated, db.Error
 	}
@@ -69,7 +83,7 @@ type DedicatedDB struct {
 	InstanceType string
 }
 
-func (d *DedicatedDB) CreateDB(i *Instance, password string) (int, error) {
+func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	svc := rds.New(&aws.Config{Region: "us-east-1"})
 
 	var rdsTags []*rds.Tag

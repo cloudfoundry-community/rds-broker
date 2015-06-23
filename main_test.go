@@ -26,6 +26,8 @@ func setup() *martini.ClassicMartini {
 	var s Settings
 	var r RDS
 	s.Rds = &r
+	r.DbType = "sqlite3"
+	r.DbName = ":memory:"
 	s.EncryptionKey = "12345678901234567890123456789012"
 
 	m := App(&s, "test")
