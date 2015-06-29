@@ -29,7 +29,7 @@ func LoadRDS() *RDS {
 	rds.Username = os.Getenv("DB_USER")
 	rds.Password = os.Getenv("DB_PASS")
 	rds.DbName = os.Getenv("DB_NAME")
-	rds.Sslmode = "verify-ca"
+	rds.Sslmode = "require"
 
 	if os.Getenv("DB_PORT") != "" {
 		rds.Port = os.Getenv("DB_PORT")
