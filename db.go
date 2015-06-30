@@ -5,13 +5,13 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
-	"log"
 	"errors"
+	"fmt"
+	"log"
 )
 
-// Connection string parameters for Postgres - http://godoc.org/github.com/lib/pq, if you are using another
-// database refer to the relevant driver's documentation.
-
+// DBConfig holds configuration information to connect to a database.
+// Parameters for the config.
 // * dbname - The name of the database to connect to
 // * user - The user to sign in as
 // * password - The user's password
@@ -23,34 +23,54 @@ import (
 //    * disable - No SSL
 //    * require - Always SSL (skip verification)
 //    * verify-full - Always SSL (require verification)
+type DBConfig struct {
+	DbType   string
+	Url      string
+	Username string
+	Password string
+	DbName   string
+	Sslmode  string
+	Port     string
+}
 
-var DB gorm.DB
-
-func DBInit(rds *RDS) error {
+// DBinit is a generic helper function that will try to connect to a database with the config in the input.
+// Supported DB types:
+// * postgres
+// * sqlite3
+func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
+	var DB gorm.DB
 	var err error
-	switch rds.DbType {
+	switch dbConfig.DbType {
 	case "postgres":
-		DB, err = gorm.Open("postgres", "user=gorm dbname=gorm sslmode=disable")
+		conn := "dbname=%s user=%s password=%s host=%s sslmode=%s port=%s"
+		conn = fmt.Sprintf(conn,
+			dbConfig.DbName,
+			dbConfig.Username,
+			dbConfig.Password,
+			dbConfig.Url,
+			dbConfig.Sslmode,
+			dbConfig.Port)
+		DB, err = gorm.Open("postgres", conn)
 	case "sqlite3":
-		DB, err = gorm.Open("sqlite3", rds.DbName)
+		DB, err = gorm.Open("sqlite3", dbConfig.DbName)
 	default:
-		errorString := "Cannot connect. Unsupported DB type: (" + rds.DbType + ")"
+		errorString := "Cannot connect. Unsupported DB type: (" + dbConfig.DbType + ")"
 		log.Println(errorString)
-		return errors.New(errorString)
+		return nil, errors.New(errorString)
 	}
 	if err != nil {
 		log.Println("Error!")
-		return err
+		return nil, err
 	}
 
 	if err = DB.DB().Ping(); err != nil {
 		log.Println("Unable to verify connection to database")
-		return err
+		return nil, err
 	}
 	DB.DB().SetMaxOpenConns(10)
 	log.Println("Migrating")
 	// Automigrate!
 	DB.AutoMigrate(Instance{})
 	log.Println("Migrated")
-	return nil
+	return &DB, nil
 }

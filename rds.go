@@ -9,23 +9,20 @@ import (
 	"fmt"
 )
 
-type RDS struct {
-	DbType     string
-	Url      string
-	Username string
-	Password string
-	DbName   string
-	Sslmode  string
-	Port     string
-}
-
 type DBInstanceState uint8
 
 const (
-	InstanceNotCreated DBInstanceState = iota	// 0
-	InstanceInProgress				// 1
-	InstanceReady					// 2
+	InstanceNotCreated DBInstanceState = iota // 0
+	InstanceInProgress                        // 1
+	InstanceReady                             // 2
 )
+
+type IDBAdapterFactory interface {
+	CreateDB(plan *Plan, i *Instance, db *gorm.DB, password string) (DBInstanceState, error)
+}
+
+type DBAdapterFactory struct {
+}
 
 // Main function to create database instances
 // Selects an adapter and depending on the plan
@@ -35,7 +32,7 @@ const (
 // 0 = not created
 // 1 = in progress
 // 2 = ready
-func CreateDB(plan *Plan,
+func (f DBAdapterFactory) CreateDB(plan *Plan,
 	i *Instance,
 	db *gorm.DB,
 	password string) (DBInstanceState, error) {
