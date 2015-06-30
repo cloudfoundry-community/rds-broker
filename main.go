@@ -26,7 +26,9 @@ func LoadBrokerDBConfig() *DBConfig {
 	dbConfig.Username = os.Getenv("DB_USER")
 	dbConfig.Password = os.Getenv("DB_PASS")
 	dbConfig.DbName = os.Getenv("DB_NAME")
-	dbConfig.Sslmode = "verify-ca"
+	if dbConfig.Sslmode = os.Getenv("DB_SSLMODE"); dbConfig.Sslmode == "" {
+		dbConfig.Sslmode = "verify-ca"
+	}
 
 	if os.Getenv("DB_PORT") != "" {
 		dbConfig.Port = os.Getenv("DB_PORT")
