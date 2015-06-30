@@ -68,9 +68,11 @@ func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, erro
 		return InstanceNotCreated, db.Error
 	}
 	if db := d.Db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
+		// TODO. Revert CREATE DATABASE.
 		return InstanceNotCreated, db.Error
 	}
 	if db := d.Db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
+		// TODO. Revert CREATE DATABASE and CREATE USER.
 		return InstanceNotCreated, db.Error
 	}
 	return InstanceReady, nil
