@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/jinzhu/gorm"
 
@@ -94,6 +96,7 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 		})
 	}
 
+	// Standard parameters
 	params := &rds.CreateDBInstanceInput{
 		// Everyone gets 10gb for now
 		AllocatedStorage: aws.Long(10),
@@ -101,44 +104,65 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 		DBInstanceClass:         &d.InstanceType,
 		DBInstanceIdentifier:    &i.Database,
 		Engine:                  aws.String("postgres"),
-		MasterUserPassword:      &i.Password,
+		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Boolean(true),
-		DBSecurityGroups: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
-		DBSubnetGroupName: aws.String("String"),
 		MultiAZ:           aws.Boolean(true),
 		StorageEncrypted:  aws.Boolean(true),
 		Tags:              rdsTags,
-		VPCSecurityGroupIDs: []*string{
-			aws.String("String"), // Required
-			// More values...
-		},
 	}
+
+	// Now, adjust parameters based on the particular instance.
+	// Per http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html,
+	// Encryption is only supported on the following instances.
+	switch *params.DBInstanceClass {
+	// Start list of supported instance types for encryption.
+	case "db.m3.medium":
+		fallthrough
+	case "db.m3.large":
+		fallthrough
+	case "db.m3.xlarge":
+		fallthrough
+	case "db.m3.2xlarge":
+		fallthrough
+	case "db.r3.large":
+		fallthrough
+	case "db.r3.xlarge":
+		fallthrough
+	case "db.r3.2xlarge":
+		fallthrough
+	case "db.r3.4xlarge":
+		fallthrough
+	case "db.r3.8xlarge":
+		fallthrough
+	case "db.cr1.8xlarge":
+		// End of supported instance types.
+		_ = 0
+	default:
+		fmt.Println("Encryption not supported by AWS for instance size: " + d.InstanceType)
+		params.StorageEncrypted = aws.Boolean(false)
+	}
+
+
 	resp, err := svc.CreateDBInstance(params)
 
-	_ = resp
-	_ = err
-
-	// if err != nil {
-	// 	if awsErr, ok := err.(awserr.Error); ok {
-	// 		// Generic AWS Error with Code, Message, and original error (if any)
-	// 		fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
-	// 		if reqErr, ok := err.(awserr.RequestFailure); ok {
-	// 			// A service error occurred
-	// 			fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
-	// 		}
-	// 	} else {
-	// 		// This case should never be hit, The SDK should alwsy return an
-	// 		// error which satisfies the awserr.Error interface.
-	// 		fmt.Println(err.Error())
-	// 	}
-	// }
-
-	// // Pretty-print the response data.
-	// fmt.Println(awsutil.StringValue(resp))
+	// Pretty-print the response data.
+	fmt.Println(awsutil.StringValue(resp))
+	if err != nil {
+		if awsErr, ok := err.(awserr.Error); ok {
+			// Generic AWS Error with Code, Message, and original error (if any)
+			fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
+			if reqErr, ok := err.(awserr.RequestFailure); ok {
+				// A service error occurred
+				fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
+			}
+		} else {
+			// This case should never be hit, The SDK should alwsy return an
+			// error which satisfies the awserr.Error interface.
+			fmt.Println(err.Error())
+		}
+		return InstanceNotCreated, nil
+	}
 
 	return InstanceNotCreated, nil
 }
