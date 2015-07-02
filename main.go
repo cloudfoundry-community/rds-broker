@@ -59,7 +59,7 @@ func main() {
 		json.Unmarshal([]byte(tags), &settings.InstanceTags)
 	}
 
-	DB, err := DBInit(settings.DbConfig)
+	DB, err := InternalDBInit(settings.DbConfig)
 	if err != nil {
 		log.Println("There was an error with the DB. Error: " + err.Error())
 		return
