@@ -140,7 +140,6 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 	} else {
 		r.JSON(http.StatusInternalServerError, Response{"Unsupported adapter type: " + instance.Adapter + ". Unable to bind."})
 	}
-
 }
 
 // DeleteInstance
@@ -160,10 +159,16 @@ func DeleteInstance(p martini.Params, r render.Render, db *gorm.DB) {
 		return
 	}
 
-	db.Exec(fmt.Sprintf("DROP DATABASE %s;", instance.Database))
-	db.Exec(fmt.Sprintf("DROP USER %s;", instance.Username))
+	if instance.Adapter == "shared" {
+		db.Exec(fmt.Sprintf("DROP DATABASE %s;", instance.Database))
+		db.Exec(fmt.Sprintf("DROP USER %s;", instance.Username))
 
-	db.Delete(&instance)
+		db.Delete(&instance)
 
-	r.JSON(http.StatusOK, Response{"The instance was deleted"})
+		r.JSON(http.StatusOK, Response{"The instance was deleted"})
+	} else if instance.Adapter == "dedicated" {
+		r.JSON(http.StatusNotImplemented, Response{"Dedicated instance support not implemented yet."})
+	} else {
+		r.JSON(http.StatusInternalServerError, Response{"Unsupported adapter type: " + instance.Adapter + ". Unable to delete."})
+	}
 }
