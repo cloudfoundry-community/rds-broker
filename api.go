@@ -55,6 +55,8 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 
 	instance.Uuid = p["id"]
 
+	instance.Adapter = plan.Adapter
+
 	instance.Database = "db" + randStr(15)
 	instance.Username = "u" + randStr(15)
 	instance.Salt = GenerateSalt(aes.BlockSize)
@@ -72,6 +74,13 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 		r.JSON(http.StatusInternalServerError, Response{desc})
 		return
 	}
+	// Double check in case the developer forgets to send an error back.
+	if status == InstanceNotCreated {
+		desc := "There was an error creating the instance."
+		r.JSON(http.StatusInternalServerError, Response{desc})
+		return
+	}
+
 	switch status {
 	case InstanceInProgress:
 		// Instance creation in progress
@@ -101,30 +110,37 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 		return
 	}
 
-	password, err := instance.GetPassword(s.EncryptionKey)
-	if err != nil {
-		r.JSON(http.StatusInternalServerError, "")
+	if instance.Adapter == "shared" {
+		password, err := instance.GetPassword(s.EncryptionKey)
+		if err != nil {
+			r.JSON(http.StatusInternalServerError, "")
+		}
+
+		uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+			instance.Username,
+			password,
+			s.DbConfig.Url,
+			s.DbConfig.Port,
+			instance.Database)
+
+		credentials := map[string]string{
+			"uri":      uri,
+			"username": instance.Username,
+			"password": password,
+			"host":     s.DbConfig.Url,
+			"db_name":  instance.Database,
+		}
+
+		response := map[string]interface{}{
+			"credentials": credentials,
+		}
+		r.JSON(http.StatusCreated, response)
+	} else if instance.Adapter == "dedicated" {
+		r.JSON(http.StatusNotImplemented, Response{"Dedicated instance support not implemented yet."})
+	} else {
+		r.JSON(http.StatusInternalServerError, Response{"Unsupported adapter type: " + instance.Adapter + ". Unable to bind."})
 	}
 
-	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		instance.Username,
-		password,
-		s.DbConfig.Url,
-		s.DbConfig.Port,
-		instance.Database)
-
-	credentials := map[string]string{
-		"uri":      uri,
-		"username": instance.Username,
-		"password": password,
-		"host":     s.DbConfig.Url,
-		"db_name":  instance.Database,
-	}
-
-	response := map[string]interface{}{
-		"credentials": credentials,
-	}
-	r.JSON(http.StatusCreated, response)
 }
 
 // DeleteInstance
