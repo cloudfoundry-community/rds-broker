@@ -49,9 +49,7 @@ type MockDBAdapter struct {
 }
 
 func (a MockDBAdapter) CreateDB(plan *Plan,
-	i *Instance,
-	sharedDbConn *gorm.DB,
-	password string) (DBInstanceState, error) {
+	sharedDbConn *gorm.DB) (*DB, error) {
 
 	var db DB
 	switch plan.Adapter {
@@ -64,11 +62,10 @@ func (a MockDBAdapter) CreateDB(plan *Plan,
 			InstanceType: plan.InstanceType,
 		}
 	default:
-		return InstanceNotCreated, errors.New("Adapter not found")
+		return nil, errors.New("Adapter not found")
 	}
 
-	status, err := db.CreateDB(i, password)
-	return status, err
+	return &db, nil
 }
 
 type MockSharedDB struct {
@@ -80,6 +77,11 @@ func (d *MockSharedDB) CreateDB(i *Instance, password string) (DBInstanceState, 
 	return InstanceReady, nil
 }
 
+func (d *MockSharedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+	// TODO
+	return InstanceGone, nil
+}
+
 type MockDedicatedDB struct {
 	InstanceType string
 }
@@ -87,6 +89,11 @@ type MockDedicatedDB struct {
 func (d *MockDedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	// TODO
 	return InstanceReady, nil
+}
+
+func (d *MockDedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+	// TODO
+	return InstanceGone, nil
 }
 
 func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, body io.Reader) (*httptest.ResponseRecorder, *martini.ClassicMartini) {

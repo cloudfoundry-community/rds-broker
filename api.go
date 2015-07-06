@@ -21,10 +21,10 @@ import (
 //   "organization_guid": "org-guid-here",
 //   "space_guid":        "space-guid-here"
 // }
-func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *gorm.DB, s *Settings) {
+func CreateInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *Settings) {
 	instance := Instance{}
 
-	db.Where("uuid = ?", p["id"]).First(&instance)
+	brokerDb.Where("uuid = ?", p["id"]).First(&instance)
 
 	if instance.Id > 0 {
 		r.JSON(http.StatusConflict, Response{"The instance already exists"})
@@ -67,16 +67,20 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 		return
 	}
 
-	// Create the database instance
-	status, err := s.DbAdapter.CreateDB(plan, &instance, db, password)
+	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
+	db, err := s.DbAdapter.CreateDB(plan, brokerDb)
 	if err != nil {
 		desc := "There was an error creating the instance. Error: " + err.Error()
 		r.JSON(http.StatusInternalServerError, Response{desc})
 		return
 	}
-	// Double check in case the developer forgets to send an error back.
-	if status == InstanceNotCreated {
+	var status DBInstanceState
+	// Create the database instance.
+	if status, err = (*db).CreateDB(&instance, password); status == InstanceNotCreated {
 		desc := "There was an error creating the instance."
+		if err != nil {
+			desc = desc + " Error: " + err.Error()
+		}
 		r.JSON(http.StatusInternalServerError, Response{desc})
 		return
 	}
@@ -88,7 +92,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 		// Instance ready
 	}
 
-	db.Save(&instance)
+	brokerDb.Save(&instance)
 
 	r.JSON(http.StatusCreated, Response{"The instance was created"})
 }
@@ -101,10 +105,10 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 //   "service_id":     "service-guid-here",
 //   "app_guid":       "app-guid-here"
 // }
-func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
+func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings) {
 	instance := Instance{}
 
-	db.Where("uuid = ?", p["instance_id"]).First(&instance)
+	brokerDb.Where("uuid = ?", p["instance_id"]).First(&instance)
 	if instance.Id == 0 {
 		r.JSON(404, Response{"Instance not found"})
 		return
@@ -149,26 +153,40 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 //   "service_id": "service-id-here"
 //   "plan_id":    "plan-id-here"
 // }
-func DeleteInstance(p martini.Params, r render.Render, db *gorm.DB) {
+func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings) {
 	instance := Instance{}
 
-	db.Where("uuid = ?", p["id"]).First(&instance)
+	brokerDb.Where("uuid = ?", p["id"]).First(&instance)
 
 	if instance.Id == 0 {
 		r.JSON(http.StatusNotFound, Response{"Instance not found"})
 		return
 	}
 
-	if instance.Adapter == "shared" {
-		db.Exec(fmt.Sprintf("DROP DATABASE %s;", instance.Database))
-		db.Exec(fmt.Sprintf("DROP USER %s;", instance.Username))
+	var plan *Plan
+	plan = FindPlan(instance.PlanId)
 
-		db.Delete(&instance)
-
-		r.JSON(http.StatusOK, Response{"The instance was deleted"})
-	} else if instance.Adapter == "dedicated" {
-		r.JSON(http.StatusNotImplemented, Response{"Dedicated instance support not implemented yet."})
-	} else {
-		r.JSON(http.StatusInternalServerError, Response{"Unsupported adapter type: " + instance.Adapter + ". Unable to delete."})
+	if plan == nil {
+		r.JSON(http.StatusBadRequest, Response{"The plan requested does not exist"})
+		return
 	}
+	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
+	db, err := s.DbAdapter.CreateDB(plan, brokerDb)
+	if err != nil {
+		desc := "There was an error deleting the instance. Error: " + err.Error()
+		r.JSON(http.StatusInternalServerError, Response{desc})
+		return
+	}
+	var status DBInstanceState
+	// Delete the database instance.
+	if status, err = (*db).DeleteDB(&instance); status == InstanceNotGone {
+		desc := "There was an error deleting the instance."
+		if err != nil {
+			desc = desc + " Error: " + err.Error()
+		}
+		r.JSON(http.StatusInternalServerError, Response{desc})
+		return
+	}
+	brokerDb.Delete(&instance)
+	r.JSON(http.StatusOK, Response{"The instance was deleted"})
 }

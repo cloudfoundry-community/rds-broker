@@ -17,10 +17,12 @@ const (
 	InstanceNotCreated DBInstanceState = iota // 0
 	InstanceInProgress                        // 1
 	InstanceReady                             // 2
+	InstanceGone                              // 3
+	InstanceNotGone                           // 4
 )
 
 type DBAdapter interface {
-	CreateDB(plan *Plan, i *Instance, db *gorm.DB, password string) (DBInstanceState, error)
+	CreateDB(plan *Plan, db *gorm.DB) (*DB, error)
 }
 
 type RDSAdapter struct {
@@ -35,9 +37,7 @@ type RDSAdapter struct {
 // 1 = in progress
 // 2 = ready
 func (a RDSAdapter) CreateDB(plan *Plan,
-	i *Instance,
-	sharedDbConn *gorm.DB,
-	password string) (DBInstanceState, error) {
+	sharedDbConn *gorm.DB) (*DB, error) {
 
 	var db DB
 	switch plan.Adapter {
@@ -50,15 +50,15 @@ func (a RDSAdapter) CreateDB(plan *Plan,
 			InstanceType: plan.InstanceType,
 		}
 	default:
-		return InstanceNotCreated, errors.New("Adapter not found")
+		return nil, errors.New("Adapter not found")
 	}
 
-	status, err := db.CreateDB(i, password)
-	return status, err
+	return &db, nil
 }
 
 type DB interface {
 	CreateDB(i *Instance, password string) (DBInstanceState, error)
+	DeleteDB(i *Instance) (DBInstanceState, error)
 }
 
 type SharedDB struct {
@@ -78,6 +78,16 @@ func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, erro
 		return InstanceNotCreated, db.Error
 	}
 	return InstanceReady, nil
+}
+
+func (d * SharedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.Database)); db.Error != nil {
+		return InstanceNotGone, db.Error
+	}
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP USER %s;", i.Username)); db.Error != nil {
+		return InstanceNotGone, db.Error
+	}
+	return InstanceGone, nil
 }
 
 type DedicatedDB struct {
@@ -165,4 +175,8 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 	}
 
 	return InstanceReady, nil
+}
+
+func (d *DedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+	return InstanceGone, errors.New("Not implemented yet")
 }
