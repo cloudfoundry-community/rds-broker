@@ -164,5 +164,5 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 		return InstanceNotCreated, nil
 	}
 
-	return InstanceNotCreated, nil
+	return InstanceReady, nil
 }
