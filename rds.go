@@ -155,9 +155,36 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 
 
 	resp, err := svc.CreateDBInstance(params)
-
 	// Pretty-print the response data.
 	fmt.Println(awsutil.StringValue(resp))
+	// Decide if AWS service call was successful
+	if yes := d.DidAwsCallSucceed(err); yes {
+		return InstanceReady, nil
+	} else {
+		return InstanceNotCreated, nil
+	}
+}
+
+func (d *DedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+	svc := rds.New(&aws.Config{Region: "us-east-1"})
+	params := &rds.DeleteDBInstanceInput{
+		DBInstanceIdentifier:      aws.String(i.Database), // Required
+		// FinalDBSnapshotIdentifier: aws.String("String"),
+		SkipFinalSnapshot:         aws.Boolean(true),
+	}
+	resp, err := svc.DeleteDBInstance(params)
+	// Pretty-print the response data.
+	fmt.Println(awsutil.StringValue(resp))
+	// Decide if AWS service call was successful
+	if yes := d.DidAwsCallSucceed(err); yes {
+		return InstanceGone, nil
+	} else {
+		return InstanceNotGone, nil
+	}
+}
+
+func (d *DedicatedDB) DidAwsCallSucceed(err error) bool {
+	// TODO Eventually return a formatted error object.
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {
 			// Generic AWS Error with Code, Message, and original error (if any)
@@ -171,12 +198,7 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 			// error which satisfies the awserr.Error interface.
 			fmt.Println(err.Error())
 		}
-		return InstanceNotCreated, nil
+		return false
 	}
-
-	return InstanceReady, nil
-}
-
-func (d *DedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
-	return InstanceGone, errors.New("Not implemented yet")
+	return true
 }
