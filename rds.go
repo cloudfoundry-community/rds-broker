@@ -58,6 +58,7 @@ func (a RDSAdapter) CreateDB(plan *Plan,
 
 type DB interface {
 	CreateDB(i *Instance, password string) (DBInstanceState, error)
+	BindDBToApp(i *Instance, password string) (map[string]string, error)
 	DeleteDB(i *Instance) (DBInstanceState, error)
 }
 
@@ -78,6 +79,10 @@ func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, erro
 		return InstanceNotCreated, db.Error
 	}
 	return InstanceReady, nil
+}
+
+func (d *SharedDB) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+	return i.GetCredentials(password)
 }
 
 func (d * SharedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
@@ -117,9 +122,9 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Boolean(true),
-		MultiAZ:           aws.Boolean(true),
-		StorageEncrypted:  aws.Boolean(true),
-		Tags:              rdsTags,
+		MultiAZ:                 aws.Boolean(true),
+		StorageEncrypted:        aws.Boolean(true),
+		Tags:                    rdsTags,
 	}
 
 	// Now, adjust parameters based on the particular instance.
@@ -153,24 +158,84 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 		params.StorageEncrypted = aws.Boolean(false)
 	}
 
-
 	resp, err := svc.CreateDBInstance(params)
 	// Pretty-print the response data.
 	fmt.Println(awsutil.StringValue(resp))
 	// Decide if AWS service call was successful
 	if yes := d.DidAwsCallSucceed(err); yes {
-		return InstanceReady, nil
+		return InstanceInProgress, nil
 	} else {
 		return InstanceNotCreated, nil
 	}
 }
 
+func (d *DedicatedDB) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+	// First, we need to check if the instance is up and available before binding.
+	// Only search for details if the instance was not indicated as ready.
+	if i.State != InstanceReady {
+		svc := rds.New(&aws.Config{Region: "us-east-1"})
+		params := &rds.DescribeDBInstancesInput{
+			DBInstanceIdentifier: aws.String(i.Database),
+			// MaxRecords: aws.Long(1),
+		}
+
+		resp, err := svc.DescribeDBInstances(params)
+		if err != nil {
+			if awsErr, ok := err.(awserr.Error); ok {
+				// Generic AWS error with Code, Message, and original error (if any)
+				fmt.Println(awsErr.Code(), awsErr.Message(), awsErr.OrigErr())
+				if reqErr, ok := err.(awserr.RequestFailure); ok {
+					// A service error occurred
+					fmt.Println(reqErr.Code(), reqErr.Message(), reqErr.StatusCode(), reqErr.RequestID())
+				}
+			} else {
+				// This case should never be hit, the SDK should always return an
+				// error which satisfies the awserr.Error interface.
+				fmt.Println(err.Error())
+			}
+			return nil, err
+		}
+
+		// Pretty-print the response data.
+		fmt.Println(awsutil.StringValue(resp))
+
+		// Get the details (host and port) for the instance.
+		numOfInstances := len(resp.DBInstances)
+		if numOfInstances > 0 {
+			for _, value := range resp.DBInstances {
+				// First check that the instance is up.
+				if value.DBInstanceStatus != nil && *(value.DBInstanceStatus) == "available" {
+					if value.Endpoint != nil && value.Endpoint.Address != nil && value.Endpoint.Port != nil {
+						fmt.Printf("host: %s port: %d \n", *(value.Endpoint.Address), *(value.Endpoint.Port))
+						i.Port = *(value.Endpoint.Port)
+						i.Host = *(value.Endpoint.Address)
+						i.State = InstanceReady
+						// Should only be one regardless. Just return now.
+						break
+					} else {
+						// Something went horribly wrong. Should never get here.
+						return nil, errors.New("Inavlid memory for endpoint and/or endpoint members.")
+					}
+				} else {
+					// Instance not up yet.
+					return nil, errors.New("Instance not available.")
+				}
+			}
+		} else {
+			// Couldn't find any instances.
+			return nil, errors.New("Couldn't find any instances.")
+		}
+	}
+	// If we get here that means the instance is up and we have the information for it.
+	return i.GetCredentials(password)
+}
+
 func (d *DedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
 	svc := rds.New(&aws.Config{Region: "us-east-1"})
 	params := &rds.DeleteDBInstanceInput{
-		DBInstanceIdentifier:      aws.String(i.Database), // Required
+		DBInstanceIdentifier: aws.String(i.Database), // Required
 		// FinalDBSnapshotIdentifier: aws.String("String"),
-		SkipFinalSnapshot:         aws.Boolean(true),
+		SkipFinalSnapshot: aws.Boolean(true),
 	}
 	resp, err := svc.DeleteDBInstance(params)
 	// Pretty-print the response data.

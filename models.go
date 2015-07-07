@@ -6,6 +6,7 @@ import (
 
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -24,7 +25,14 @@ type Instance struct {
 	Tags          map[string]string `sql:"-"`
 	DBSubnetGroup string            `sql:"-"`
 
-	Adapter      string `sql:"size(255)"`
+	Adapter string `sql:"size(255)"`
+
+	Host string `sql:"size(255)"`
+	Port int64
+
+	DbType string `sql:"size(255)"`
+
+	State DBInstanceState
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -61,4 +69,28 @@ func (i *Instance) GetPassword(key string) (string, error) {
 	}
 
 	return decrypted, nil
+}
+
+func (i *Instance) GetCredentials(password string) (map[string]string, error) {
+	var credentials map[string]string
+	switch i.DbType {
+	case "postgres":
+		uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+			i.Username,
+			password,
+			i.Host,
+			i.Port,
+			i.Database)
+
+		credentials = map[string]string{
+			"uri":      uri,
+			"username": i.Username,
+			"password": password,
+			"host":     i.Host,
+			"db_name":  i.Database,
+		}
+	default:
+		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
+	}
+	return credentials, nil
 }

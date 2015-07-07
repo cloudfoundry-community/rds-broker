@@ -77,6 +77,11 @@ func (d *MockSharedDB) CreateDB(i *Instance, password string) (DBInstanceState, 
 	return InstanceReady, nil
 }
 
+func (d *MockSharedDB) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+	// TODO
+	return i.GetCredentials(password)
+}
+
 func (d *MockSharedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
 	// TODO
 	return InstanceGone, nil
@@ -89,6 +94,11 @@ type MockDedicatedDB struct {
 func (d *MockDedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	// TODO
 	return InstanceReady, nil
+}
+
+func (d *MockDedicatedDB) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+	// TODO
+	return i.GetCredentials(password)
 }
 
 func (d *MockDedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {

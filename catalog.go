@@ -25,6 +25,7 @@ type Plan struct {
 	Free         bool         `json:"free"`
 	Adapter      string       `json:"-"`
 	InstanceType string       `json:"-"`
+	DbType       string       `json:"-"`
 }
 
 type Service struct {
@@ -74,6 +75,7 @@ func GetPlans() []Plan {
 		},
 		Free:    true,
 		Adapter: "shared",
+		DbType:  "postgres",
 	}
 
 	microPlan := Plan{
@@ -95,6 +97,7 @@ func GetPlans() []Plan {
 		Free:         false,
 		Adapter:      "dedicated",
 		InstanceType: "db.t2.micro",
+		DbType:  "postgres",
 	}
 
 	mediumPlan := Plan{
@@ -116,6 +119,7 @@ func GetPlans() []Plan {
 		Free:         false,
 		Adapter:      "dedicated",
 		InstanceType: "db.m3.medium",
+		DbType:  "postgres",
 	}
 
 	return []Plan{sharedPlan, microPlan, mediumPlan}
