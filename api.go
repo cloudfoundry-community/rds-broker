@@ -95,6 +95,15 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	}
 
 	instance.State = status
+	// FIXME
+	// Currently, if we are dealing with a shared database, it will not populate the host and port fields of the instance.
+	// Also, currently, the shared database instance just create a new database and user inside the intenral broker database.
+	// Eventually we want to register a DBConfig or a pool of database connections for the shared instances to get the host and port
+	// and move the logic of storing it in the instance in the SharedDB's CreateDB.
+	if instance.Adapter == "shared" {
+		instance.Host = s.DbConfig.Url
+		instance.Port = s.DbConfig.Port
+	}
 	brokerDb.Save(&instance)
 
 	r.JSON(http.StatusCreated, Response{"The instance was created"})

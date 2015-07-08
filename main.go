@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strconv"
 )
 
 type Settings struct {
@@ -31,9 +32,14 @@ func LoadBrokerDBConfig() *DBConfig {
 	}
 
 	if os.Getenv("DB_PORT") != "" {
-		dbConfig.Port = os.Getenv("DB_PORT")
+		var err error
+		dbConfig.Port, err = strconv.ParseInt(os.Getenv("DB_PORT"), 10, 64)
+		// Just return nothing if we can't interpret the number.
+		if err != nil {
+			return nil
+		}
 	} else {
-		dbConfig.Port = "5432"
+		dbConfig.Port = 5432
 	}
 
 	return &dbConfig
