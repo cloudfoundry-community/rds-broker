@@ -75,7 +75,7 @@ func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 	var credentials map[string]string
 	switch i.DbType {
 	case "postgres":
-		uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
 			i.Username,
 			password,
 			i.Host,

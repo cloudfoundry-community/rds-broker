@@ -218,7 +218,7 @@ func (d *DedicatedDB) BindDBToApp(i *Instance, password string) (map[string]stri
 					}
 				} else {
 					// Instance not up yet.
-					return nil, errors.New("Instance not available.")
+					return nil, errors.New("Instance not available yet. Please wait and try again..")
 				}
 			}
 		} else {
