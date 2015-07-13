@@ -158,6 +158,14 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 		params.StorageEncrypted = aws.Boolean(false)
 	}
 
+	// FIXME.
+	// A micro instance can support Multi-AZ however it has to be in a VPC. Since right now we aren't configuring VPCs,
+	// we will just turn off Multi-AZ for a micro instance.
+	if *params.DBInstanceClass == "db.t2.micro" {
+		params.MultiAZ = aws.Boolean(false)
+	}
+	// END FIXME
+
 	resp, err := svc.CreateDBInstance(params)
 	// Pretty-print the response data.
 	fmt.Println(awsutil.StringValue(resp))
