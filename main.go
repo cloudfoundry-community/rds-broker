@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-martini/martini"
+	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
@@ -10,42 +11,38 @@ import (
 	"os"
 )
 
-type RDS struct {
-	Url      string
-	Username string
-	Password string
-	DbName   string
-	Sslmode  string
-	Port     string
-}
-
 type Settings struct {
 	EncryptionKey string
-	Rds           *RDS
+	DbConfig      *DBConfig
 	InstanceTags  map[string]string
+	DbAdapter     DBAdapter
 }
 
-func LoadRDS() *RDS {
-	rds := RDS{}
-	rds.Url = os.Getenv("DB_URL")
-	rds.Username = os.Getenv("DB_USER")
-	rds.Password = os.Getenv("DB_PASS")
-	rds.DbName = os.Getenv("DB_NAME")
-	rds.Sslmode = "verify-ca"
-
-	if os.Getenv("DB_PORT") != "" {
-		rds.Port = os.Getenv("DB_PORT")
-	} else {
-		rds.Port = "5432"
+// Loads configuration for the internal DB that the broker will be using.
+func LoadBrokerDBConfig() *DBConfig {
+	dbConfig := DBConfig{}
+	dbConfig.DbType = os.Getenv("DB_TYPE")
+	dbConfig.Url = os.Getenv("DB_URL")
+	dbConfig.Username = os.Getenv("DB_USER")
+	dbConfig.Password = os.Getenv("DB_PASS")
+	dbConfig.DbName = os.Getenv("DB_NAME")
+	if dbConfig.Sslmode = os.Getenv("DB_SSLMODE"); dbConfig.Sslmode == "" {
+		dbConfig.Sslmode = "verify-ca"
 	}
 
-	return &rds
+	if os.Getenv("DB_PORT") != "" {
+		dbConfig.Port = os.Getenv("DB_PORT")
+	} else {
+		dbConfig.Port = "5432"
+	}
+
+	return &dbConfig
 }
 
 func main() {
 	var settings Settings
 	log.Println("Loading settings")
-	settings.Rds = LoadRDS()
+	settings.DbConfig = LoadBrokerDBConfig()
 
 	settings.EncryptionKey = os.Getenv("ENC_KEY")
 	if settings.EncryptionKey == "" {
@@ -53,25 +50,30 @@ func main() {
 		return
 	}
 
+	// Set the type of DB Adapter.
+	settings.DbAdapter = RDSAdapter{}
+
 	log.Println("Loading app...")
 	tags := os.Getenv("INSTANCE_TAGS")
 	if tags != "" {
 		json.Unmarshal([]byte(tags), &settings.InstanceTags)
 	}
 
-	m := App(&settings, "prod")
+	DB, err := DBInit(settings.DbConfig)
+	if err != nil {
+		log.Println("There was an error with the DB. Error: " + err.Error())
+		return
+	}
 
-	log.Println("Starting app...")
-	m.Run()
+	if m := App(&settings, "prod", DB); m != nil {
+		log.Println("Starting app...")
+		m.Run()
+	} else {
+		log.Println("Unable to setup application. Exiting...")
+	}
 }
 
-func App(settings *Settings, env string) *martini.ClassicMartini {
-
-	err := DBInit(settings.Rds, env)
-	if err != nil {
-		log.Println("There was an error with the DB")
-		return nil
-	}
+func App(settings *Settings, env string, DB *gorm.DB) *martini.ClassicMartini {
 
 	m := martini.Classic()
 
@@ -81,7 +83,7 @@ func App(settings *Settings, env string) *martini.ClassicMartini {
 	m.Use(auth.Basic(username, password))
 	m.Use(render.Renderer())
 
-	m.Map(&DB)
+	m.Map(DB)
 	m.Map(settings)
 
 	log.Println("Loading Routes")

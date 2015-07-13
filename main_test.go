@@ -2,9 +2,11 @@ package main
 
 import (
 	"github.com/go-martini/martini"
+	"github.com/jinzhu/gorm"
 
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -20,17 +22,71 @@ var createInstanceReq []byte = []byte(`{
 	"space_guid":"a-space"
 }`)
 
+var brokerDB *gorm.DB
+
 func setup() *martini.ClassicMartini {
 	os.Setenv("AUTH_USER", "default")
 	os.Setenv("AUTH_PASS", "default")
 	var s Settings
-	var r RDS
-	s.Rds = &r
+	var dbConfig DBConfig
+	s.DbConfig = &dbConfig
+	dbConfig.DbType = "sqlite3"
+	dbConfig.DbName = ":memory:"
 	s.EncryptionKey = "12345678901234567890123456789012"
+	s.DbAdapter = MockDBAdapter{}
+	brokerDB, _ = DBInit(&dbConfig)
 
-	m := App(&s, "test")
+	m := App(&s, "test", brokerDB)
 
 	return m
+}
+
+/*
+	Mock Objects
+*/
+
+type MockDBAdapter struct {
+}
+
+func (a MockDBAdapter) CreateDB(plan *Plan,
+	i *Instance,
+	sharedDbConn *gorm.DB,
+	password string) (DBInstanceState, error) {
+
+	var db DB
+	switch plan.Adapter {
+	case "shared":
+		db = &MockSharedDB{
+			SharedDbConn: sharedDbConn,
+		}
+	case "dedicated":
+		db = &MockDedicatedDB{
+			InstanceType: plan.InstanceType,
+		}
+	default:
+		return InstanceNotCreated, errors.New("Adapter not found")
+	}
+
+	status, err := db.CreateDB(i, password)
+	return status, err
+}
+
+type MockSharedDB struct {
+	SharedDbConn *gorm.DB
+}
+
+func (d *MockSharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+	// TODO
+	return InstanceReady, nil
+}
+
+type MockDedicatedDB struct {
+	InstanceType string
+}
+
+func (d *MockDedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+	// TODO
+	return InstanceReady, nil
 }
 
 func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, body io.Reader) (*httptest.ResponseRecorder, *martini.ClassicMartini) {
@@ -48,6 +104,10 @@ func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, 
 
 	return res, m
 }
+
+/*
+	End Mock Objects
+*/
 
 func validJson(response []byte, url string, t *testing.T) {
 	var aJson map[string]interface{}
@@ -82,6 +142,7 @@ func TestCreateInstance(t *testing.T) {
 	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	if res.Code != http.StatusCreated {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
 
@@ -95,7 +156,7 @@ func TestCreateInstance(t *testing.T) {
 
 	// Is it in the database and has a username and password?
 	i := Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&i)
+	brokerDB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id == 0 {
 		t.Error("The instance should be saved in the DB")
 	}
@@ -123,6 +184,7 @@ func TestBindInstance(t *testing.T) {
 
 	res, _ = doRequest(m, url, "PUT", true, nil)
 	if res.Code != http.StatusCreated {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
 
@@ -151,7 +213,7 @@ func TestBindInstance(t *testing.T) {
 	}
 
 	instance := Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&instance)
+	brokerDB.Where("uuid = ?", "the_instance").First(&instance)
 
 	// Does it return an unencrypted password?
 	if instance.Password == r.Credentials.Password || r.Credentials.Password == "" {
@@ -188,7 +250,7 @@ func TestDeleteInstance(t *testing.T) {
 	// Create the instance and try again
 	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, bytes.NewBuffer(createInstanceReq))
 	i := Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&i)
+	brokerDB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id == 0 {
 		t.Error("The instance should be in the DB")
 	}
@@ -196,12 +258,13 @@ func TestDeleteInstance(t *testing.T) {
 	res, _ = doRequest(m, url, "DELETE", true, nil)
 
 	if res.Code != http.StatusOK {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 200 and it returned", res.Code)
 	}
 
 	// Is it actually gone from the DB?
 	i = Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&i)
+	brokerDB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id > 0 {
 		t.Error("The instance shouldn't be in the DB")
 	}

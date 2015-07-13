@@ -9,9 +9,20 @@ import (
 	"fmt"
 )
 
-const InstanceNotCreated = 0
-const InstanceInProgress = 1
-const InstanceReady = 2
+type DBInstanceState uint8
+
+const (
+	InstanceNotCreated DBInstanceState = iota // 0
+	InstanceInProgress                        // 1
+	InstanceReady                             // 2
+)
+
+type DBAdapter interface {
+	CreateDB(plan *Plan, i *Instance, db *gorm.DB, password string) (DBInstanceState, error)
+}
+
+type RDSAdapter struct {
+}
 
 // Main function to create database instances
 // Selects an adapter and depending on the plan
@@ -21,41 +32,49 @@ const InstanceReady = 2
 // 0 = not created
 // 1 = in progress
 // 2 = ready
-func CreateDB(plan *Plan,
+func (a RDSAdapter) CreateDB(plan *Plan,
 	i *Instance,
-	db *gorm.DB,
-	password string) (int, error) {
+	sharedDbConn *gorm.DB,
+	password string) (DBInstanceState, error) {
 
-	var adapter DBAdapter
+	var db DB
 	switch plan.Adapter {
 	case "shared":
-		adapter = &SharedDB{
-			Db: db,
+		db = &SharedDB{
+			SharedDbConn: sharedDbConn,
 		}
 	case "dedicated":
-		adapter = &DedicatedDB{
+		db = &DedicatedDB{
 			InstanceType: plan.InstanceType,
 		}
 	default:
 		return InstanceNotCreated, errors.New("Adapter not found")
 	}
 
-	status, err := adapter.CreateDB(i, password)
+	status, err := db.CreateDB(i, password)
 	return status, err
 }
 
-type DBAdapter interface {
-	CreateDB(i *Instance, password string) (int, error)
+type DB interface {
+	CreateDB(i *Instance, password string) (DBInstanceState, error)
 }
 
 type SharedDB struct {
-	Db *gorm.DB
+	SharedDbConn *gorm.DB
 }
 
-func (d *SharedDB) CreateDB(i *Instance, password string) (int, error) {
-	d.Db.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database))
-	d.Db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password))
-	d.Db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username))
+func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+		return InstanceNotCreated, db.Error
+	}
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
+		// TODO. Revert CREATE DATABASE.
+		return InstanceNotCreated, db.Error
+	}
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
+		// TODO. Revert CREATE DATABASE and CREATE USER.
+		return InstanceNotCreated, db.Error
+	}
 	return InstanceReady, nil
 }
 
@@ -63,7 +82,7 @@ type DedicatedDB struct {
 	InstanceType string
 }
 
-func (d *DedicatedDB) CreateDB(i *Instance, password string) (int, error) {
+func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	svc := rds.New(&aws.Config{Region: "us-east-1"})
 
 	var rdsTags []*rds.Tag

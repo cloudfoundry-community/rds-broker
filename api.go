@@ -66,9 +66,9 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, db *go
 	}
 
 	// Create the database instance
-	status, err := CreateDB(plan, &instance, db, password)
+	status, err := s.DbAdapter.CreateDB(plan, &instance, db, password)
 	if err != nil {
-		desc := "There was an error creating the instance" + err.Error()
+		desc := "There was an error creating the instance. Error: " + err.Error()
 		r.JSON(http.StatusInternalServerError, Response{desc})
 		return
 	}
@@ -109,15 +109,15 @@ func BindInstance(p martini.Params, r render.Render, db *gorm.DB, s *Settings) {
 	uri := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		instance.Username,
 		password,
-		s.Rds.Url,
-		s.Rds.Port,
+		s.DbConfig.Url,
+		s.DbConfig.Port,
 		instance.Database)
 
 	credentials := map[string]string{
 		"uri":      uri,
 		"username": instance.Username,
 		"password": password,
-		"host":     s.Rds.Url,
+		"host":     s.DbConfig.Url,
 		"db_name":  instance.Database,
 	}
 
