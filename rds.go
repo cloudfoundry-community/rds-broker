@@ -17,11 +17,11 @@ const (
 	InstanceReady                             // 2
 )
 
-type IDBAdapterFactory interface {
+type DBAdapter interface {
 	CreateDB(plan *Plan, i *Instance, db *gorm.DB, password string) (DBInstanceState, error)
 }
 
-type DBAdapterFactory struct {
+type RDSAdapter struct {
 }
 
 // Main function to create database instances
@@ -32,46 +32,46 @@ type DBAdapterFactory struct {
 // 0 = not created
 // 1 = in progress
 // 2 = ready
-func (f DBAdapterFactory) CreateDB(plan *Plan,
+func (a RDSAdapter) CreateDB(plan *Plan,
 	i *Instance,
-	db *gorm.DB,
+	sharedDbConn *gorm.DB,
 	password string) (DBInstanceState, error) {
 
-	var adapter DBAdapter
+	var db DB
 	switch plan.Adapter {
 	case "shared":
-		adapter = &SharedDB{
-			Db: db,
+		db = &SharedDB{
+			SharedDbConn: sharedDbConn,
 		}
 	case "dedicated":
-		adapter = &DedicatedDB{
+		db = &DedicatedDB{
 			InstanceType: plan.InstanceType,
 		}
 	default:
 		return InstanceNotCreated, errors.New("Adapter not found")
 	}
 
-	status, err := adapter.CreateDB(i, password)
+	status, err := db.CreateDB(i, password)
 	return status, err
 }
 
-type DBAdapter interface {
+type DB interface {
 	CreateDB(i *Instance, password string) (DBInstanceState, error)
 }
 
 type SharedDB struct {
-	Db *gorm.DB
+	SharedDbConn *gorm.DB
 }
 
 func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
-	if db := d.Db.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
 		return InstanceNotCreated, db.Error
 	}
-	if db := d.Db.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
 		// TODO. Revert CREATE DATABASE.
 		return InstanceNotCreated, db.Error
 	}
-	if db := d.Db.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
 		// TODO. Revert CREATE DATABASE and CREATE USER.
 		return InstanceNotCreated, db.Error
 	}

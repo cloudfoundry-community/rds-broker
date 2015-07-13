@@ -12,10 +12,10 @@ import (
 )
 
 type Settings struct {
-	EncryptionKey    string
-	DbConfig         *DBConfig
-	InstanceTags     map[string]string
-	DbAdapterFactory IDBAdapterFactory
+	EncryptionKey string
+	DbConfig      *DBConfig
+	InstanceTags  map[string]string
+	DbAdapter     DBAdapter
 }
 
 // Loads configuration for the internal DB that the broker will be using.
@@ -50,8 +50,8 @@ func main() {
 		return
 	}
 
-	// Set the type of DB Adapter Factory.
-	settings.DbAdapterFactory = DBAdapterFactory{}
+	// Set the type of DB Adapter.
+	settings.DbAdapter = RDSAdapter{}
 
 	log.Println("Loading app...")
 	tags := os.Getenv("INSTANCE_TAGS")

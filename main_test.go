@@ -33,7 +33,7 @@ func setup() *martini.ClassicMartini {
 	dbConfig.DbType = "sqlite3"
 	dbConfig.DbName = ":memory:"
 	s.EncryptionKey = "12345678901234567890123456789012"
-	s.DbAdapterFactory = MockDBAdapterFactory{}
+	s.DbAdapter = MockDBAdapter{}
 	brokerDB, _ = DBInit(&dbConfig)
 
 	m := App(&s, "test", brokerDB)
@@ -45,34 +45,34 @@ func setup() *martini.ClassicMartini {
 	Mock Objects
 */
 
-type MockDBAdapterFactory struct {
+type MockDBAdapter struct {
 }
 
-func (f MockDBAdapterFactory) CreateDB(plan *Plan,
+func (a MockDBAdapter) CreateDB(plan *Plan,
 	i *Instance,
-	db *gorm.DB,
+	sharedDbConn *gorm.DB,
 	password string) (DBInstanceState, error) {
 
-	var adapter DBAdapter
+	var db DB
 	switch plan.Adapter {
 	case "shared":
-		adapter = &MockSharedDB{
-			Db: db,
+		db = &MockSharedDB{
+			SharedDbConn: sharedDbConn,
 		}
 	case "dedicated":
-		adapter = &MockDedicatedDB{
+		db = &MockDedicatedDB{
 			InstanceType: plan.InstanceType,
 		}
 	default:
 		return InstanceNotCreated, errors.New("Adapter not found")
 	}
 
-	status, err := adapter.CreateDB(i, password)
+	status, err := db.CreateDB(i, password)
 	return status, err
 }
 
 type MockSharedDB struct {
-	Db *gorm.DB
+	SharedDbConn *gorm.DB
 }
 
 func (d *MockSharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
