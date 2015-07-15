@@ -7,6 +7,7 @@ import (
 	"github.com/martini-contrib/render"
 
 	"encoding/json"
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -16,7 +17,34 @@ type Settings struct {
 	EncryptionKey string
 	DbConfig      *DBConfig
 	InstanceTags  map[string]string
-	DbAdapter     DBAdapter
+	Environment   string
+}
+
+// Main function to create database instances
+func (s Settings) InitializeAdapter(plan *Plan,
+	sharedDbConn *gorm.DB) (*DBAdapter, error) {
+
+	var dbAdapter DBAdapter
+	// For test environments, use a mock adapter.
+	if s.Environment == "test" {
+		dbAdapter = &MockDBAdapter{}
+		return &dbAdapter, nil
+	}
+
+	switch plan.Adapter {
+	case "shared":
+		dbAdapter = &SharedDBAdapter{
+			SharedDbConn: sharedDbConn,
+		}
+	case "dedicated":
+		dbAdapter = &DedicatedDBAdapter{
+			InstanceType: plan.InstanceType,
+		}
+	default:
+		return nil, errors.New("Adapter not found")
+	}
+
+	return &dbAdapter, nil
 }
 
 // Loads configuration for the internal DB that the broker will be using.
@@ -56,9 +84,6 @@ func main() {
 		return
 	}
 
-	// Set the type of DB Adapter.
-	settings.DbAdapter = RDSAdapter{}
-
 	log.Println("Loading app...")
 	tags := os.Getenv("INSTANCE_TAGS")
 	if tags != "" {
@@ -71,7 +96,11 @@ func main() {
 		return
 	}
 
-	if m := App(&settings, "prod", DB); m != nil {
+	// Set the environment to production.
+	settings.Environment = "prod"
+
+	// Try to connect and create the app.
+	if m := App(&settings, DB); m != nil {
 		log.Println("Starting app...")
 		m.Run()
 	} else {
@@ -79,7 +108,7 @@ func main() {
 	}
 }
 
-func App(settings *Settings, env string, DB *gorm.DB) *martini.ClassicMartini {
+func App(settings *Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m := martini.Classic()
 

@@ -23,51 +23,41 @@ const (
 )
 
 type DBAdapter interface {
-	CreateDB(plan *Plan, db *gorm.DB) (*DB, error)
-}
-
-type RDSAdapter struct {
-}
-
-// Main function to create database instances
-// Selects an adapter and depending on the plan
-// creates the instance
-// Returns status and error
-// Status codes:
-// 0 = not created
-// 1 = in progress
-// 2 = ready
-func (a RDSAdapter) CreateDB(plan *Plan,
-	sharedDbConn *gorm.DB) (*DB, error) {
-
-	var db DB
-	switch plan.Adapter {
-	case "shared":
-		db = &SharedDB{
-			SharedDbConn: sharedDbConn,
-		}
-	case "dedicated":
-		db = &DedicatedDB{
-			InstanceType: plan.InstanceType,
-		}
-	default:
-		return nil, errors.New("Adapter not found")
-	}
-
-	return &db, nil
-}
-
-type DB interface {
 	CreateDB(i *Instance, password string) (DBInstanceState, error)
 	BindDBToApp(i *Instance, password string) (map[string]string, error)
 	DeleteDB(i *Instance) (DBInstanceState, error)
 }
 
-type SharedDB struct {
+// MockDBAdapter is a struct meant for testing.
+// It should only be used in *_test.go files.
+// It is only here because *_test.go files are only compiled during "go test"
+// and it's referenced in non *_test.go code eg. InitializeAdapter in main.go.
+type MockDBAdapter struct {
+}
+
+func (d *MockDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+	// TODO
+	return InstanceReady, nil
+}
+
+func (d *MockDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+	// TODO
+	return i.GetCredentials(password)
+}
+
+func (d *MockDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
+	// TODO
+	return InstanceGone, nil
+}
+// END MockDBAdpater
+
+
+
+type SharedDBAdapter struct {
 	SharedDbConn *gorm.DB
 }
 
-func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+func (d *SharedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
 		return InstanceNotCreated, db.Error
 	}
@@ -82,11 +72,11 @@ func (d *SharedDB) CreateDB(i *Instance, password string) (DBInstanceState, erro
 	return InstanceReady, nil
 }
 
-func (d *SharedDB) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+func (d *SharedDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
 	return i.GetCredentials(password)
 }
 
-func (d *SharedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+func (d *SharedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.Database)); db.Error != nil {
 		return InstanceNotGone, db.Error
 	}
@@ -96,11 +86,11 @@ func (d *SharedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
 	return InstanceGone, nil
 }
 
-type DedicatedDB struct {
+type DedicatedDBAdapter struct {
 	InstanceType string
 }
 
-func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	svc := rds.New(&aws.Config{Region: "us-east-1"})
 
 	var rdsTags []*rds.Tag
@@ -256,7 +246,7 @@ func (d *DedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, e
 	}
 }
 
-func (d *DedicatedDB) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
 	// First, we need to check if the instance is up and available before binding.
 	// Only search for details if the instance was not indicated as ready.
 	if i.State != InstanceReady {
@@ -317,7 +307,7 @@ func (d *DedicatedDB) BindDBToApp(i *Instance, password string) (map[string]stri
 	return i.GetCredentials(password)
 }
 
-func (d *DedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
+func (d *DedicatedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
 	svc := rds.New(&aws.Config{Region: "us-east-1"})
 	params := &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(i.Database), // Required
@@ -335,7 +325,7 @@ func (d *DedicatedDB) DeleteDB(i *Instance) (DBInstanceState, error) {
 	}
 }
 
-func (d *DedicatedDB) DidAwsCallSucceed(err error) bool {
+func (d *DedicatedDBAdapter) DidAwsCallSucceed(err error) bool {
 	// TODO Eventually return a formatted error object.
 	if err != nil {
 		if awsErr, ok := err.(awserr.Error); ok {

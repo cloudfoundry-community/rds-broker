@@ -67,7 +67,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	}
 
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
-	db, err := s.DbAdapter.CreateDB(plan, brokerDb)
+	db, err := s.InitializeAdapter(plan, brokerDb)
 
 	instance.DbType = plan.DbType
 
@@ -138,7 +138,7 @@ func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Setti
 	}
 
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
-	db, err := s.DbAdapter.CreateDB(plan, brokerDb)
+	db, err := s.InitializeAdapter(plan, brokerDb)
 	if err != nil {
 		desc := "There was an error creating the instance. Error: " + err.Error()
 		r.JSON(http.StatusInternalServerError, Response{desc})
@@ -193,7 +193,7 @@ func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Set
 		return
 	}
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
-	db, err := s.DbAdapter.CreateDB(plan, brokerDb)
+	db, err := s.InitializeAdapter(plan, brokerDb)
 	if err != nil {
 		desc := "There was an error deleting the instance. Error: " + err.Error()
 		r.JSON(http.StatusInternalServerError, Response{desc})
