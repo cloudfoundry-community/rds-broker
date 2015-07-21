@@ -30,7 +30,7 @@ type DBConfig struct {
 	Password string
 	DbName   string
 	Sslmode  string
-	Port     string
+	Port     int64   // Is int64 to match the type that rds.Endpoint.Port is in the AWS RDS SDK.
 }
 
 // DBinit is a generic helper function that will try to connect to a database with the config in the input.
@@ -42,7 +42,7 @@ func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 	var err error
 	switch dbConfig.DbType {
 	case "postgres":
-		conn := "dbname=%s user=%s password=%s host=%s sslmode=%s port=%s"
+		conn := "dbname=%s user=%s password=%s host=%s sslmode=%s port=%d"
 		conn = fmt.Sprintf(conn,
 			dbConfig.DbName,
 			dbConfig.Username,
@@ -67,10 +67,19 @@ func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 		log.Println("Unable to verify connection to database")
 		return nil, err
 	}
-	DB.DB().SetMaxOpenConns(10)
-	log.Println("Migrating")
-	// Automigrate!
-	DB.AutoMigrate(Instance{})
-	log.Println("Migrated")
 	return &DB, nil
+}
+
+// InternalDBInit initializes the internal database connection that the service broker will use.
+// In addition to calling DBInit(), it also makes sure that the tables are setup for Instance and DBConfig structs.
+func InternalDBInit(dbConfig *DBConfig) (*gorm.DB, error) {
+	db, err := DBInit(dbConfig)
+	if err == nil {
+		db.DB().SetMaxOpenConns(10)
+		log.Println("Migrating")
+		// Automigrate!
+		db.AutoMigrate(Instance{}) // Add all your models here to help setup the database tables.
+		log.Println("Migrated")
+	}
+	return db, err
 }

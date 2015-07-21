@@ -6,7 +6,6 @@ import (
 
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -33,10 +32,10 @@ func setup() *martini.ClassicMartini {
 	dbConfig.DbType = "sqlite3"
 	dbConfig.DbName = ":memory:"
 	s.EncryptionKey = "12345678901234567890123456789012"
-	s.DbAdapter = MockDBAdapter{}
-	brokerDB, _ = DBInit(&dbConfig)
+	s.Environment = "test"
+	brokerDB, _ = InternalDBInit(&dbConfig)
 
-	m := App(&s, "test", brokerDB)
+	m := App(&s, brokerDB)
 
 	return m
 }
@@ -44,50 +43,6 @@ func setup() *martini.ClassicMartini {
 /*
 	Mock Objects
 */
-
-type MockDBAdapter struct {
-}
-
-func (a MockDBAdapter) CreateDB(plan *Plan,
-	i *Instance,
-	sharedDbConn *gorm.DB,
-	password string) (DBInstanceState, error) {
-
-	var db DB
-	switch plan.Adapter {
-	case "shared":
-		db = &MockSharedDB{
-			SharedDbConn: sharedDbConn,
-		}
-	case "dedicated":
-		db = &MockDedicatedDB{
-			InstanceType: plan.InstanceType,
-		}
-	default:
-		return InstanceNotCreated, errors.New("Adapter not found")
-	}
-
-	status, err := db.CreateDB(i, password)
-	return status, err
-}
-
-type MockSharedDB struct {
-	SharedDbConn *gorm.DB
-}
-
-func (d *MockSharedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
-	// TODO
-	return InstanceReady, nil
-}
-
-type MockDedicatedDB struct {
-	InstanceType string
-}
-
-func (d *MockDedicatedDB) CreateDB(i *Instance, password string) (DBInstanceState, error) {
-	// TODO
-	return InstanceReady, nil
-}
 
 func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, body io.Reader) (*httptest.ResponseRecorder, *martini.ClassicMartini) {
 	if m == nil {
