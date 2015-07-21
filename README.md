@@ -32,18 +32,18 @@ There are important environment variables that should be overriden inside the `m
 
 1. `cf push`
 1. `cf create-service-broker SERVICE-NAME USER PASS https://BROKER-URL`
-1. `cf enable-service-access rds-database`
+1. `cf enable-service-access rds`
 
 
 ### How to use it
 
 To use the service you need to create a service instance and bind it:
 
-1. `cf create-service rds-database shared-psql MYDB`
+1. `cf create-service rds shared-psql MYDB`
 1. `cf bind-service APP MYDB`
 
 When you do that you will have all the credentials in the 
-`VCAP_SERVICES` environment variable with the JSON key `rds-database`.
+`VCAP_SERVICES` environment variable with the JSON key `rds`.
 
 Also, you will have a `DATABASE_URL` environment variable that will
 be the connection string to the DB.
