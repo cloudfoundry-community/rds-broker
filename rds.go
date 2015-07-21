@@ -4,12 +4,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/jinzhu/gorm"
 
 	"errors"
 	"fmt"
+	"log"
 )
 
 type DBInstanceState uint8
@@ -49,9 +49,8 @@ func (d *MockDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
 	// TODO
 	return InstanceGone, nil
 }
+
 // END MockDBAdpater
-
-
 
 type SharedDBAdapter struct {
 	SharedDbConn *gorm.DB
@@ -109,6 +108,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 		// Instance class is defined by the plan
 		DBInstanceClass:         &d.InstanceType,
 		DBInstanceIdentifier:    &i.Database,
+		DBName:                  &i.Database,
 		Engine:                  aws.String("postgres"),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
@@ -116,128 +116,18 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 		MultiAZ:                 aws.Boolean(true),
 		StorageEncrypted:        aws.Boolean(true),
 		Tags:                    rdsTags,
-		PubliclyAccessible:      aws.Boolean(true),
+		PubliclyAccessible:      aws.Boolean(false),
+		DBSubnetGroupName:       &i.DbSubnetGroup,
+		VPCSecurityGroupIDs:     []*string{&i.SecGroup},
 	}
 
-	// Now, adjust parameters based on the particular instance.
-	// Per http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html,
-	// Encryption is only supported on the following instances.
-	switch *params.DBInstanceClass {
-	// Start list of supported instance types for encryption.
-	case "db.m3.medium":
-		fallthrough
-	case "db.m3.large":
-		fallthrough
-	case "db.m3.xlarge":
-		fallthrough
-	case "db.m3.2xlarge":
-		fallthrough
-	case "db.r3.large":
-		fallthrough
-	case "db.r3.xlarge":
-		fallthrough
-	case "db.r3.2xlarge":
-		fallthrough
-	case "db.r3.4xlarge":
-		fallthrough
-	case "db.r3.8xlarge":
-		fallthrough
-	case "db.cr1.8xlarge":
-		// End of supported instance types.
-		_ = 0
-	default:
-		fmt.Println("Encryption not supported by AWS for instance size: " + d.InstanceType)
+	if *params.DBInstanceClass == "db.t2.micro" {
 		params.StorageEncrypted = aws.Boolean(false)
 	}
 
-	// FIXME.
-	if *params.DBInstanceClass == "db.t2.micro" {
-		// FIXME PART 1.
-		// A micro instance can support Multi-AZ however it has to be in a VPC. Since right now we aren't
-		// configuring VPCs, we will just turn off Multi-AZ for a micro instance.
-		params.MultiAZ = aws.Boolean(false)
-
-		// FIXME PART 2.
-		// A micro instance needs to be apart of a VPC.
-		var subnetID *string
-		var vpcID *string
-		var subnet *ec2.Subnet
-		ec2Svc := ec2.New(&aws.Config{Region: "us-east-1"})
-		// Get the DB Subnet Group Name.
-
-		// Get the EC2 Subnets and VPCIds
-		describeSubnetparams := &ec2.DescribeSubnetsInput{
-		// TODO: Add parameters.
-		}
-		describeSubnetsResp, err := ec2Svc.DescribeSubnets(describeSubnetparams)
-		fmt.Println(awsutil.StringValue(describeSubnetsResp))
-		if !d.DidAwsCallSucceed(err) || len(describeSubnetsResp.Subnets) < 1 {
-			// If no subnet exists, create VPC and then create subnet.
-			// TODO
-			/*
-				cidrBlock = "10.0.0.0/16"
-				ec2VPCParams := &ec2.CreateVPCInput{
-					CIDRBlock:       aws.String(cidrBlock), // Required.
-					InstanceTenancy: aws.String("default"),
-				}
-				ec2VPCResp, err := ec2Svc.CreateVPC(ec2VPCParams)
-				fmt.Println(awsutil.StringValue(ec2VPCResp))
-				if !d.DidAwsCallSucceed(err) {
-					return InstanceNotCreated, nil
-				}
-				vpcID = ec2VPCResp.VPC.VPCID
-				// Create a subnet with the VPC just created.
-				ec2SubnetParams := &ec2.CreateSubnetInput{
-					CIDRBlock: aws.String(cidrBlock), // Required
-					VPCID:     vpcID,                 // Required
-				}
-				ec2SubnetResp, err := ec2Svc.CreateSubnet(ec2SubnetParams)
-				fmt.Println(awsutil.StringValue(ec2SubnetResp))
-				if !d.DidAwsCallSucceed(err) {
-					return InstanceNotCreated, nil
-				}
-			*/
-			return InstanceNotCreated, nil
-		} else {
-			// Just get the vpcid and cidrblock of the first one.
-			subnet = describeSubnetsResp.Subnets[0]
-			vpcID = subnet.VPCID
-		}
-		// Look for a db subnet created with our VPC.
-		describeDbSubnetGroupsParams := &rds.DescribeDBSubnetGroupsInput{
-		// TODO When AWS SDK supports filtering (when it does, we will filter by vpc or subnetid).
-		}
-		_ = vpcID // Temp FIXME until filtering.
-
-		// Find exisiting db subnet group names.
-		describeDbSubnetGroupsResp, err := svc.DescribeDBSubnetGroups(describeDbSubnetGroupsParams)
-		fmt.Println(awsutil.StringValue(describeDbSubnetGroupsResp))
-		if !d.DidAwsCallSucceed(err) || len(describeDbSubnetGroupsResp.DBSubnetGroups) < 1 {
-			// Create db subnet group with VPC if a DB Subnet Group does not exist.
-			createDBSubnetGroupParams := &rds.CreateDBSubnetGroupInput{
-				DBSubnetGroupDescription: aws.String(i.PlanId + "-subnet-" + randStr(10)),
-				DBSubnetGroupName:        aws.String(randStr(10)),
-				SubnetIDs:                []*string{subnet.SubnetID},
-			}
-			createDBSubnetGroupResp, err := svc.CreateDBSubnetGroup(createDBSubnetGroupParams)
-			if !d.DidAwsCallSucceed(err) {
-				return InstanceNotCreated, nil
-			}
-			// Assign db subnet group name
-			subnetID = createDBSubnetGroupResp.DBSubnetGroup.DBSubnetGroupName
-		} else {
-			// Assign db subnet group name
-			subnetID = describeDbSubnetGroupsResp.DBSubnetGroups[0].DBSubnetGroupName
-		}
-
-		// Assign Subnet group name into create instance parameters.
-		params.DBSubnetGroupName = subnetID
-	}
-	// END FIXME
-
 	resp, err := svc.CreateDBInstance(params)
 	// Pretty-print the response data.
-	fmt.Println(awsutil.StringValue(resp))
+	log.Println(awsutil.StringValue(resp))
 	// Decide if AWS service call was successful
 	if yes := d.DidAwsCallSucceed(err); yes {
 		return InstanceInProgress, nil

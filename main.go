@@ -6,88 +6,18 @@ import (
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
-	"encoding/json"
-	"errors"
 	"log"
 	"os"
-	"strconv"
 )
-
-type Settings struct {
-	EncryptionKey string
-	DbConfig      *DBConfig
-	InstanceTags  map[string]string
-	Environment   string
-}
-
-// Main function to create database instances
-func (s Settings) InitializeAdapter(plan *Plan,
-	sharedDbConn *gorm.DB) (*DBAdapter, error) {
-
-	var dbAdapter DBAdapter
-	// For test environments, use a mock adapter.
-	if s.Environment == "test" {
-		dbAdapter = &MockDBAdapter{}
-		return &dbAdapter, nil
-	}
-
-	switch plan.Adapter {
-	case "shared":
-		dbAdapter = &SharedDBAdapter{
-			SharedDbConn: sharedDbConn,
-		}
-	case "dedicated":
-		dbAdapter = &DedicatedDBAdapter{
-			InstanceType: plan.InstanceType,
-		}
-	default:
-		return nil, errors.New("Adapter not found")
-	}
-
-	return &dbAdapter, nil
-}
-
-// Loads configuration for the internal DB that the broker will be using.
-func LoadBrokerDBConfig() *DBConfig {
-	dbConfig := DBConfig{}
-	dbConfig.DbType = os.Getenv("DB_TYPE")
-	dbConfig.Url = os.Getenv("DB_URL")
-	dbConfig.Username = os.Getenv("DB_USER")
-	dbConfig.Password = os.Getenv("DB_PASS")
-	dbConfig.DbName = os.Getenv("DB_NAME")
-	if dbConfig.Sslmode = os.Getenv("DB_SSLMODE"); dbConfig.Sslmode == "" {
-		dbConfig.Sslmode = "verify-ca"
-	}
-
-	if os.Getenv("DB_PORT") != "" {
-		var err error
-		dbConfig.Port, err = strconv.ParseInt(os.Getenv("DB_PORT"), 10, 64)
-		// Just return nothing if we can't interpret the number.
-		if err != nil {
-			return nil
-		}
-	} else {
-		dbConfig.Port = 5432
-	}
-
-	return &dbConfig
-}
 
 func main() {
 	var settings Settings
-	log.Println("Loading settings")
-	settings.DbConfig = LoadBrokerDBConfig()
 
-	settings.EncryptionKey = os.Getenv("ENC_KEY")
-	if settings.EncryptionKey == "" {
-		log.Println("An encryption key is required")
+	// Load settings from environment
+	if err := settings.LoadFromEnv(); err != nil {
+		log.Println("There was an error loading settings")
+		log.Println(err)
 		return
-	}
-
-	log.Println("Loading app...")
-	tags := os.Getenv("INSTANCE_TAGS")
-	if tags != "" {
-		json.Unmarshal([]byte(tags), &settings.InstanceTags)
 	}
 
 	DB, err := InternalDBInit(settings.DbConfig)
@@ -95,9 +25,6 @@ func main() {
 		log.Println("There was an error with the DB. Error: " + err.Error())
 		return
 	}
-
-	// Set the environment to production.
-	settings.Environment = "prod"
 
 	// Try to connect and create the app.
 	if m := App(&settings, DB); m != nil {

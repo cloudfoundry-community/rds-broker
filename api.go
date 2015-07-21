@@ -5,11 +5,32 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/render"
 
-	"crypto/aes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 )
+
+type Response struct {
+	Description string `json:"description"`
+}
+
+type Operation struct {
+	State                    string
+	Description              string
+	AsyncPollIntervalSeconds int `json:"async_poll_interval_seconds, omitempty"`
+}
+
+type CreateResponse struct {
+	DashboardUrl  string
+	LastOperation Operation
+}
+
+type ServiceReq struct {
+	ServiceId        string `json:"service_id"`
+	PlainId          string `json:"plan_id"`
+	OrganizationGuid string `json:"organization_guid"`
+	SpaceGuid        string `json:"space_guid"`
+}
 
 // CreateInstance
 // URL: /v2/service_instances/:id
@@ -30,8 +51,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 		return
 	}
 
-	var sr serviceReq
-	var plan *Plan
+	var sr ServiceReq
 
 	if req.Body == nil {
 		r.JSON(http.StatusBadRequest, Response{"No request"})
@@ -39,46 +59,33 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	}
 
 	body, _ := ioutil.ReadAll(req.Body)
-
 	json.Unmarshal(body, &sr)
-	instance.PlanId = sr.PlainId
-	instance.OrgGuid = sr.OrganizationGuid
-	instance.SpaceGuid = sr.SpaceGuid
 
-	plan = FindPlan(instance.PlanId)
-
+	plan := FindPlan(sr.PlainId)
 	if plan == nil {
 		r.JSON(http.StatusBadRequest, Response{"The plan requested does not exist"})
 		return
 	}
 
-	instance.Uuid = p["id"]
-
-	instance.Adapter = plan.Adapter
-
-	instance.Database = "db" + randStr(15)
-	instance.Username = "u" + randStr(15)
-	instance.Salt = GenerateSalt(aes.BlockSize)
-	password := randStr(25)
-	if err := instance.SetPassword(password, s.EncryptionKey); err != nil {
-		desc := "There was an error setting the password" + err.Error()
-		r.JSON(http.StatusInternalServerError, Response{desc})
-		return
-	}
-
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
-	db, err := s.InitializeAdapter(plan, brokerDb)
+	adapter, _ := s.InitializeAdapter(plan, brokerDb)
 
-	instance.DbType = plan.DbType
+	err := instance.Init(
+		p["id"],
+		sr.OrganizationGuid,
+		sr.SpaceGuid,
+		plan,
+		s)
 
 	if err != nil {
-		desc := "There was an error creating the instance. Error: " + err.Error()
+		desc := "There was an error initializing the instance. Error: " + err.Error()
 		r.JSON(http.StatusInternalServerError, Response{desc})
 		return
 	}
-	var status DBInstanceState
+
 	// Create the database instance.
-	if status, err = (*db).CreateDB(&instance, password); status == InstanceNotCreated {
+	status, err := adapter.CreateDB(&instance, instance.ClearPassword)
+	if status == InstanceNotCreated {
 		desc := "There was an error creating the instance."
 		if err != nil {
 			desc = desc + " Error: " + err.Error()
@@ -87,14 +94,8 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 		return
 	}
 
-	switch status {
-	case InstanceInProgress:
-		// Instance creation in progress
-	case InstanceReady:
-		// Instance ready
-	}
-
 	instance.State = status
+
 	// FIXME
 	// Currently, if we are dealing with a shared database, it will not populate the host and port fields of the instance.
 	// Also, currently, the shared database instance just create a new database and user inside the intenral broker database.
@@ -148,7 +149,7 @@ func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Setti
 	var credentials map[string]string
 	// Bind the database instance to the application.
 	originalInstanceState := instance.State
-	if credentials, err = (*db).BindDBToApp(&instance, password); err != nil {
+	if credentials, err = db.BindDBToApp(&instance, password); err != nil {
 		desc := "There was an error binding the database instance to the application."
 		if err != nil {
 			desc = desc + " Error: " + err.Error()
@@ -201,7 +202,7 @@ func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Set
 	}
 	var status DBInstanceState
 	// Delete the database instance.
-	if status, err = (*db).DeleteDB(&instance); status == InstanceNotGone {
+	if status, err = db.DeleteDB(&instance); status == InstanceNotGone {
 		desc := "There was an error deleting the instance."
 		if err != nil {
 			desc = desc + " Error: " + err.Error()
