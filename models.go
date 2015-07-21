@@ -4,6 +4,7 @@ import (
 	// "github.com/jinzhu/gorm"
 	// _ "github.com/lib/pq"
 
+	"crypto/aes"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -18,12 +19,15 @@ type Instance struct {
 	Password string `sql:"size(255)"`
 	Salt     string `sql:"size(255)"`
 
+	ClearPassword string `sql:"-"`
+
 	PlanId    string `sql:"size(255)"`
 	OrgGuid   string `sql:"size(255)"`
 	SpaceGuid string `sql:"size(255)"`
 
 	Tags          map[string]string `sql:"-"`
-	DBSubnetGroup string            `sql:"-"`
+	DbSubnetGroup string            `sql:"-"`
+	SecGroup      string            `sql:"-"`
 
 	Adapter string `sql:"size(255)"`
 
@@ -52,6 +56,7 @@ func (i *Instance) SetPassword(password, key string) error {
 	}
 
 	i.Password = encrypted
+	i.ClearPassword = password
 
 	return nil
 }
@@ -93,4 +98,34 @@ func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
 	}
 	return credentials, nil
+}
+
+func (i *Instance) Init(uuid string,
+	orgGuid string,
+	spaceGuid string,
+	plan *Plan,
+	s *Settings) error {
+
+	i.Uuid = uuid
+	i.PlanId = plan.Id
+	i.OrgGuid = orgGuid
+	i.SpaceGuid = spaceGuid
+
+	i.Adapter = plan.Adapter
+
+	// Build random values
+	i.Database = "db" + randStr(15)
+	i.Username = "u" + randStr(15)
+	i.Salt = GenerateSalt(aes.BlockSize)
+	password := randStr(25)
+	if err := i.SetPassword(password, s.EncryptionKey); err != nil {
+		return err
+	}
+
+	// Load AWS values
+	i.DbType = plan.DbType
+	i.DbSubnetGroup = s.SubnetGroup
+	i.SecGroup = s.SecGroup
+
+	return nil
 }

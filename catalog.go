@@ -8,15 +8,18 @@ type Metadata struct {
 	DocumentationUrl    string `json:"documentationUrl"`
 	SupportUrl          string `json:"supportUrl"`
 }
+
 type PlanCost struct {
 	Amount map[string]float64 `json:"amount"`
 	Unit   string             `json:"unit"`
 }
+
 type PlanMetadata struct {
 	Bullets     []string   `json:"bullets"`
 	Costs       []PlanCost `json:"costs"`
 	DisplayName string     `json:"displayName"`
 }
+
 type Plan struct {
 	Id           string       `json:"id"`
 	Name         string       `json:"name"`
@@ -97,7 +100,7 @@ func GetPlans() []Plan {
 		Free:         false,
 		Adapter:      "dedicated",
 		InstanceType: "db.t2.micro",
-		DbType:  "postgres",
+		DbType:       "postgres",
 	}
 
 	mediumPlan := Plan{
@@ -119,7 +122,7 @@ func GetPlans() []Plan {
 		Free:         false,
 		Adapter:      "dedicated",
 		InstanceType: "db.m3.medium",
-		DbType:  "postgres",
+		DbType:       "postgres",
 	}
 
 	return []Plan{sharedPlan, microPlan, mediumPlan}
