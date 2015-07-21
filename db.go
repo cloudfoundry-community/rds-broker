@@ -5,13 +5,13 @@ import (
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 
+	"errors"
 	"fmt"
 	"log"
 )
 
-// Connection string parameters for Postgres - http://godoc.org/github.com/lib/pq, if you are using another
-// database refer to the relevant driver's documentation.
-
+// DBConfig holds configuration information to connect to a database.
+// Parameters for the config.
 // * dbname - The name of the database to connect to
 // * user - The user to sign in as
 // * password - The user's password
@@ -23,44 +23,63 @@ import (
 //    * disable - No SSL
 //    * require - Always SSL (skip verification)
 //    * verify-full - Always SSL (require verification)
+type DBConfig struct {
+	DbType   string
+	Url      string
+	Username string
+	Password string
+	DbName   string
+	Sslmode  string
+	Port     int64   // Is int64 to match the type that rds.Endpoint.Port is in the AWS RDS SDK.
+}
 
-var DB gorm.DB
-
-func DBInit(rds *RDS, env string) error {
+// DBinit is a generic helper function that will try to connect to a database with the config in the input.
+// Supported DB types:
+// * postgres
+// * sqlite3
+func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
+	var DB gorm.DB
 	var err error
-
-	if env == "test" {
-		// We are doing testing!
-		DB, err = gorm.Open("sqlite3", ":memory:")
-
-		log.Println("TEST")
-	} else {
-		log.Println("Connecting to DB")
-		conn := "dbname=%s user=%s password=%s host=%s sslmode=%s port=%s"
+	switch dbConfig.DbType {
+	case "postgres":
+		conn := "dbname=%s user=%s password=%s host=%s sslmode=%s port=%d"
 		conn = fmt.Sprintf(conn,
-			rds.DbName,
-			rds.Username,
-			rds.Password,
-			rds.Url,
-			rds.Sslmode,
-			rds.Port)
-
+			dbConfig.DbName,
+			dbConfig.Username,
+			dbConfig.Password,
+			dbConfig.Url,
+			dbConfig.Sslmode,
+			dbConfig.Port)
 		DB, err = gorm.Open("postgres", conn)
-
-		log.Println("Connected")
-
-		// DB.LogMode(true)
-		DB.DB().SetMaxOpenConns(10)
+	case "sqlite3":
+		DB, err = gorm.Open("sqlite3", dbConfig.DbName)
+	default:
+		errorString := "Cannot connect. Unsupported DB type: (" + dbConfig.DbType + ")"
+		log.Println(errorString)
+		return nil, errors.New(errorString)
 	}
-
 	if err != nil {
 		log.Println("Error!")
-		return err
+		return nil, err
 	}
 
-	log.Println("Migrating")
-	// Automigrate!
-	DB.AutoMigrate(Instance{})
-	log.Println("Migrated")
-	return nil
+	if err = DB.DB().Ping(); err != nil {
+		log.Println("Unable to verify connection to database")
+		return nil, err
+	}
+	return &DB, nil
+}
+
+// InternalDBInit initializes the internal database connection that the service broker will use.
+// In addition to calling DBInit(), it also makes sure that the tables are setup for Instance and DBConfig structs.
+func InternalDBInit(dbConfig *DBConfig) (*gorm.DB, error) {
+	db, err := DBInit(dbConfig)
+	if err == nil {
+		db.DB().SetMaxOpenConns(10)
+		log.Println("Migrating")
+		// Automigrate!
+		db.AutoMigrate(Instance{}) // Add all your models here to help setup the database tables.
+		log.Println("Migrated")
+	}
+	return db, err
 }

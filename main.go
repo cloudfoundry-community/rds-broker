@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-martini/martini"
+	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
@@ -9,62 +10,32 @@ import (
 	"os"
 )
 
-type RDS struct {
-	Url      string
-	Username string
-	Password string
-	DbName   string
-	Sslmode  string
-	Port     string
-}
-
-type Settings struct {
-	EncryptionKey string
-	Rds           *RDS
-}
-
-func LoadRDS() *RDS {
-	rds := RDS{}
-	rds.Url = os.Getenv("DB_URL")
-	rds.Username = os.Getenv("DB_USER")
-	rds.Password = os.Getenv("DB_PASS")
-	rds.DbName = os.Getenv("DB_NAME")
-	rds.Sslmode = "require"
-
-	if os.Getenv("DB_PORT") != "" {
-		rds.Port = os.Getenv("DB_PORT")
-	} else {
-		rds.Port = "5432"
-	}
-
-	return &rds
-}
-
 func main() {
 	var settings Settings
-	log.Println("Loading settings")
-	settings.Rds = LoadRDS()
 
-	settings.EncryptionKey = os.Getenv("ENC_KEY")
-	if settings.EncryptionKey == "" {
-		log.Println("An encryption key is required")
+	// Load settings from environment
+	if err := settings.LoadFromEnv(); err != nil {
+		log.Println("There was an error loading settings")
+		log.Println(err)
 		return
 	}
 
-	log.Println("Loading app...")
-	m := App(&settings, "prod")
+	DB, err := InternalDBInit(settings.DbConfig)
+	if err != nil {
+		log.Println("There was an error with the DB. Error: " + err.Error())
+		return
+	}
 
-	log.Println("Starting app...")
-	m.Run()
+	// Try to connect and create the app.
+	if m := App(&settings, DB); m != nil {
+		log.Println("Starting app...")
+		m.Run()
+	} else {
+		log.Println("Unable to setup application. Exiting...")
+	}
 }
 
-func App(settings *Settings, env string) *martini.ClassicMartini {
-
-	err := DBInit(settings.Rds, env)
-	if err != nil {
-		log.Println("There was an error with the DB")
-		return nil
-	}
+func App(settings *Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m := martini.Classic()
 
@@ -74,7 +45,7 @@ func App(settings *Settings, env string) *martini.ClassicMartini {
 	m.Use(auth.Basic(username, password))
 	m.Use(render.Renderer())
 
-	m.Map(&DB)
+	m.Map(DB)
 	m.Map(settings)
 
 	log.Println("Loading Routes")

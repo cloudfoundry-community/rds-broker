@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-martini/martini"
+	"github.com/jinzhu/gorm"
 
 	"bytes"
 	"encoding/json"
@@ -13,18 +14,35 @@ import (
 	"testing"
 )
 
+var createInstanceReq []byte = []byte(`{
+	"service_id":"the-service",
+	"plan_id":"44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
+	"organization_guid":"an-org",
+	"space_guid":"a-space"
+}`)
+
+var brokerDB *gorm.DB
+
 func setup() *martini.ClassicMartini {
 	os.Setenv("AUTH_USER", "default")
 	os.Setenv("AUTH_PASS", "default")
 	var s Settings
-	var r RDS
-	s.Rds = &r
+	var dbConfig DBConfig
+	s.DbConfig = &dbConfig
+	dbConfig.DbType = "sqlite3"
+	dbConfig.DbName = ":memory:"
 	s.EncryptionKey = "12345678901234567890123456789012"
+	s.Environment = "test"
+	brokerDB, _ = InternalDBInit(&dbConfig)
 
-	m := App(&s, "test")
+	m := App(&s, brokerDB)
 
 	return m
 }
+
+/*
+	Mock Objects
+*/
 
 func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, body io.Reader) (*httptest.ResponseRecorder, *martini.ClassicMartini) {
 	if m == nil {
@@ -41,6 +59,10 @@ func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, 
 
 	return res, m
 }
+
+/*
+	End Mock Objects
+*/
 
 func validJson(response []byte, url string, t *testing.T) {
 	var aJson map[string]interface{}
@@ -71,16 +93,11 @@ func TestCatalog(t *testing.T) {
 
 func TestCreateInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance"
-	jsonStr := []byte(`{
-  	"service_id":"the-service",
-  	"plan_id":"the-plan",
-  	"organization_guid":"an-org",
-  	"space_guid":"a-space"
-  }`)
 
-	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(jsonStr))
+	res, _ := doRequest(nil, url, "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	if res.Code != http.StatusCreated {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
 
@@ -94,7 +111,7 @@ func TestCreateInstance(t *testing.T) {
 
 	// Is it in the database and has a username and password?
 	i := Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&i)
+	brokerDB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id == 0 {
 		t.Error("The instance should be saved in the DB")
 	}
@@ -103,14 +120,14 @@ func TestCreateInstance(t *testing.T) {
 		t.Error("The instance should have a username and password")
 	}
 
-	if i.PlanId != "the-plan" || i.OrgGuid != "an-org" || i.SpaceGuid != "a-space" {
+	if i.PlanId == "" || i.OrgGuid == "" || i.SpaceGuid == "" {
 		t.Error("The instance should have metadata")
 	}
 }
 
 func TestBindInstance(t *testing.T) {
 	url := "/v2/service_instances/the_instance/service_bindings/the_binding"
-	res, m := doRequest(nil, url, "PUT", true, nil)
+	res, m := doRequest(nil, url, "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	// Without the instance
 	if res.Code != http.StatusNotFound {
@@ -118,10 +135,11 @@ func TestBindInstance(t *testing.T) {
 	}
 
 	// Create the instance and try again
-	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, nil)
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, bytes.NewBuffer(createInstanceReq))
 
 	res, _ = doRequest(m, url, "PUT", true, nil)
 	if res.Code != http.StatusCreated {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 201 and it returned", res.Code)
 	}
 
@@ -150,7 +168,7 @@ func TestBindInstance(t *testing.T) {
 	}
 
 	instance := Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&instance)
+	brokerDB.Where("uuid = ?", "the_instance").First(&instance)
 
 	// Does it return an unencrypted password?
 	if instance.Password == r.Credentials.Password || r.Credentials.Password == "" {
@@ -185,9 +203,9 @@ func TestDeleteInstance(t *testing.T) {
 	}
 
 	// Create the instance and try again
-	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, nil)
+	doRequest(m, "/v2/service_instances/the_instance", "PUT", true, bytes.NewBuffer(createInstanceReq))
 	i := Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&i)
+	brokerDB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id == 0 {
 		t.Error("The instance should be in the DB")
 	}
@@ -195,12 +213,13 @@ func TestDeleteInstance(t *testing.T) {
 	res, _ = doRequest(m, url, "DELETE", true, nil)
 
 	if res.Code != http.StatusOK {
+		t.Logf("Unable to create instance. Body is: " + res.Body.String())
 		t.Error(url, "with auth should return 200 and it returned", res.Code)
 	}
 
 	// Is it actually gone from the DB?
 	i = Instance{}
-	DB.Where("uuid = ?", "the_instance").First(&i)
+	brokerDB.Where("uuid = ?", "the_instance").First(&i)
 	if i.Id > 0 {
 		t.Error("The instance shouldn't be in the DB")
 	}
