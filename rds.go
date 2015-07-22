@@ -95,10 +95,13 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 	var rdsTags []*rds.Tag
 
 	for k, v := range i.Tags {
-		rdsTags = append(rdsTags, &rds.Tag{
-			Key:   &k,
-			Value: &v,
-		})
+		var tag rds.Tag
+		tag = rds.Tag{
+			Key:   aws.String(k),
+			Value: aws.String(v),
+		}
+
+		rdsTags = append(rdsTags, &tag)
 	}
 
 	// Standard parameters
