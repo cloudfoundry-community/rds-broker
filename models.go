@@ -122,6 +122,9 @@ func (i *Instance) Init(uuid string,
 		return err
 	}
 
+	// Load tags
+	i.Tags = s.InstanceTags
+
 	// Load AWS values
 	i.DbType = plan.DbType
 	i.DbSubnetGroup = s.SubnetGroup
