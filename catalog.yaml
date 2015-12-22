@@ -8,7 +8,7 @@ services:
       - "database"
       - "RDS"
       - "postgresql"
-    metadata:  
+    metadata:
       displayName: RDS Database Broker
       imageUrl:
       longDescription:
@@ -31,6 +31,8 @@ services:
               unit: "MONTHLY"
           displayName: "Free Shared Plan"
         free: true
+        adapter: shared
+        dbType: postgres
       -
         id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
         name: "micro-psql"
@@ -46,6 +48,9 @@ services:
               unit: "HOURLY"
           displayName: "Dedicated Micro Postgres"
         free: false
+        adapter: dedicated
+        instanceType: db.t2.micro
+        dbType: postgres
       -
         id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
         name: "medium-psql"
@@ -61,3 +66,6 @@ services:
               unit: "HOURLY"
           displayName: "Dedicated Medium Postgres"
         free: false
+        adapter: dedicated
+        instanceType: db.m3.medium
+        dbType: postgres
