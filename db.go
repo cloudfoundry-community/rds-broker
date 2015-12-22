@@ -78,7 +78,7 @@ func InternalDBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 		db.DB().SetMaxOpenConns(10)
 		log.Println("Migrating")
 		// Automigrate!
-		db.AutoMigrate(Instance{}) // Add all your models here to help setup the database tables.
+		db.AutoMigrate(&Instance{}) // Add all your models here to help setup the database tables.
 		log.Println("Migrated")
 	}
 	return db, err
