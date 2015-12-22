@@ -1,139 +1,96 @@
 package main
 
-type Metadata struct {
-	DisplayName         string `json:"displayName"`
-	ImageUrl            string `json:"imageUrl"`
-	LongDescription     string `json:"longDescription"`
-	ProviderDisplayName string `json:"providerDisplayName"`
-	DocumentationUrl    string `json:"documentationUrl"`
-	SupportUrl          string `json:"supportUrl"`
+import (
+	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
+
+	"gopkg.in/yaml.v2"
+)
+
+type ServiceMetadata struct {
+	DisplayName         string `yaml:"displayName" json:"displayName"`
+	ImageUrl            string `yaml:"imageUrl" json:"imageUrl"`
+	LongDescription     string `yaml:"longDescription" json:"longDescription"`
+	ProviderDisplayName string `yaml:"providerDisplayName" json:"providerDisplayName"`
+	DocumentationUrl    string `yaml:"documentationUrl" json:"documentationUrl"`
+	SupportUrl          string `yaml:"supportUrl" json:"supportUrl"`
 }
 
 type PlanCost struct {
-	Amount map[string]float64 `json:"amount"`
-	Unit   string             `json:"unit"`
+	Amount map[string]float64 `yaml:"amount" json:"amount"`
+	Unit   string             `yaml:"unit" json:"unit"`
 }
 
 type PlanMetadata struct {
-	Bullets     []string   `json:"bullets"`
-	Costs       []PlanCost `json:"costs"`
-	DisplayName string     `json:"displayName"`
+	Bullets     []string   `yaml:"bullets" json:"bullets"`
+	Costs       []PlanCost `yaml:"costs" json:"costs"`
+	DisplayName string     `yaml:"displayName" json:"displayName"`
 }
 
 type Plan struct {
-	Id           string       `json:"id"`
-	Name         string       `json:"name"`
-	Description  string       `json:"description"`
-	Metadata     PlanMetadata `json:"metadata"`
-	Free         bool         `json:"free"`
-	Adapter      string       `json:"-"`
-	InstanceType string       `json:"-"`
-	DbType       string       `json:"-"`
+	Id           string       `yaml:"id" json:"id"`
+	Name         string       `yaml:"name" json:"name"`
+	Description  string       `yaml:"description" json:"description"`
+	Metadata     PlanMetadata `yaml:"metadata" json:"metadata"`
+	Free         bool         `yaml:"free" json:"free"`
+	Adapter      string       `yaml:"-" json:"-"`
+	InstanceType string       `yaml:"-" json:"-"`
+	DbType       string       `yaml:"-" json:"-"`
 }
 
 type Service struct {
-	Id          string   `json:"id"`
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Bindable    bool     `json:"bindable"`
-	Tags        []string `json:"tags"`
-	Metadata    Metadata `json:"metadata"`
-	Plans       []Plan   `json:"plans"`
+	Id          string          `yaml:"id" json:"id"`
+	Name        string          `yaml:"name" json:"name"`
+	Description string          `yaml:"description" json:"description"`
+	Bindable    bool            `yaml:"bindable" json:"bindable"`
+	Tags        []string        `yaml:"tags" json:"tags"`
+	Metadata    ServiceMetadata `yaml:"metadata" json:"metadata"`
+	Plans       []Plan          `yaml:"plans" json:"plans"`
 }
 
-func BuildCatalog() []Service {
-
-	service := Service{
-		Id:          "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
-		Name:        "rds",
-		Description: "RDS Database Broker",
-		Bindable:    true,
-		Tags:        []string{"database", "RDS", "postgresql"},
-		Metadata: Metadata{
-			DisplayName:         "RDS Database Broker",
-			ProviderDisplayName: "RDS",
-		},
-		Plans: GetPlans(),
-	}
-
-	return []Service{service}
+// Catalog struct holds a collections of services
+type Catalog struct {
+	Services []Service `yaml:"services" json:"services"`
 }
 
-func GetPlans() []Plan {
-	sharedPlan := Plan{
-		Id:          "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
-		Name:        "shared-psql",
-		Description: "Shared infrastructure for Postgres DB",
-		Metadata: PlanMetadata{
-			Bullets: []string{"Shared RDS Instance", "Postgres instance"},
-			Costs: []PlanCost{
-				PlanCost{
-					Amount: map[string]float64{
-						"usd": 0.00,
-					},
-					Unit: "MONTHLY",
-				},
-			},
-			DisplayName: "Free Shared Plan",
-		},
-		Free:    true,
-		Adapter: "shared",
-		DbType:  "postgres",
+// initCatalog initalizes a Catalog struct that contains services and plans
+// defined in the catalog.yaml configuation file and returns a pointer to that catalog
+func initCatalog() *Catalog {
+	var catalog Catalog
+	workingDir, _ := os.Getwd()
+	catalogFile := filepath.Join(workingDir, "catalog.yaml")
+	data, err := ioutil.ReadFile(catalogFile)
+	if err != nil {
+		log.Fatalf("error: %v", err)
 	}
-
-	microPlan := Plan{
-		Id:          "da91e15c-98c9-46a9-b114-02b8d28062c6",
-		Name:        "micro-psql",
-		Description: "Dedicated Micro RDS Postgres DB Instance",
-		Metadata: PlanMetadata{
-			Bullets: []string{"Dedicated Redundant RDS Instance", "Postgres instance"},
-			Costs: []PlanCost{
-				PlanCost{
-					Amount: map[string]float64{
-						"usd": 0.036,
-					},
-					Unit: "HOURLY",
-				},
-			},
-			DisplayName: "Dedicated Micro Postgres",
-		},
-		Free:         false,
-		Adapter:      "dedicated",
-		InstanceType: "db.t2.micro",
-		DbType:       "postgres",
+	err = yaml.Unmarshal(data, &catalog)
+	if err != nil {
+		log.Fatalf("error: %v", err)
 	}
-
-	mediumPlan := Plan{
-		Id:          "332e0168-6969-4bd7-b07f-29f08c4bf78e",
-		Name:        "medium-psql",
-		Description: "Dedicated Medium RDS Postgres DB Instance",
-		Metadata: PlanMetadata{
-			Bullets: []string{"Dedicated Redundant RDS Instance", "Postgres instance"},
-			Costs: []PlanCost{
-				PlanCost{
-					Amount: map[string]float64{
-						"usd": 0.190,
-					},
-					Unit: "HOURLY",
-				},
-			},
-			DisplayName: "Dedicated Medium Postgres",
-		},
-		Free:         false,
-		Adapter:      "dedicated",
-		InstanceType: "db.m3.medium",
-		DbType:       "postgres",
-	}
-
-	return []Plan{sharedPlan, microPlan, mediumPlan}
+	return &catalog
 }
 
-func FindPlan(id string) *Plan {
-	for _, p := range GetPlans() {
-		if p.Id == id {
-			return &p
+// fetchService returns a pointer to the Service struct with the given service ID
+func (catalog *Catalog) fetchService(serviceID string) *Service {
+	for _, service := range catalog.Services {
+		if service.Id == serviceID {
+			return &service
 		}
 	}
+	return nil
+}
 
+// fetchPlan return a pointer to a Plan struct with the given plan ID
+func (catalog *Catalog) fetchPlan(serviceID string, planID string) *Plan {
+	service := catalog.fetchService(serviceID)
+	if service != nil {
+		for _, plan := range service.Plans {
+			if plan.Id == planID {
+				return &plan
+			}
+		}
+	}
 	return nil
 }
