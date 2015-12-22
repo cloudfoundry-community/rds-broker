@@ -177,7 +177,7 @@ func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Setti
 //   "service_id": "service-id-here"
 //   "plan_id":    "plan-id-here"
 // }
-func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings, catalog Catalog) {
+func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings, catalog *Catalog) {
 	instance := Instance{}
 
 	brokerDb.Where("uuid = ?", p["id"]).First(&instance)
