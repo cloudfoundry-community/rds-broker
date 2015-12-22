@@ -47,15 +47,12 @@ func App(settings *Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m.Map(DB)
 	m.Map(settings)
+	m.Map(initCatalog())
 
 	log.Println("Loading Routes")
 
 	// Serve the catalog with services and plans
-	m.Get("/v2/catalog", func(r render.Render) {
-		services := BuildCatalog()
-		catalog := map[string]interface{}{
-			"services": services,
-		}
+	m.Get("/v2/catalog", func(r render.Render, catalog *Catalog) {
 		r.JSON(200, catalog)
 	})
 
