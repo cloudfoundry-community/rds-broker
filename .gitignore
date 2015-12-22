@@ -1,3 +1,4 @@
 .env
 gin-bin
 .DS_Store
+Godeps/_workspace/
