@@ -21,6 +21,7 @@ type Instance struct {
 
 	ClearPassword string `sql:"-"`
 
+	ServiceId string `sql:"size(255)"`
 	PlanId    string `sql:"size(255)"`
 	OrgGuid   string `sql:"size(255)"`
 	SpaceGuid string `sql:"size(255)"`
@@ -103,10 +104,12 @@ func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 func (i *Instance) Init(uuid string,
 	orgGuid string,
 	spaceGuid string,
+	serviceId string,
 	plan *Plan,
 	s *Settings) error {
 
 	i.Uuid = uuid
+	i.ServiceId = serviceId
 	i.PlanId = plan.Id
 	i.OrgGuid = orgGuid
 	i.SpaceGuid = spaceGuid
