@@ -14,8 +14,9 @@ import (
 	"testing"
 )
 
-var createInstanceReq []byte = []byte(`{
-	"service_id":"the-service",
+var createInstanceReq []byte = []byte(
+	`{
+	"service_id":"db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
 	"plan_id":"44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
 	"organization_guid":"an-org",
 	"space_guid":"a-space"
