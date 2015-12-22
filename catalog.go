@@ -35,9 +35,9 @@ type Plan struct {
 	Description  string       `yaml:"description" json:"description"`
 	Metadata     PlanMetadata `yaml:"metadata" json:"metadata"`
 	Free         bool         `yaml:"free" json:"free"`
-	Adapter      string       `yaml:"-" json:"-"`
-	InstanceType string       `yaml:"-" json:"-"`
-	DbType       string       `yaml:"-" json:"-"`
+	Adapter      string       `yaml:"adapter" json:"-"`
+	InstanceType string       `yaml:"instanceType" json:"-"`
+	DbType       string       `yaml:"dbType" json:"-"`
 }
 
 type Service struct {
