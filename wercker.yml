@@ -6,6 +6,11 @@ build:
     # Sets the go workspace and places you package
     # at the right place in the workspace tree
     - setup-go-workspace
+    # Install reqs.
+    - script:
+        name: godep get
+        code: |
+          godep get
 
     # Build the project
     - script:
