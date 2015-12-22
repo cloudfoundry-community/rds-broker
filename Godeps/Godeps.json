@@ -8,6 +8,11 @@
 			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/endpoints",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
+		},
+		{
 			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/query",
 			"Comment": "v1.0.7-2-g727e1f5",
 			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
@@ -55,10 +60,6 @@
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
 			"Rev": "52ba1858c31dcbe1573f46f994d3cdf334729ff4"
-		},
-		{
-			"ImportPath": "github.com/jinzhu/inflection",
-			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
 		},
 		{
 			"ImportPath": "github.com/jmespath/go-jmespath",

@@ -30,7 +30,7 @@ type DBConfig struct {
 	Password string
 	DbName   string
 	Sslmode  string
-	Port     int64   // Is int64 to match the type that rds.Endpoint.Port is in the AWS RDS SDK.
+	Port     int64 // Is int64 to match the type that rds.Endpoint.Port is in the AWS RDS SDK.
 }
 
 // DBinit is a generic helper function that will try to connect to a database with the config in the input.
