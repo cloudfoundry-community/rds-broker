@@ -1,15 +1,13 @@
 package main
 
-import (
-	"testing"
-)
+import "testing"
 
 // Create a catalog
 var catalog = initCatalog()
 
 func TestInitCatalog(t *testing.T) {
 	if len(catalog.Services) == 0 {
-		t.Error("There should be at least 1 plan")
+		t.Error("There should be at least 1 service")
 	}
 }
 

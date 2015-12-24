@@ -10,6 +10,7 @@ import (
 	"strconv"
 )
 
+// Settings stores settings used to run the application
 type Settings struct {
 	EncryptionKey string
 	DbConfig      *DBConfig
@@ -19,8 +20,8 @@ type Settings struct {
 	SubnetGroup   string
 }
 
-// Main function to create database instances
-func (s Settings) InitializeAdapter(plan *Plan,
+// InitializeAdapter is the main function to create database instances
+func (s Settings) InitializeAdapter(plan *AWSPlan,
 	sharedDbConn *gorm.DB) (DBAdapter, error) {
 
 	var dbAdapter DBAdapter
@@ -46,7 +47,7 @@ func (s Settings) InitializeAdapter(plan *Plan,
 	return dbAdapter, nil
 }
 
-// Load settings from environment variables
+// LoadFromEnv loads settings from environment variables
 func (s *Settings) LoadFromEnv() error {
 	log.Println("Loading settings")
 

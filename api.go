@@ -187,7 +187,7 @@ func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Set
 		return
 	}
 
-	var plan *Plan
+	var plan *AWSPlan
 	plan = catalog.fetchPlan(instance.ServiceId, instance.PlanId)
 
 	if plan == nil {

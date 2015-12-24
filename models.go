@@ -105,12 +105,12 @@ func (i *Instance) Init(uuid string,
 	orgGuid string,
 	spaceGuid string,
 	serviceId string,
-	plan *Plan,
+	plan *AWSPlan,
 	s *Settings) error {
 
 	i.Uuid = uuid
 	i.ServiceId = serviceId
-	i.PlanId = plan.Id
+	i.PlanId = plan.ID
 	i.OrgGuid = orgGuid
 	i.SpaceGuid = spaceGuid
 
