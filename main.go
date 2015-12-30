@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/cloudfoundry-community/aws-broker/config"
 	"github.com/go-martini/martini"
 	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/auth"
@@ -8,10 +9,11 @@ import (
 
 	"log"
 	"os"
+	"github.com/cloudfoundry-community/aws-broker/catalog"
 )
 
 func main() {
-	var settings Settings
+	var settings config.Settings
 
 	// Load settings from environment
 	if err := settings.LoadFromEnv(); err != nil {
@@ -20,7 +22,7 @@ func main() {
 		return
 	}
 
-	DB, err := InternalDBInit(settings.DbConfig)
+	DB, err := config.InternalDBInit(settings.DbConfig)
 	if err != nil {
 		log.Println("There was an error with the DB. Error: " + err.Error())
 		return
@@ -35,7 +37,7 @@ func main() {
 	}
 }
 
-func App(settings *Settings, DB *gorm.DB) *martini.ClassicMartini {
+func App(settings *config.Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m := martini.Classic()
 
@@ -47,13 +49,13 @@ func App(settings *Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m.Map(DB)
 	m.Map(settings)
-	m.Map(initCatalog())
+	m.Map(catalog.InitCatalog())
 
 	log.Println("Loading Routes")
 
 	// Serve the catalog with services and plans
-	m.Get("/v2/catalog", func(r render.Render, catalog *Catalog) {
-		r.JSON(200, catalog)
+	m.Get("/v2/catalog", func(r render.Render, c *catalog.Catalog) {
+		r.JSON(200, c)
 	})
 
 	// Create the service instance (cf create-service-instance)

@@ -1,6 +1,7 @@
-package main
+package config
 
 import (
+	"github.com/cloudfoundry-community/aws-broker/base"
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -78,7 +79,7 @@ func InternalDBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 		db.DB().SetMaxOpenConns(10)
 		log.Println("Migrating")
 		// Automigrate!
-		db.AutoMigrate(&Instance{}) // Add all your models here to help setup the database tables.
+		db.AutoMigrate(&base.Instance{}) // Add all your models here to help setup the database tables.
 		log.Println("Migrated")
 	}
 	return db, err

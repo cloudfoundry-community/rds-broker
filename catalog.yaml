@@ -32,7 +32,7 @@ services:
           displayName: "Free Shared Plan"
         free: true
         adapter: shared
-        dbType: postgres
+        instanceType: postgres
       -
         id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
         name: "micro-psql"
@@ -49,8 +49,8 @@ services:
           displayName: "Dedicated Micro Postgres"
         free: false
         adapter: dedicated
-        instanceType: db.t2.micro
-        dbType: postgres
+        instanceSize: db.t2.micro
+        instanceType: postgres
       -
         id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
         name: "medium-psql"
@@ -67,5 +67,5 @@ services:
           displayName: "Dedicated Medium Postgres"
         free: false
         adapter: dedicated
-        instanceType: db.m3.medium
-        dbType: postgres
+        instanceSize: db.m3.medium
+        instanceType: postgres

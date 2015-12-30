@@ -1,4 +1,4 @@
-package main
+package rds
 
 import (
 	"github.com/aws/aws-sdk-go/aws"
@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
+	"github.com/cloudfoundry-community/aws-broker/base"
 	"github.com/jinzhu/gorm"
 
 	"errors"
@@ -13,20 +14,10 @@ import (
 	"log"
 )
 
-type DBInstanceState uint8
-
-const (
-	InstanceNotCreated DBInstanceState = iota // 0
-	InstanceInProgress                        // 1
-	InstanceReady                             // 2
-	InstanceGone                              // 3
-	InstanceNotGone                           // 4
-)
-
 type DBAdapter interface {
-	CreateDB(i *Instance, password string) (DBInstanceState, error)
-	BindDBToApp(i *Instance, password string) (map[string]string, error)
-	DeleteDB(i *Instance) (DBInstanceState, error)
+	CreateDB(i *RDSInstance, password string) (base.InstanceState, error)
+	BindDBToApp(i *RDSInstance, password string) (map[string]string, error)
+	DeleteDB(i *RDSInstance) (base.InstanceState, error)
 }
 
 // MockDBAdapter is a struct meant for testing.
@@ -36,19 +27,19 @@ type DBAdapter interface {
 type MockDBAdapter struct {
 }
 
-func (d *MockDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+func (d *MockDBAdapter) CreateDB(i *RDSInstance, password string) (base.InstanceState, error) {
 	// TODO
-	return InstanceReady, nil
+	return base.InstanceReady, nil
 }
 
-func (d *MockDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+func (d *MockDBAdapter) BindDBToApp(i *RDSInstance, password string) (map[string]string, error) {
 	// TODO
 	return i.GetCredentials(password)
 }
 
-func (d *MockDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
+func (d *MockDBAdapter) DeleteDB(i *RDSInstance) (base.InstanceState, error) {
 	// TODO
-	return InstanceGone, nil
+	return base.InstanceGone, nil
 }
 
 // END MockDBAdpater
@@ -57,40 +48,40 @@ type SharedDBAdapter struct {
 	SharedDbConn *gorm.DB
 }
 
-func (d *SharedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+func (d *SharedDBAdapter) CreateDB(i *RDSInstance, password string) (base.InstanceState, error) {
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
-		return InstanceNotCreated, db.Error
+		return base.InstanceNotCreated, db.Error
 	}
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
 		// TODO. Revert CREATE DATABASE.
-		return InstanceNotCreated, db.Error
+		return base.InstanceNotCreated, db.Error
 	}
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
 		// TODO. Revert CREATE DATABASE and CREATE USER.
-		return InstanceNotCreated, db.Error
+		return base.InstanceNotCreated, db.Error
 	}
-	return InstanceReady, nil
+	return base.InstanceReady, nil
 }
 
-func (d *SharedDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+func (d *SharedDBAdapter) BindDBToApp(i *RDSInstance, password string) (map[string]string, error) {
 	return i.GetCredentials(password)
 }
 
-func (d *SharedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
+func (d *SharedDBAdapter) DeleteDB(i *RDSInstance) (base.InstanceState, error) {
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.Database)); db.Error != nil {
-		return InstanceNotGone, db.Error
+		return base.InstanceNotGone, db.Error
 	}
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP USER %s;", i.Username)); db.Error != nil {
-		return InstanceNotGone, db.Error
+		return base.InstanceNotGone, db.Error
 	}
-	return InstanceGone, nil
+	return base.InstanceGone, nil
 }
 
 type DedicatedDBAdapter struct {
 	InstanceType string
 }
 
-func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
+func (d *DedicatedDBAdapter) CreateDB(i *RDSInstance, password string) (base.InstanceState, error) {
 	svc := rds.New(session.New(), aws.NewConfig().WithRegion("us-east-1"))
 	var rdsTags []*rds.Tag
 
@@ -136,16 +127,16 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 	log.Println(awsutil.StringValue(resp))
 	// Decide if AWS service call was successful
 	if yes := d.DidAwsCallSucceed(err); yes {
-		return InstanceInProgress, nil
+		return base.InstanceInProgress, nil
 	} else {
-		return InstanceNotCreated, nil
+		return base.InstanceNotCreated, nil
 	}
 }
 
-func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
+func (d *DedicatedDBAdapter) BindDBToApp(i *RDSInstance, password string) (map[string]string, error) {
 	// First, we need to check if the instance is up and available before binding.
 	// Only search for details if the instance was not indicated as ready.
-	if i.State != InstanceReady {
+	if i.State != base.InstanceReady {
 		svc := rds.New(session.New(), aws.NewConfig().WithRegion("us-east-1"))
 		params := &rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: aws.String(i.Database),
@@ -182,7 +173,7 @@ func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[stri
 						fmt.Printf("host: %s port: %d \n", *(value.Endpoint.Address), *(value.Endpoint.Port))
 						i.Port = *(value.Endpoint.Port)
 						i.Host = *(value.Endpoint.Address)
-						i.State = InstanceReady
+						i.State = base.InstanceReady
 						// Should only be one regardless. Just return now.
 						break
 					} else {
@@ -203,7 +194,7 @@ func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[stri
 	return i.GetCredentials(password)
 }
 
-func (d *DedicatedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
+func (d *DedicatedDBAdapter) DeleteDB(i *RDSInstance) (base.InstanceState, error) {
 	svc := rds.New(session.New(), aws.NewConfig().WithRegion("us-east-1"))
 	params := &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(i.Database), // Required
@@ -215,9 +206,9 @@ func (d *DedicatedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
 	fmt.Println(awsutil.StringValue(resp))
 	// Decide if AWS service call was successful
 	if yes := d.DidAwsCallSucceed(err); yes {
-		return InstanceGone, nil
+		return base.InstanceGone, nil
 	} else {
-		return InstanceNotGone, nil
+		return base.InstanceNotGone, nil
 	}
 }
 

@@ -1,4 +1,4 @@
-package main
+package helpers
 
 import (
 	"crypto/aes"
@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 )
 
-func randStr(strSize int) string {
+func RandStr(strSize int) string {
 
 	var dictionary string
 	dictionary = "0123456789abcdefghijklmnopqrstuvwxyz"

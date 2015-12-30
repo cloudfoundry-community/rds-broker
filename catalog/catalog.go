@@ -1,4 +1,4 @@
-package main
+package catalog
 
 import (
 	"io/ioutil"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -67,6 +68,11 @@ type Service struct {
 	Plans       []AWSPlan       `yaml:"plans" json:"plans"`
 }
 
+var (
+	ErrNoServiceFound = errors.New("No service found for given service id.")
+	ErrNoPlanFound    = errors.New("No plan found for given plan id.")
+)
+
 // Catalog struct holds a collections of services
 type Catalog struct {
 	Services []Service `yaml:"services" json:"services"`
@@ -74,7 +80,7 @@ type Catalog struct {
 
 // initCatalog initalizes a Catalog struct that contains services and plans
 // defined in the catalog.yaml configuation file and returns a pointer to that catalog
-func initCatalog() *Catalog {
+func InitCatalog() *Catalog {
 	var catalog Catalog
 	workingDir, _ := os.Getwd()
 	catalogFile := filepath.Join(workingDir, "catalog.yaml")
@@ -89,25 +95,26 @@ func initCatalog() *Catalog {
 	return &catalog
 }
 
-// fetchService returns a pointer to the Service struct with the given service ID
-func (catalog *Catalog) fetchService(serviceID string) *Service {
+// FetchService returns a pointer to the Service struct with the given service ID
+func (catalog *Catalog) FetchService(serviceID string) (Service, error) {
 	for _, service := range catalog.Services {
 		if service.ID == serviceID {
-			return &service
+			return service, nil
 		}
 	}
-	return nil
+	return Service{}, ErrNoServiceFound
 }
 
-// fetchPlan return a pointer to a Plan struct with the given plan ID
-func (catalog *Catalog) fetchPlan(serviceID string, planID string) *AWSPlan {
-	service := catalog.fetchService(serviceID)
-	if service != nil {
-		for _, plan := range service.Plans {
-			if plan.ID == planID {
-				return &plan
-			}
+// FetchPlan return a pointer to a Plan struct with the given plan ID
+func (catalog *Catalog) FetchPlan(serviceID string, planID string) (AWSPlan, error) {
+	service, serviceErr := catalog.FetchService(serviceID)
+	if serviceErr != nil {
+		return AWSPlan{}, serviceErr
+	}
+	for _, plan := range service.Plans {
+		if plan.ID == planID {
+			return plan, nil
 		}
 	}
-	return nil
+	return AWSPlan{}, ErrNoPlanFound
 }

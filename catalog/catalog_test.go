@@ -1,9 +1,9 @@
-package main
+package catalog
 
 import "testing"
 
 // Create a catalog
-var catalog = initCatalog()
+var catalog = InitCatalog()
 
 func TestInitCatalog(t *testing.T) {
 	if len(catalog.Services) == 0 {
@@ -12,12 +12,12 @@ func TestInitCatalog(t *testing.T) {
 }
 
 func TestFetchPlan(t *testing.T) {
-	plan := catalog.fetchPlan(
+	plan, err := catalog.FetchPlan(
 		"db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
 		"44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
 	)
 
-	if plan == nil {
+	if err != nil {
 		t.Error("Plan has to exist")
 	}
 
@@ -27,11 +27,11 @@ func TestFetchPlan(t *testing.T) {
 }
 
 func TestFetchService(t *testing.T) {
-	service := catalog.fetchService(
+	service, err := catalog.FetchService(
 		"db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
 	)
 
-	if service == nil {
+	if err != nil {
 		t.Error("Service has to exist")
 	}
 

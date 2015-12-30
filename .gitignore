@@ -1,4 +1,5 @@
 .env
 gin-bin
+aws-broker
 .DS_Store
 Godeps/_workspace/

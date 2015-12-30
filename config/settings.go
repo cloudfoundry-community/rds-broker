@@ -1,8 +1,6 @@
-package main
+package config
 
 import (
-	"github.com/jinzhu/gorm"
-
 	"encoding/json"
 	"errors"
 	"log"
@@ -18,33 +16,6 @@ type Settings struct {
 	Environment   string
 	SecGroup      string
 	SubnetGroup   string
-}
-
-// InitializeAdapter is the main function to create database instances
-func (s Settings) InitializeAdapter(plan *AWSPlan,
-	sharedDbConn *gorm.DB) (DBAdapter, error) {
-
-	var dbAdapter DBAdapter
-	// For test environments, use a mock adapter.
-	if s.Environment == "test" {
-		dbAdapter = &MockDBAdapter{}
-		return dbAdapter, nil
-	}
-
-	switch plan.Adapter {
-	case "shared":
-		dbAdapter = &SharedDBAdapter{
-			SharedDbConn: sharedDbConn,
-		}
-	case "dedicated":
-		dbAdapter = &DedicatedDBAdapter{
-			InstanceType: plan.InstanceType,
-		}
-	default:
-		return nil, errors.New("Adapter not found")
-	}
-
-	return dbAdapter, nil
 }
 
 // LoadFromEnv loads settings from environment variables
