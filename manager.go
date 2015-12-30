@@ -6,74 +6,76 @@ import (
 	"strings"
 	"github.com/jinzhu/gorm"
 	"github.com/cloudfoundry-community/aws-broker/services/rds"
-	"encoding/json"
-	//"errors"
 	"net/http"
-	"github.com/cloudfoundry-community/aws-broker/helpers"
 	"github.com/cloudfoundry-community/aws-broker/helpers/response"
-	"io/ioutil"
 	"github.com/cloudfoundry-community/aws-broker/config"
+	"github.com/cloudfoundry-community/aws-broker/helpers/request"
 )
 
-var (
-	ErrNoRequestResponse = response.New(http.StatusBadRequest, "No Request Body")
-)
-
-func extractServiceReq(req *http.Request) (helpers.ServiceReq, *response.Response) {
-	var sr helpers.ServiceReq
-	if req.Body == nil {
-		return sr, ErrNoRequestResponse
-	}
-	body, err := ioutil.ReadAll(req.Body)
-	if err != nil {
-		return sr, response.New(http.StatusBadRequest, err.Error())
-	}
-	json.Unmarshal(body, &sr)
-	return sr, nil
-}
-
-func findBroker(serviceReq helpers.ServiceReq, c *catalog.Catalog, brokerDb *gorm.DB, settings *config.Settings) (base.Broker, *response.Response) {
+func findBroker(serviceId string, c *catalog.Catalog, brokerDb *gorm.DB, settings *config.Settings) (base.Broker, response.Response) {
 	// Look in catalog and find the service.
-	service, err := c.FetchService(serviceReq.ServiceId)
+	service, err := c.FetchService(serviceId)
 	if err != nil {
-		return nil, response.New(http.StatusNotFound, err.Error())
+		return nil, response.NewErrorResponse(http.StatusNotFound, err.Error())
 	}
 	switch strings.ToLower(service.Name) {
 	case "rds":
-		return rds.InitRDSBroker(serviceReq, brokerDb, settings), nil
+		return rds.InitRDSBroker(brokerDb, settings), nil
 	}
 	return nil, nil
 }
 
-func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) *response.Response {
-	serviceReq, resp := extractServiceReq(req)
+func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
+	createRequest, resp := request.ExtractCreateRequest(req)
 	if resp != nil {
 		return resp
 	}
-	broker, resp := findBroker(serviceReq, c, brokerDb, settings)
+	broker, resp := findBroker(createRequest.ServiceId, c, brokerDb, settings)
 	if resp != nil {
 		return resp
 	}
 
-	plan, planErr := c.FetchPlan(serviceReq.ServiceId, serviceReq.PlanId)
+	plan, planErr := c.FetchPlan(createRequest.ServiceId, createRequest.PlanId)
 	if planErr != nil {
-		return response.New(http.StatusBadRequest, planErr.Error())
+		return response.NewErrorResponse(http.StatusBadRequest, planErr.Error())
 	}
 
 	// Create instance
-	return broker.CreateInstance(plan, id)
+	return broker.CreateInstance(plan, id, createRequest)
 }
 
-func bindInstance(broker base.Broker, serviceReq helpers.ServiceReq) *response.Response {
-	// Get the existing instance.
+func bindInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
+	bindRequest, resp := request.ExtractBindRequest(req)
+	if resp != nil {
+		return resp
+	}
+	broker, resp := findBroker(bindRequest.ServiceId, c, brokerDb, settings)
+	if resp != nil {
+		return resp
+	}
 
-	// Bind it to the app.
-	return nil
+	plan, planErr := c.FetchPlan(bindRequest.ServiceId, bindRequest.PlanId)
+	if planErr != nil {
+		return response.NewErrorResponse(http.StatusBadRequest, planErr.Error())
+	}
+
+	return broker.BindInstance(plan, id)
 }
 
-func deleteInstance(broker base.Broker, serviceReq helpers.ServiceReq) *response.Response {
-	// Get the existing instance.
+func deleteInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
+	deleteRequest, resp := request.ExtractDeleteRequest(req)
+	if resp != nil {
+		return resp
+	}
+	broker, resp := findBroker(deleteRequest.ServiceId, c, brokerDb, settings)
+	if resp != nil {
+		return resp
+	}
 
-	// Delete it and update the broker database.
-	return nil
+	plan, planErr := c.FetchPlan(deleteRequest.ServiceId, deleteRequest.PlanId)
+	if planErr != nil {
+		return response.NewErrorResponse(http.StatusBadRequest, planErr.Error())
+	}
+
+	return broker.DeleteInstance(plan, id)
 }

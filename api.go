@@ -40,7 +40,7 @@ type CreateResponse struct {
 // }
 func CreateInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *config.Settings, c *catalog.Catalog) {
 	resp := createInstance(req, c, brokerDb, p["id"], s)
-	r.JSON(resp.StatusCode, resp)
+	r.JSON(resp.GetStatusCode(), resp)
 }
 
 // BindInstance
@@ -51,7 +51,9 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 //   "service_id":     "service-guid-here",
 //   "app_guid":       "app-guid-here"
 // }
-func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *config.Settings, c *catalog.Catalog) {
+func BindInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *config.Settings, c *catalog.Catalog) {
+	resp := bindInstance(req, c, brokerDb, p["instance_id"], s)
+	r.JSON(resp.GetStatusCode(), resp)
 	/*
 	existingInstance := base.Instance{}
 
