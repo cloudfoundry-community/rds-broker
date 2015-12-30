@@ -7,9 +7,9 @@ import (
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
+	"github.com/cloudfoundry-community/aws-broker/catalog"
 	"log"
 	"os"
-	"github.com/cloudfoundry-community/aws-broker/catalog"
 )
 
 func main() {

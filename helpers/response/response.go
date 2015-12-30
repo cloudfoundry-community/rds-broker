@@ -1,4 +1,5 @@
 package response
+
 import "net/http"
 
 type Response interface {
@@ -7,7 +8,7 @@ type Response interface {
 }
 
 type ErrorResponse struct {
-	StatusCode int `json:"-"`
+	StatusCode  int    `json:"-"`
 	Description string `json:"description"`
 }
 
@@ -27,9 +28,8 @@ var (
 	ErrNoRequestResponse = NewErrorResponse(http.StatusBadRequest, "No Request Body")
 )
 
-
 type SuccessBindResponse struct {
-	StatusCode int `json:"-"`
+	StatusCode  int               `json:"-"`
 	Credentials map[string]string `json:"credentials"`
 }
 
@@ -46,7 +46,7 @@ func (resp *SuccessBindResponse) GetResponseType() string {
 }
 
 type SuccessCreateResponse struct {
-	StatusCode int `json:"-"`
+	StatusCode  int    `json:"-"`
 	Description string `json:"description"`
 }
 
@@ -62,9 +62,8 @@ func (resp *SuccessCreateResponse) GetResponseType() string {
 	return "success_create"
 }
 
-
 type SuccessDeleteResponse struct {
-	StatusCode int `json:"-"`
+	StatusCode  int    `json:"-"`
 	Description string `json:"description"`
 }
 
@@ -79,4 +78,3 @@ func (resp *SuccessDeleteResponse) GetStatusCode() int {
 func (resp *SuccessDeleteResponse) GetResponseType() string {
 	return "success_create"
 }
-

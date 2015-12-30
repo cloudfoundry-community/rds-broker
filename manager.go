@@ -3,13 +3,13 @@ package main
 import (
 	"github.com/cloudfoundry-community/aws-broker/base"
 	"github.com/cloudfoundry-community/aws-broker/catalog"
-	"strings"
-	"github.com/jinzhu/gorm"
-	"github.com/cloudfoundry-community/aws-broker/services/rds"
-	"net/http"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
 	"github.com/cloudfoundry-community/aws-broker/config"
 	"github.com/cloudfoundry-community/aws-broker/helpers/request"
+	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/cloudfoundry-community/aws-broker/services/rds"
+	"github.com/jinzhu/gorm"
+	"net/http"
+	"strings"
 )
 
 func findBroker(serviceId string, c *catalog.Catalog, brokerDb *gorm.DB, settings *config.Settings) (base.Broker, response.Response) {

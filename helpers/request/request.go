@@ -1,9 +1,10 @@
 package request
+
 import (
 	"encoding/json"
+	"github.com/cloudfoundry-community/aws-broker/helpers/response"
 	"io/ioutil"
 	"net/http"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
 )
 
 // CreateInstance
@@ -44,9 +45,9 @@ func ExtractCreateRequest(req *http.Request) (CreateRequest, response.Response) 
 //   "app_guid":       "app-guid-here"
 // }
 type BindRequest struct {
-	PlanId			string `json:"plan_id"`
-	ServiceId		string `json:"service_id"`
-	AppGuid			string `json:"app_guid"`
+	PlanId    string `json:"plan_id"`
+	ServiceId string `json:"service_id"`
+	AppGuid   string `json:"app_guid"`
 }
 
 func ExtractBindRequest(req *http.Request) (BindRequest, response.Response) {
@@ -70,10 +71,9 @@ func ExtractBindRequest(req *http.Request) (BindRequest, response.Response) {
 //   "plan_id":    "plan-id-here"
 // }
 type DeleteRequest struct {
-	ServiceId        string `json:"service_id"`
-	PlanId           string `json:"plan_id"`
+	ServiceId string `json:"service_id"`
+	PlanId    string `json:"plan_id"`
 }
-
 
 func ExtractDeleteRequest(req *http.Request) (DeleteRequest, response.Response) {
 	var dr DeleteRequest

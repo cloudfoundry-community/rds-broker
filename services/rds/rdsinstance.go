@@ -7,9 +7,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/cloudfoundry-community/aws-broker/helpers"
 	"github.com/cloudfoundry-community/aws-broker/catalog"
 	"github.com/cloudfoundry-community/aws-broker/config"
+	"github.com/cloudfoundry-community/aws-broker/helpers"
 )
 
 type RDSInstance struct {

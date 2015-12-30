@@ -1,13 +1,13 @@
 package rds
 
 import (
-	"github.com/jinzhu/gorm"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/cloudfoundry-community/aws-broker/base"
 	"github.com/cloudfoundry-community/aws-broker/catalog"
 	"github.com/cloudfoundry-community/aws-broker/config"
-	"net/http"
-	"github.com/cloudfoundry-community/aws-broker/base"
 	"github.com/cloudfoundry-community/aws-broker/helpers/request"
+	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/jinzhu/gorm"
+	"net/http"
 )
 
 type rdsBroker struct {
@@ -15,10 +15,9 @@ type rdsBroker struct {
 	settings *config.Settings
 }
 
-
 // InitializeAdapter is the main function to create database instances
 func initializeAdapter(plan catalog.AWSPlan, s *config.Settings,
-sharedDbConn *gorm.DB) (DBAdapter, response.Response) {
+	sharedDbConn *gorm.DB) (DBAdapter, response.Response) {
 
 	var dbAdapter DBAdapter
 	// For test environments, use a mock adapter.
@@ -65,7 +64,7 @@ func (broker *rdsBroker) CreateInstance(plan catalog.AWSPlan, id string, createR
 		broker.settings)
 
 	if err != nil {
-		return response.NewErrorResponse(http.StatusBadRequest, "There was an error initializing the instance. Error: " + err.Error())
+		return response.NewErrorResponse(http.StatusBadRequest, "There was an error initializing the instance. Error: "+err.Error())
 	}
 
 	adapter, adapterErr := initializeAdapter(plan, broker.settings, broker.brokerDB)

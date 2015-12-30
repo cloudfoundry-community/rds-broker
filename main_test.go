@@ -4,15 +4,13 @@ import (
 	"github.com/go-martini/martini"
 	"github.com/jinzhu/gorm"
 
-	// "bytes"
 	"encoding/json"
+	"github.com/cloudfoundry-community/aws-broker/config"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	// "strings"
 	"testing"
-	"github.com/cloudfoundry-community/aws-broker/config"
 )
 
 var createInstanceReq []byte = []byte(
