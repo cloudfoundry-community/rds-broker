@@ -78,7 +78,7 @@ func (d *SharedDBAdapter) DeleteDB(i *RDSInstance) (base.InstanceState, error) {
 }
 
 type DedicatedDBAdapter struct {
-	InstanceType string
+	InstanceClass string
 }
 
 func (d *DedicatedDBAdapter) CreateDB(i *RDSInstance, password string) (base.InstanceState, error) {
@@ -100,7 +100,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *RDSInstance, password string) (base.Ins
 		// Everyone gets 10gb for now
 		AllocatedStorage: aws.Int64(10),
 		// Instance class is defined by the plan
-		DBInstanceClass:         &d.InstanceType,
+		DBInstanceClass:         &d.InstanceClass,
 		DBInstanceIdentifier:    &i.Database,
 		DBName:                  &i.Database,
 		Engine:                  aws.String("postgres"),

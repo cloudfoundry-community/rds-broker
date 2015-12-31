@@ -9,20 +9,16 @@ import (
 	"github.com/cloudfoundry-community/aws-broker/services/rds"
 	"github.com/jinzhu/gorm"
 	"net/http"
-	"strings"
 )
 
 func findBroker(serviceId string, c *catalog.Catalog, brokerDb *gorm.DB, settings *config.Settings) (base.Broker, response.Response) {
-	// Look in catalog and find the service.
-	service, err := c.FetchService(serviceId)
-	if err != nil {
-		return nil, response.NewErrorResponse(http.StatusNotFound, err.Error())
-	}
-	switch strings.ToLower(service.Name) {
-	case "rds":
+	switch serviceId {
+	// RDS Service
+	case c.RdsService.ID:
 		return rds.InitRDSBroker(brokerDb, settings), nil
 	}
-	return nil, nil
+
+	return nil, response.NewErrorResponse(http.StatusNotFound, catalog.ErrNoServiceFound.Error())
 }
 
 func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
@@ -35,13 +31,8 @@ func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id
 		return resp
 	}
 
-	plan, planErr := c.FetchPlan(createRequest.ServiceId, createRequest.PlanId)
-	if planErr != nil {
-		return response.NewErrorResponse(http.StatusBadRequest, planErr.Error())
-	}
-
 	// Create instance
-	return broker.CreateInstance(plan, id, createRequest)
+	return broker.CreateInstance(c, id, createRequest)
 }
 
 func bindInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
@@ -54,12 +45,7 @@ func bindInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id s
 		return resp
 	}
 
-	plan, planErr := c.FetchPlan(bindRequest.ServiceId, bindRequest.PlanId)
-	if planErr != nil {
-		return response.NewErrorResponse(http.StatusBadRequest, planErr.Error())
-	}
-
-	return broker.BindInstance(plan, id)
+	return broker.BindInstance(c, id, bindRequest)
 }
 
 func deleteInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
@@ -72,10 +58,5 @@ func deleteInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id
 		return resp
 	}
 
-	plan, planErr := c.FetchPlan(deleteRequest.ServiceId, deleteRequest.PlanId)
-	if planErr != nil {
-		return response.NewErrorResponse(http.StatusBadRequest, planErr.Error())
-	}
-
-	return broker.DeleteInstance(plan, id)
+	return broker.DeleteInstance(c, id, deleteRequest)
 }

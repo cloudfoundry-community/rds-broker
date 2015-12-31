@@ -92,7 +92,7 @@ func (i *RDSInstance) Init(uuid string,
 	orgGuid string,
 	spaceGuid string,
 	serviceId string,
-	plan catalog.AWSPlan,
+	plan catalog.RDSPlan,
 	s *config.Settings) error {
 
 	i.Uuid = uuid

@@ -49,7 +49,9 @@ func App(settings *config.Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m.Map(DB)
 	m.Map(settings)
-	m.Map(catalog.InitCatalog())
+
+	path, _ := os.Getwd()
+	m.Map(catalog.InitCatalog(path))
 
 	log.Println("Loading Routes")
 

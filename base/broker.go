@@ -7,7 +7,7 @@ import (
 )
 
 type Broker interface {
-	CreateInstance(catalog.AWSPlan, string, request.CreateRequest) response.Response
-	BindInstance(catalog.AWSPlan, string) response.Response
-	DeleteInstance(catalog.AWSPlan, string) response.Response
+	CreateInstance(*catalog.Catalog, string, request.CreateRequest) response.Response
+	BindInstance(*catalog.Catalog, string, request.BindRequest) response.Response
+	DeleteInstance(*catalog.Catalog, string, request.DeleteRequest) response.Response
 }

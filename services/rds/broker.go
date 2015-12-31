@@ -16,7 +16,7 @@ type rdsBroker struct {
 }
 
 // InitializeAdapter is the main function to create database instances
-func initializeAdapter(plan catalog.AWSPlan, s *config.Settings,
+func initializeAdapter(plan catalog.RDSPlan, s *config.Settings,
 	sharedDbConn *gorm.DB) (DBAdapter, response.Response) {
 
 	var dbAdapter DBAdapter
@@ -33,7 +33,7 @@ func initializeAdapter(plan catalog.AWSPlan, s *config.Settings,
 		}
 	case "dedicated":
 		dbAdapter = &DedicatedDBAdapter{
-			InstanceType: plan.InstanceType,
+			InstanceClass: plan.InstanceClass,
 		}
 	default:
 		return nil, response.NewErrorResponse(http.StatusInternalServerError, "Adapter not found")
@@ -46,13 +46,18 @@ func InitRDSBroker(brokerDB *gorm.DB, settings *config.Settings) base.Broker {
 	return &rdsBroker{brokerDB, settings}
 }
 
-func (broker *rdsBroker) CreateInstance(plan catalog.AWSPlan, id string, createRequest request.CreateRequest) response.Response {
+func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createRequest request.CreateRequest) response.Response {
 	newInstance := RDSInstance{}
 
 	var count int64
 	broker.brokerDB.Where("uuid = ?", id).First(&newInstance).Count(&count)
 	if count != 0 {
 		return response.NewErrorResponse(http.StatusConflict, "The instance already exists")
+	}
+
+	plan, planErr := c.RdsService.FetchPlan(createRequest.PlanId)
+	if planErr != nil {
+		return planErr
 	}
 
 	err := newInstance.Init(
@@ -96,13 +101,18 @@ func (broker *rdsBroker) CreateInstance(plan catalog.AWSPlan, id string, createR
 	return response.NewSuccessCreateResponse()
 }
 
-func (broker *rdsBroker) BindInstance(plan catalog.AWSPlan, id string) response.Response {
+func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, bindRequest request.BindRequest) response.Response {
 	existingInstance := RDSInstance{}
 
 	var count int64
 	broker.brokerDB.Where("uuid = ?", id).First(&existingInstance).Count(&count)
 	if count == 0 {
 		return response.NewErrorResponse(http.StatusNotFound, "Instance not found")
+	}
+
+	plan, planErr := c.RdsService.FetchPlan(bindRequest.PlanId)
+	if planErr != nil {
+		return planErr
 	}
 
 	password, err := existingInstance.GetPassword(broker.settings.EncryptionKey)
@@ -135,12 +145,17 @@ func (broker *rdsBroker) BindInstance(plan catalog.AWSPlan, id string) response.
 	return response.NewSuccessBindResponse(credentials)
 }
 
-func (broker *rdsBroker) DeleteInstance(plan catalog.AWSPlan, id string) response.Response {
+func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, deleteRequest request.DeleteRequest) response.Response {
 	existingInstance := RDSInstance{}
 	var count int64
 	broker.brokerDB.Where("uuid = ?", id).First(&existingInstance).Count(&count)
 	if count == 0 {
 		return response.NewErrorResponse(http.StatusNotFound, "Instance not found")
+	}
+
+	plan, planErr := c.RdsService.FetchPlan(deleteRequest.PlanId)
+	if planErr != nil {
+		return planErr
 	}
 
 	adapter, adapterErr := initializeAdapter(plan, broker.settings, broker.brokerDB)
