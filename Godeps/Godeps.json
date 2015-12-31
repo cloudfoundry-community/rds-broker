@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/cloudfoundry-community/rds-broker",
+	"ImportPath": "github.com/cloudfoundry-community/aws-broker",
 	"GoVersion": "go1.5",
 	"Deps": [
 		{
@@ -85,6 +85,11 @@
 		{
 			"ImportPath": "github.com/oxtoacart/bpool",
 			"Rev": "0f78ff9152c03745d1a47c9023af1b424e202c07"
+		},
+		{
+			"ImportPath": "gopkg.in/go-playground/validator.v8",
+			"Comment": "v8.14",
+			"Rev": "43f534e6552e5be8d847665d342b9431ac3086d8"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
