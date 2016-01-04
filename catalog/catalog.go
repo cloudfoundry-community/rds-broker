@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"github.com/cloudfoundry-community/aws-broker/helpers/response"
 	"gopkg.in/go-playground/validator.v8"
+	"reflect"
 )
 
 // ServiceMetadata contains the service metadata fields listed in the Cloud Foundry docs:
@@ -80,7 +81,7 @@ func (s RDSService) FetchPlan(planId string) (RDSPlan, response.Response) {
 
 // Catalog struct holds a collections of services
 type Catalog struct {
-	RdsService RDSService `yaml:"rds" json:"rds"`
+	RdsService RDSService `yaml:"rds" json:"-"`
 }
 
 // Service struct contains data for the Cloud Foundry service
@@ -92,6 +93,16 @@ type Service struct {
 	Bindable    bool            `yaml:"bindable" json:"bindable" validate:"required"`
 	Tags        []string        `yaml:"tags" json:"tags" validate:"required"`
 	Metadata    ServiceMetadata `yaml:"metadata" json:"metadata" validate:"required"`
+}
+
+func (c *Catalog) GetServices() []interface{}{
+	catalogStruct := reflect.ValueOf(*c)
+	numOfFields := catalogStruct.NumField()
+	services := make([]interface{}, numOfFields)
+	for i :=0; i < numOfFields; i++ {
+		services[i] = catalogStruct.Field(i).Interface()
+	}
+	return services
 }
 
 // InitCatalog initalizes a Catalog struct that contains services and plans
