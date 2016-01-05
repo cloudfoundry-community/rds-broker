@@ -1,12 +1,10 @@
 package catalog
 
-
 import (
-	"testing"
 	"os"
 	"path/filepath"
+	"testing"
 )
-
 
 func TestInitCatalog(t *testing.T) {
 	wd, _ := os.Getwd()

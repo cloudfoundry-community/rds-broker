@@ -67,8 +67,9 @@ func (i *RDSInstance) GetPassword(key string) (string, error) {
 func (i *RDSInstance) GetCredentials(password string) (map[string]string, error) {
 	var credentials map[string]string
 	switch i.DbType {
-	case "postgres":
-		uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+	case "postgres", "mysql":
+		uri := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
+			i.DbType,
 			i.Username,
 			password,
 			i.Host,
@@ -98,7 +99,7 @@ func (i *RDSInstance) Init(uuid string,
 	i.Uuid = uuid
 	i.ServiceId = serviceId
 	i.PlanId = plan.ID
-	i.OrgGuid = orgGuid
+	i.OrganizationGuid = orgGuid
 	i.SpaceGuid = spaceGuid
 
 	i.Adapter = plan.Adapter

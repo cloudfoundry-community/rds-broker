@@ -7,7 +7,7 @@ import (
 )
 
 type Broker interface {
-	CreateInstance(*catalog.Catalog, string, request.CreateRequest) response.Response
-	BindInstance(*catalog.Catalog, string, request.BindRequest) response.Response
-	DeleteInstance(*catalog.Catalog, string, request.DeleteRequest) response.Response
+	CreateInstance(*catalog.Catalog, string, request.Request) response.Response
+	BindInstance(*catalog.Catalog, string, Instance) response.Response
+	DeleteInstance(*catalog.Catalog, string, Instance) response.Response
 }

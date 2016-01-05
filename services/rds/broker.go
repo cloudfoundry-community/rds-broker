@@ -46,7 +46,7 @@ func InitRDSBroker(brokerDB *gorm.DB, settings *config.Settings) base.Broker {
 	return &rdsBroker{brokerDB, settings}
 }
 
-func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createRequest request.CreateRequest) response.Response {
+func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createRequest request.Request) response.Response {
 	newInstance := RDSInstance{}
 
 	var count int64
@@ -97,11 +97,14 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		newInstance.Host = broker.settings.DbConfig.Url
 		newInstance.Port = broker.settings.DbConfig.Port
 	}
-	broker.brokerDB.Save(&newInstance)
+	err = broker.brokerDB.Save(&newInstance).Error
+	if err != nil {
+		return response.NewErrorResponse(http.StatusBadRequest, err.Error())
+	}
 	return response.NewSuccessCreateResponse()
 }
 
-func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, bindRequest request.BindRequest) response.Response {
+func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, baseInstance base.Instance) response.Response {
 	existingInstance := RDSInstance{}
 
 	var count int64
@@ -110,7 +113,7 @@ func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, bindRequest
 		return response.NewErrorResponse(http.StatusNotFound, "Instance not found")
 	}
 
-	plan, planErr := c.RdsService.FetchPlan(bindRequest.PlanId)
+	plan, planErr := c.RdsService.FetchPlan(baseInstance.PlanId)
 	if planErr != nil {
 		return planErr
 	}
@@ -145,7 +148,7 @@ func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, bindRequest
 	return response.NewSuccessBindResponse(credentials)
 }
 
-func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, deleteRequest request.DeleteRequest) response.Response {
+func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, baseInstance base.Instance) response.Response {
 	existingInstance := RDSInstance{}
 	var count int64
 	broker.brokerDB.Where("uuid = ?", id).First(&existingInstance).Count(&count)
@@ -153,7 +156,7 @@ func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, deleteReq
 		return response.NewErrorResponse(http.StatusNotFound, "Instance not found")
 	}
 
-	plan, planErr := c.RdsService.FetchPlan(deleteRequest.PlanId)
+	plan, planErr := c.RdsService.FetchPlan(baseInstance.PlanId)
 	if planErr != nil {
 		return planErr
 	}

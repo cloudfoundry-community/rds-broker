@@ -22,7 +22,7 @@ func findBroker(serviceId string, c *catalog.Catalog, brokerDb *gorm.DB, setting
 }
 
 func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
-	createRequest, resp := request.ExtractCreateRequest(req)
+	createRequest, resp := request.ExtractRequest(req)
 	if resp != nil {
 		return resp
 	}
@@ -32,31 +32,43 @@ func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id
 	}
 
 	// Create instance
-	return broker.CreateInstance(c, id, createRequest)
+	resp = broker.CreateInstance(c, id, createRequest)
+	if resp.GetResponseType() != response.ErrorResponseType {
+		instance := base.Instance{Id: id, Request: createRequest}
+		brokerDb.NewRecord(instance)
+		brokerDb.Create(&instance)
+		// TODO check save error
+	}
+	return resp
 }
 
 func bindInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
-	bindRequest, resp := request.ExtractBindRequest(req)
+	instance, resp := base.FindBaseInstance(brokerDb, id)
 	if resp != nil {
 		return resp
 	}
-	broker, resp := findBroker(bindRequest.ServiceId, c, brokerDb, settings)
+	broker, resp := findBroker(instance.ServiceId, c, brokerDb, settings)
 	if resp != nil {
 		return resp
 	}
 
-	return broker.BindInstance(c, id, bindRequest)
+	return broker.BindInstance(c, id, instance)
 }
 
 func deleteInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id string, settings *config.Settings) response.Response {
-	deleteRequest, resp := request.ExtractDeleteRequest(req)
+	instance, resp := base.FindBaseInstance(brokerDb, id)
 	if resp != nil {
 		return resp
 	}
-	broker, resp := findBroker(deleteRequest.ServiceId, c, brokerDb, settings)
+	broker, resp := findBroker(instance.ServiceId, c, brokerDb, settings)
 	if resp != nil {
 		return resp
 	}
 
-	return broker.DeleteInstance(c, id, deleteRequest)
+	resp = broker.DeleteInstance(c, id, instance)
+	if resp.GetResponseType() != response.ErrorResponseType {
+		brokerDb.Unscoped().Delete(&instance)
+		// TODO check delete error
+	}
+	return resp
 }

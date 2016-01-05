@@ -8,6 +8,7 @@ import (
 	"github.com/martini-contrib/render"
 
 	"github.com/cloudfoundry-community/aws-broker/catalog"
+	"github.com/cloudfoundry-community/aws-broker/db"
 	"log"
 	"os"
 )
@@ -22,7 +23,7 @@ func main() {
 		return
 	}
 
-	DB, err := config.InternalDBInit(settings.DbConfig)
+	DB, err := db.InternalDBInit(settings.DbConfig)
 	if err != nil {
 		log.Println("There was an error with the DB. Error: " + err.Error())
 		return
@@ -75,7 +76,7 @@ func App(settings *config.Settings, DB *gorm.DB) *martini.ClassicMartini {
 	})
 
 	// Delete service instance
-	m.Delete("/v2/service_instances/:id", DeleteInstance)
+	m.Delete("/v2/service_instances/:instance_id", DeleteInstance)
 
 	return m
 }

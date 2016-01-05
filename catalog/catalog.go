@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 
 	"errors"
-	"net/http"
-	"gopkg.in/yaml.v2"
 	"fmt"
 	"github.com/cloudfoundry-community/aws-broker/helpers/response"
 	"gopkg.in/go-playground/validator.v8"
+	"gopkg.in/yaml.v2"
+	"net/http"
 	"reflect"
 )
 
@@ -57,17 +57,17 @@ var (
 
 type RDSService struct {
 	Service `yaml:",inline" validate:"required"`
-	Plans []RDSPlan `yaml:"plans" json:"plans" validate:"required,dive,required"`
+	Plans   []RDSPlan `yaml:"plans" json:"plans" validate:"required,dive,required"`
 }
 
 // RDSPlan inherits from a Plan and adds fields specific to AWS.
 // these fields are read from the catalog.yaml file, but are not rendered
 // in the catalog API endpoint.
 type RDSPlan struct {
-	Plan         `yaml:",inline" validate:"required"`
-	Adapter      string `yaml:"adapter" json:"-" validate:"required"`
+	Plan          `yaml:",inline" validate:"required"`
+	Adapter       string `yaml:"adapter" json:"-" validate:"required"`
 	InstanceClass string `yaml:"instanceClass" json:"-"`
-	DbType       string `yaml:"dbType" json:"-" validate:"required"`
+	DbType        string `yaml:"dbType" json:"-" validate:"required"`
 }
 
 func (s RDSService) FetchPlan(planId string) (RDSPlan, response.Response) {
@@ -95,11 +95,11 @@ type Service struct {
 	Metadata    ServiceMetadata `yaml:"metadata" json:"metadata" validate:"required"`
 }
 
-func (c *Catalog) GetServices() []interface{}{
+func (c *Catalog) GetServices() []interface{} {
 	catalogStruct := reflect.ValueOf(*c)
 	numOfFields := catalogStruct.NumField()
 	services := make([]interface{}, numOfFields)
-	for i :=0; i < numOfFields; i++ {
+	for i := 0; i < numOfFields; i++ {
 		services[i] = catalogStruct.Field(i).Interface()
 	}
 	return services

@@ -103,7 +103,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *RDSInstance, password string) (base.Ins
 		DBInstanceClass:         &d.InstanceClass,
 		DBInstanceIdentifier:    &i.Database,
 		DBName:                  &i.Database,
-		Engine:                  aws.String("postgres"),
+		Engine:                  aws.String(i.DbType),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Bool(true),
@@ -113,7 +113,6 @@ func (d *DedicatedDBAdapter) CreateDB(i *RDSInstance, password string) (base.Ins
 		PubliclyAccessible:      aws.Bool(false),
 		DBSubnetGroupName:       &i.DbSubnetGroup,
 		VpcSecurityGroupIds: []*string{
-			aws.String("String"),
 			&i.SecGroup,
 		},
 	}

@@ -1,6 +1,11 @@
 package base
 
 import (
+	"github.com/cloudfoundry-community/aws-broker/helpers/request"
+	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/jinzhu/gorm"
+	"log"
+	"net/http"
 	"time"
 )
 
@@ -15,19 +20,10 @@ const (
 )
 
 type Instance struct {
-	Id   int64
+	Id   string `gorm:"primary_key" sql:"type:varchar(255) PRIMARY KEY"`
 	Uuid string `sql:"size(255)"`
 
-	ServiceId string `sql:"size(255)"`
-	PlanId    string `sql:"size(255)"`
-	OrgGuid   string `sql:"size(255)"`
-	SpaceGuid string `sql:"size(255)"`
-
-	Tags          map[string]string `sql:"-"`
-	DbSubnetGroup string            `sql:"-"`
-	SecGroup      string            `sql:"-"`
-
-	Adapter string `sql:"size(255)"`
+	request.Request
 
 	Host string `sql:"size(255)"`
 	Port int64
@@ -37,4 +33,17 @@ type Instance struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt time.Time
+}
+
+func FindBaseInstance(brokerDb *gorm.DB, id string) (Instance, response.Response) {
+	instance := Instance{}
+	log.Println("Looking for instance with id " + id)
+	err := brokerDb.Where("id = ?", id).First(&instance).Error
+	if err == nil {
+		return instance, nil
+	} else if err == gorm.RecordNotFound {
+		return instance, response.NewErrorResponse(http.StatusNotFound, err.Error())
+	} else {
+		return instance, response.NewErrorResponse(http.StatusInternalServerError, err.Error())
+	}
 }

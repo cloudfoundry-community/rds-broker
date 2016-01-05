@@ -51,7 +51,7 @@ func BindInstance(p martini.Params, req *http.Request, r render.Render, brokerDb
 }
 
 // DeleteInstance
-// URL: /v2/service_instances/:id
+// URL: /v2/service_instances/:instance_id
 // Request:
 // {
 //   "service_id": "service-id-here"

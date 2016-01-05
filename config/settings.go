@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
+	"github.com/cloudfoundry-community/aws-broker/common"
 	"log"
 	"os"
 	"strconv"
@@ -11,7 +12,7 @@ import (
 // Settings stores settings used to run the application
 type Settings struct {
 	EncryptionKey string
-	DbConfig      *DBConfig
+	DbConfig      *common.DBConfig
 	InstanceTags  map[string]string
 	Environment   string
 	SecGroup      string
@@ -23,7 +24,7 @@ func (s *Settings) LoadFromEnv() error {
 	log.Println("Loading settings")
 
 	// Load DB Settings
-	dbConfig := DBConfig{}
+	dbConfig := common.DBConfig{}
 	dbConfig.DbType = os.Getenv("DB_TYPE")
 	dbConfig.Url = os.Getenv("DB_URL")
 	dbConfig.Username = os.Getenv("DB_USER")

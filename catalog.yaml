@@ -7,6 +7,7 @@ rds:
     - "database"
     - "RDS"
     - "postgresql"
+    - "mysql"
   metadata:
     displayName: RDS Database Broker
     imageUrl:
@@ -68,3 +69,39 @@ rds:
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: postgres
+    -
+      id: "da91e15c-98c9-46a9-b114-02b8d28062c7"
+      name: "micro-mysql"
+      description: "Dedicated Micro RDS Postgres DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0.036
+            unit: "HOURLY"
+        displayName: "Dedicated Micro MySQL"
+      free: false
+      adapter: dedicated
+      instanceClass: db.t2.micro
+      dbType: mysql
+    -
+      id: "332e0168-6969-4bd7-b07f-29f08c4bf78d"
+      name: "medium-mysql"
+      description: "Dedicated Medium RDS MySQL DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0.19
+            unit: "HOURLY"
+        displayName: "Dedicated Medium MySQL"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.medium
+      dbType: mysql
