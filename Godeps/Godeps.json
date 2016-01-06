@@ -62,7 +62,7 @@
 		},
 		{
 			"ImportPath": "github.com/jinzhu/gorm",
-			"Rev": "52ba1858c31dcbe1573f46f994d3cdf334729ff4"
+			"Rev": "2f7811c55f286c55cfc3a2aefb5c4049b9cd5214"
 		},
 		{
 			"ImportPath": "github.com/jmespath/go-jmespath",
