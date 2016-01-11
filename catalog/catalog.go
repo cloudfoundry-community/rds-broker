@@ -50,13 +50,26 @@ type Plan struct {
 }
 
 var (
+	// ErrNoServiceFound represents the error to return when the service could not be found by its ID.
 	ErrNoServiceFound = errors.New("No service found for given service id.")
+	// ErrNoPlanFound represents the error to return when the plan could not be found by its ID.
 	ErrNoPlanFound    = errors.New("No plan found for given plan id.")
 )
 
+// RDSService describes the RDS Service. It contains the basic Service details as well as a list of RDS Plans
 type RDSService struct {
 	Service `yaml:",inline" validate:"required"`
 	Plans   []RDSPlan `yaml:"plans" json:"plans" validate:"required,dive,required"`
+}
+
+// FetchPlan will look for a specific RDS Plan based on the plan ID.
+func (s RDSService) FetchPlan(planID string) (RDSPlan, response.Response) {
+	for _, plan := range s.Plans {
+		if plan.ID == planID {
+			return plan, nil
+		}
+	}
+	return RDSPlan{}, response.NewErrorResponse(http.StatusBadRequest, ErrNoPlanFound.Error())
 }
 
 // RDSPlan inherits from a Plan and adds fields specific to AWS.
@@ -69,15 +82,6 @@ type RDSPlan struct {
 	DbType        string `yaml:"dbType" json:"-" validate:"required"`
 }
 
-func (s RDSService) FetchPlan(planId string) (RDSPlan, response.Response) {
-	for _, plan := range s.Plans {
-		if plan.ID == planId {
-			return plan, nil
-		}
-	}
-	return RDSPlan{}, response.NewErrorResponse(http.StatusBadRequest, ErrNoPlanFound.Error())
-}
-
 // Catalog struct holds a collections of services
 type Catalog struct {
 	// Instances of Services
@@ -85,10 +89,11 @@ type Catalog struct {
 
 	// All helper structs to be unexported
 	secrets   Secrets          `yaml:"-" json:"-"`
-	resources CatalogResources `yaml:"-" json:"-"`
+	resources Resources `yaml:"-" json:"-"`
 }
 
-type CatalogResources struct {
+// Resources contains all the secrets to be used for the catalog.
+type Resources struct {
 	RdsSettings *RDSSettings
 }
 
@@ -103,6 +108,8 @@ type Service struct {
 	Metadata    ServiceMetadata `yaml:"metadata" json:"metadata" validate:"required"`
 }
 
+// GetServices returns the list of all the Services. In order to do this, it uses reflection to look for all the
+// exported values of the catalog.
 func (c *Catalog) GetServices() []interface{} {
 	catalogStruct := reflect.ValueOf(*c)
 	numOfFields := catalogStruct.NumField()
@@ -117,7 +124,8 @@ func (c *Catalog) GetServices() []interface{} {
 	return services
 }
 
-func (c *Catalog) GetResources() CatalogResources {
+// GetResources returns the resources wrapper for all the resources generated from the secrets. (e.g. Connection to shared dbs)
+func (c *Catalog) GetResources() Resources {
 	return c.resources
 }
 
@@ -158,6 +166,8 @@ func (c *Catalog) loadServicesResources(path string) error {
 	if secrets == nil {
 		return errors.New("Unable to load secrets.")
 	}
+
+	// Loading resources.
 	rdsSettings, err := InitRDSSettings(secrets)
 	if err != nil {
 		return errors.New("Unable to load rds settings.")

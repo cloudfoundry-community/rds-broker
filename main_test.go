@@ -15,7 +15,7 @@ import (
 	"testing"
 )
 
-var createInstanceReq []byte = []byte(
+var createInstanceReq = []byte(
 	`{
 	"service_id":"db80ca29-2d1b-4fbc-aad3-d03c0bfa7593",
 	"plan_id":"44d24fc7-f7a4-4ac1-b7a0-de82836e89a3",
@@ -66,9 +66,9 @@ func doRequest(m *martini.ClassicMartini, url string, method string, auth bool, 
 	End Mock Objects
 */
 
-func validJson(response []byte, url string, t *testing.T) {
-	var aJson map[string]interface{}
-	if json.Unmarshal(response, &aJson) != nil {
+func validJSON(response []byte, url string, t *testing.T) {
+	var aJSON map[string]interface{}
+	if json.Unmarshal(response, &aJSON) != nil {
 		t.Error(url, "should return a valid json")
 	}
 }
@@ -90,7 +90,7 @@ func TestCatalog(t *testing.T) {
 	}
 
 	// Is it a valid JSON?
-	validJson(res.Body.Bytes(), url, t)
+	validJSON(res.Body.Bytes(), url, t)
 }
 
 /*

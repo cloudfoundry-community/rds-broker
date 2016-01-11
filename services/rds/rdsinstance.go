@@ -13,6 +13,7 @@ import (
 	"strconv"
 )
 
+// RDSInstance represents the information of a RDS Service instance.
 type RDSInstance struct {
 	base.Instance
 
@@ -32,7 +33,7 @@ type RDSInstance struct {
 	DbType string `sql:"size(255)"`
 }
 
-func (i *RDSInstance) SetPassword(password, key string) error {
+func (i *RDSInstance) setPassword(password, key string) error {
 	if i.Salt == "" {
 		return errors.New("Salt has to be set before writing the password")
 	}
@@ -50,7 +51,7 @@ func (i *RDSInstance) SetPassword(password, key string) error {
 	return nil
 }
 
-func (i *RDSInstance) GetPassword(key string) (string, error) {
+func (i *RDSInstance) getPassword(key string) (string, error) {
 	if i.Salt == "" || i.Password == "" {
 		return "", errors.New("Salt and password has to be set before writing the password")
 	}
@@ -65,7 +66,7 @@ func (i *RDSInstance) GetPassword(key string) (string, error) {
 	return decrypted, nil
 }
 
-func (i *RDSInstance) GetCredentials(password string) (map[string]string, error) {
+func (i *RDSInstance) getCredentials(password string) (map[string]string, error) {
 	var credentials map[string]string
 	switch i.DbType {
 	case "postgres", "mysql":
@@ -91,18 +92,18 @@ func (i *RDSInstance) GetCredentials(password string) (map[string]string, error)
 	return credentials, nil
 }
 
-func (i *RDSInstance) Init(uuid string,
-	orgGuid string,
-	spaceGuid string,
-	serviceId string,
+func (i *RDSInstance) init(uuid string,
+	orgGUID string,
+	spaceGUID string,
+	serviceID string,
 	plan catalog.RDSPlan,
 	s *config.Settings) error {
 
 	i.Uuid = uuid
-	i.ServiceId = serviceId
-	i.PlanId = plan.ID
-	i.OrganizationGuid = orgGuid
-	i.SpaceGuid = spaceGuid
+	i.ServiceID = serviceID
+	i.PlanID = plan.ID
+	i.OrganizationGUID = orgGUID
+	i.SpaceGUID = spaceGUID
 
 	i.Adapter = plan.Adapter
 
@@ -111,7 +112,7 @@ func (i *RDSInstance) Init(uuid string,
 	i.Username = "u" + helpers.RandStr(15)
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)
-	if err := i.SetPassword(password, s.EncryptionKey); err != nil {
+	if err := i.setPassword(password, s.EncryptionKey); err != nil {
 		return err
 	}
 

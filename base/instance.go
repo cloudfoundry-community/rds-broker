@@ -9,14 +9,20 @@ import (
 	"time"
 )
 
+// InstanceState is an enumeration to indicate what state the instance is in.
 type InstanceState uint8
 
 const (
+	// InstanceNotCreated is the default InstanceState that represents an uninitiated instance.
 	InstanceNotCreated InstanceState = iota // 0
-	InstanceInProgress                      // 1
-	InstanceReady                           // 2
-	InstanceGone                            // 3
-	InstanceNotGone                         // 4
+	// InstanceInProgress indicates that the instance is in a intermediate step.
+	InstanceInProgress // 1
+	// InstanceReady indicates that the instance is created and ready to be used.
+	InstanceReady // 2
+	// InstanceGone indicates that the instance is deleted.
+	InstanceGone // 3
+	// InstanceNotGone indicates that the instance is successfully deleted.
+	InstanceNotGone // 4
 )
 
 type Instance struct {
@@ -35,6 +41,7 @@ type Instance struct {
 	DeletedAt time.Time
 }
 
+// FindBaseInstance is a helper function to find the base instance of the
 func FindBaseInstance(brokerDb *gorm.DB, id string) (Instance, response.Response) {
 	instance := Instance{}
 	log.Println("Looking for instance with id " + id)

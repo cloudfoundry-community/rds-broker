@@ -11,8 +11,8 @@ import (
 	"net/http"
 )
 
-func findBroker(serviceId string, c *catalog.Catalog, brokerDb *gorm.DB, settings *config.Settings) (base.Broker, response.Response) {
-	switch serviceId {
+func findBroker(serviceID string, c *catalog.Catalog, brokerDb *gorm.DB, settings *config.Settings) (base.Broker, response.Response) {
+	switch serviceID {
 	// RDS Service
 	case c.RdsService.ID:
 		return rds.InitRDSBroker(brokerDb, settings), nil
@@ -26,7 +26,7 @@ func createInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id
 	if resp != nil {
 		return resp
 	}
-	broker, resp := findBroker(createRequest.ServiceId, c, brokerDb, settings)
+	broker, resp := findBroker(createRequest.ServiceID, c, brokerDb, settings)
 	if resp != nil {
 		return resp
 	}
@@ -47,7 +47,7 @@ func bindInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id s
 	if resp != nil {
 		return resp
 	}
-	broker, resp := findBroker(instance.ServiceId, c, brokerDb, settings)
+	broker, resp := findBroker(instance.ServiceID, c, brokerDb, settings)
 	if resp != nil {
 		return resp
 	}
@@ -60,7 +60,7 @@ func deleteInstance(req *http.Request, c *catalog.Catalog, brokerDb *gorm.DB, id
 	if resp != nil {
 		return resp
 	}
-	broker, resp := findBroker(instance.ServiceId, c, brokerDb, settings)
+	broker, resp := findBroker(instance.ServiceID, c, brokerDb, settings)
 	if resp != nil {
 		return resp
 	}

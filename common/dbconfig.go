@@ -1,8 +1,11 @@
 package common
 
 import (
+	// This is to init the mysql driver
 	_ "github.com/go-sql-driver/mysql"
+	// This is to init the postgres driver
 	_ "github.com/lib/pq"
+	// This is to init the sqlite driver
 	_ "github.com/mattn/go-sqlite3"
 
 	"errors"
@@ -26,7 +29,7 @@ import (
 //    * verify-full - Always SSL (require verification)
 type DBConfig struct {
 	DbType   string `yaml:"db_type" validate:"required"`
-	Url      string `yaml:"url" validate:"required"`
+	URL      string `yaml:"url" validate:"required"`
 	Username string `yaml:"username" validate:"required"`
 	Password string `yaml:"password" validate:"required"`
 	DbName   string `yaml:"db_name" validate:"required"`
@@ -34,7 +37,7 @@ type DBConfig struct {
 	Port     int64  `yaml:"port" validate:"required"` // Is int64 to match the type that rds.Endpoint.Port is in the AWS RDS SDK.
 }
 
-// DBinit is a generic helper function that will try to connect to a database with the config in the input.
+// DBInit is a generic helper function that will try to connect to a database with the config in the input.
 // Supported DB types:
 // * postgres
 // * mysql
@@ -49,7 +52,7 @@ func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 			dbConfig.DbName,
 			dbConfig.Username,
 			dbConfig.Password,
-			dbConfig.Url,
+			dbConfig.URL,
 			dbConfig.Sslmode,
 			dbConfig.Port)
 		DB, err = gorm.Open(dbConfig.DbType, conn)
@@ -59,7 +62,7 @@ func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 			dbConfig.Username,
 			dbConfig.Password,
 			"tcp",
-			dbConfig.Url,
+			dbConfig.URL,
 			dbConfig.Port,
 			dbConfig.DbName,
 			dbConfig.Sslmode)

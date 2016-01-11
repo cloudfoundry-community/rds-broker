@@ -6,15 +6,18 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-type RDSSettings struct {
-	databases map[string]*RDSSetting
-}
-
+// RDSSetting is the wrapper for
 type RDSSetting struct {
 	DB     *gorm.DB
 	Config common.DBConfig
 }
 
+// RDSSettings is a wrapper for all the resources loaded / instantiated.
+type RDSSettings struct {
+	databases map[string]*RDSSetting
+}
+
+// InitRDSSettings tries to construct all the RDSSettings based on the received secrets.
 func InitRDSSettings(secrets *Secrets) (*RDSSettings, error) {
 	rdsSettings := RDSSettings{databases: make(map[string]*RDSSetting)}
 	for _, rdsSecret := range secrets.RdsSecret.RDSDBSecrets {
@@ -28,13 +31,15 @@ func InitRDSSettings(secrets *Secrets) (*RDSSettings, error) {
 	return &rdsSettings, nil
 }
 
-func (s *RDSSettings) AddRDSSetting(rdsSetting *RDSSetting, planId string) {
+// AddRDSSetting adds an RDSSetting to the map of RDSSettings with the planID being the key.
+func (s *RDSSettings) AddRDSSetting(rdsSetting *RDSSetting, planID string) {
 	// TODO do additional checks to see if one already exists for that plan id.
-	s.databases[planId] = rdsSetting
+	s.databases[planID] = rdsSetting
 }
 
-func (s *RDSSettings) GetRDSSettingByPlan(planId string) (*RDSSetting, error) {
-	if setting, ok := s.databases[planId]; ok {
+// GetRDSSettingByPlan retrieves the RDS setting based on its planID.
+func (s *RDSSettings) GetRDSSettingByPlan(planID string) (*RDSSetting, error) {
+	if setting, ok := s.databases[planID]; ok {
 		return setting, nil
 	}
 	return nil, errors.New("Cannot find rds setting by plan id.")

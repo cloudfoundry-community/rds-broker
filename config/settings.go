@@ -26,7 +26,7 @@ func (s *Settings) LoadFromEnv() error {
 	// Load DB Settings
 	dbConfig := common.DBConfig{}
 	dbConfig.DbType = os.Getenv("DB_TYPE")
-	dbConfig.Url = os.Getenv("DB_URL")
+	dbConfig.URL = os.Getenv("DB_URL")
 	dbConfig.Username = os.Getenv("DB_USER")
 	dbConfig.Password = os.Getenv("DB_PASS")
 	dbConfig.DbName = os.Getenv("DB_NAME")

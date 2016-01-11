@@ -23,7 +23,7 @@ type CreateResponse struct {
 }
 */
 
-// CreateInstance
+// CreateInstance processes all requests for creating a new service instance.
 // URL: /v2/service_instances/:id
 // Request:
 // {
@@ -37,26 +37,15 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	r.JSON(resp.GetStatusCode(), resp)
 }
 
-// BindInstance
+// BindInstance processes all requests for binding a service instance to an application.
 // URL: /v2/service_instances/:instance_id/service_bindings/:binding_id
-// Request:
-// {
-//   "plan_id":        "plan-guid-here",
-//   "service_id":     "service-guid-here",
-//   "app_guid":       "app-guid-here"
-// }
 func BindInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *config.Settings, c *catalog.Catalog) {
 	resp := bindInstance(req, c, brokerDb, p["instance_id"], s)
 	r.JSON(resp.GetStatusCode(), resp)
 }
 
-// DeleteInstance
+// DeleteInstance processes all requests for deleting an existing service instance.
 // URL: /v2/service_instances/:instance_id
-// Request:
-// {
-//   "service_id": "service-id-here"
-//   "plan_id":    "plan-id-here"
-// }
 func DeleteInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *config.Settings, c *catalog.Catalog) {
 	resp := deleteInstance(req, c, brokerDb, p["instance_id"], s)
 	r.JSON(resp.GetStatusCode(), resp)

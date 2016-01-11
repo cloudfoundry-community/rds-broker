@@ -9,20 +9,25 @@ import (
 	"path/filepath"
 )
 
-type RDSDBSecret struct {
-	common.DBConfig `yaml:",inline" validate:"required,dive,required"`
-	PlanId          string `yaml:"plan_id" validate:"required"`
-}
-
-type RDSSecret struct {
-	ServiceId    string        `yaml:"service_id" validate:"required"`
-	RDSDBSecrets []RDSDBSecret `yaml:"plans" validate:"required,dive,required"`
-}
-
+// Secrets contains all the secrets for all the services.
 type Secrets struct {
 	RdsSecret RDSSecret `yaml:"rds" validate:"required,dive,required"`
 }
 
+// RDSSecret is a wrapper for all the RDS Secrets.
+// Only contains RDS database secrets as of now.
+type RDSSecret struct {
+	ServiceID    string        `yaml:"service_id" validate:"required"`
+	RDSDBSecrets []RDSDBSecret `yaml:"plans" validate:"required,dive,required"`
+}
+
+// RDSDBSecret contains the config to connect to a database and the corresponding plan id.
+type RDSDBSecret struct {
+	common.DBConfig `yaml:",inline" validate:"required,dive,required"`
+	PlanID          string `yaml:"plan_id" validate:"required"`
+}
+
+// InitSecrets initializes the secrets struct based on the yaml file.
 func InitSecrets(path string) *Secrets {
 	var secrets Secrets
 	secretsFile := filepath.Join(path, "secrets.yml")

@@ -7,18 +7,20 @@ import (
 	"encoding/base64"
 )
 
+// RandStr will generate a random alphanumeric string of the specified length.
 func RandStr(strSize int) string {
 
 	var dictionary string
 	dictionary = "0123456789abcdefghijklmnopqrstuvwxyz"
 
-	bytes := GenerateIv(strSize)
+	bytes := generateIv(strSize)
 	for k, v := range bytes {
 		bytes[k] = dictionary[v%byte(len(dictionary))]
 	}
 	return string(bytes)
 }
 
+// Encrypt will encrypt the given plain text string.
 func Encrypt(msg, key string, iv []byte) (string, error) {
 	src := []byte(msg)
 	dst := make([]byte, len(src))
@@ -34,6 +36,7 @@ func Encrypt(msg, key string, iv []byte) (string, error) {
 	return base64.StdEncoding.EncodeToString(dst), nil
 }
 
+// Decrypt will decrypt the given encrypted string.
 func Decrypt(msg, key string, iv []byte) (string, error) {
 	src, _ := base64.StdEncoding.DecodeString(msg)
 	dst := make([]byte, len(src))
@@ -49,15 +52,16 @@ func Decrypt(msg, key string, iv []byte) (string, error) {
 	return string(dst), nil
 }
 
-func GenerateIv(size int) []byte {
+func generateIv(size int) []byte {
 	var bytes = make([]byte, size)
 	rand.Read(bytes)
 
 	return bytes
 }
 
+// GenerateSalt will generate a salt with the given size.
 func GenerateSalt(size int) string {
-	iv := GenerateIv(size)
+	iv := generateIv(size)
 
 	return base64.StdEncoding.EncodeToString(iv)
 }

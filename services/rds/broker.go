@@ -15,13 +15,13 @@ type rdsBroker struct {
 	settings *config.Settings
 }
 
-// InitializeAdapter is the main function to create database instances
-func initializeAdapter(plan catalog.RDSPlan, s *config.Settings, c *catalog.Catalog) (DBAdapter, response.Response) {
+// initializeAdapter is the main function to create database instances
+func initializeAdapter(plan catalog.RDSPlan, s *config.Settings, c *catalog.Catalog) (dbAdapter, response.Response) {
 
-	var dbAdapter DBAdapter
+	var dbAdapter dbAdapter
 	// For test environments, use a mock adapter.
 	if s.Environment == "test" {
-		dbAdapter = &MockDBAdapter{}
+		dbAdapter = &mockDBAdapter{}
 		return dbAdapter, nil
 	}
 
@@ -34,11 +34,11 @@ func initializeAdapter(plan catalog.RDSPlan, s *config.Settings, c *catalog.Cata
 		if setting.DB == nil {
 			return nil, response.NewErrorResponse(http.StatusInternalServerError, "An internal error occurred setting up shared databases.")
 		}
-		dbAdapter = &SharedDBAdapter{
+		dbAdapter = &sharedDBAdapter{
 			SharedDbConn: setting.DB,
 		}
 	case "dedicated":
-		dbAdapter = &DedicatedDBAdapter{
+		dbAdapter = &dedicatedDBAdapter{
 			InstanceClass: plan.InstanceClass,
 		}
 	default:
@@ -48,6 +48,7 @@ func initializeAdapter(plan catalog.RDSPlan, s *config.Settings, c *catalog.Cata
 	return dbAdapter, nil
 }
 
+// InitRDSBroker is the constructor for the rdsBroker.
 func InitRDSBroker(brokerDB *gorm.DB, settings *config.Settings) base.Broker {
 	return &rdsBroker{brokerDB, settings}
 }
@@ -61,16 +62,16 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		return response.NewErrorResponse(http.StatusConflict, "The instance already exists")
 	}
 
-	plan, planErr := c.RdsService.FetchPlan(createRequest.PlanId)
+	plan, planErr := c.RdsService.FetchPlan(createRequest.PlanID)
 	if planErr != nil {
 		return planErr
 	}
 
-	err := newInstance.Init(
+	err := newInstance.init(
 		id,
-		createRequest.OrganizationGuid,
-		createRequest.SpaceGuid,
-		createRequest.ServiceId,
+		createRequest.OrganizationGUID,
+		createRequest.SpaceGUID,
+		createRequest.ServiceID,
 		plan,
 		broker.settings)
 
@@ -83,7 +84,7 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		return adapterErr
 	}
 	// Create the database instance.
-	status, err := adapter.CreateDB(&newInstance, newInstance.ClearPassword)
+	status, err := adapter.createDB(&newInstance, newInstance.ClearPassword)
 	if status == base.InstanceNotCreated {
 		desc := "There was an error creating the instance."
 		if err != nil {
@@ -99,14 +100,14 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		if err != nil {
 			return response.NewErrorResponse(http.StatusInternalServerError, err.Error())
 		}
-		newInstance.Host = setting.Config.Url
+		newInstance.Host = setting.Config.URL
 		newInstance.Port = setting.Config.Port
 	}
 	err = broker.brokerDB.Save(&newInstance).Error
 	if err != nil {
 		return response.NewErrorResponse(http.StatusBadRequest, err.Error())
 	}
-	return response.NewSuccessCreateResponse()
+	return response.SuccessCreateResponse
 }
 
 func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, baseInstance base.Instance) response.Response {
@@ -118,12 +119,12 @@ func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, baseInstanc
 		return response.NewErrorResponse(http.StatusNotFound, "Instance not found")
 	}
 
-	plan, planErr := c.RdsService.FetchPlan(baseInstance.PlanId)
+	plan, planErr := c.RdsService.FetchPlan(baseInstance.PlanID)
 	if planErr != nil {
 		return planErr
 	}
 
-	password, err := existingInstance.GetPassword(broker.settings.EncryptionKey)
+	password, err := existingInstance.getPassword(broker.settings.EncryptionKey)
 	if err != nil {
 		return response.NewErrorResponse(http.StatusInternalServerError, "Unable to get instance password.")
 	}
@@ -137,7 +138,7 @@ func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, baseInstanc
 	var credentials map[string]string
 	// Bind the database instance to the application.
 	originalInstanceState := existingInstance.State
-	if credentials, err = adapter.BindDBToApp(&existingInstance, password); err != nil {
+	if credentials, err = adapter.bindDBToApp(&existingInstance, password); err != nil {
 		desc := "There was an error binding the database instance to the application."
 		if err != nil {
 			desc = desc + " Error: " + err.Error()
@@ -161,7 +162,7 @@ func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, baseInsta
 		return response.NewErrorResponse(http.StatusNotFound, "Instance not found")
 	}
 
-	plan, planErr := c.RdsService.FetchPlan(baseInstance.PlanId)
+	plan, planErr := c.RdsService.FetchPlan(baseInstance.PlanID)
 	if planErr != nil {
 		return planErr
 	}
@@ -171,7 +172,7 @@ func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, baseInsta
 		return adapterErr
 	}
 	// Delete the database instance.
-	if status, err := adapter.DeleteDB(&existingInstance); status == base.InstanceNotGone {
+	if status, err := adapter.deleteDB(&existingInstance); status == base.InstanceNotGone {
 		desc := "There was an error deleting the instance."
 		if err != nil {
 			desc = desc + " Error: " + err.Error()
@@ -179,5 +180,5 @@ func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, baseInsta
 		return response.NewErrorResponse(http.StatusBadRequest, desc)
 	}
 	broker.brokerDB.Delete(&existingInstance)
-	return response.NewSuccessDeleteResponse()
+	return response.SuccessDeleteResponse
 }

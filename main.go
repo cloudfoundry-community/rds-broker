@@ -38,6 +38,7 @@ func main() {
 	}
 }
 
+// App gathers all necessary dependencies (databases, settings), injects them into the router, and starts the app.
 func App(settings *config.Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	m := martini.Classic()
@@ -71,8 +72,8 @@ func App(settings *config.Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	// Unbind the service from app
 	m.Delete("/v2/service_instances/:instance_id/service_bindings/:id", func(p martini.Params, r render.Render) {
-		var emptyJson struct{}
-		r.JSON(200, emptyJson)
+		var emptyJSON struct{}
+		r.JSON(200, emptyJSON)
 	})
 
 	// Delete service instance
