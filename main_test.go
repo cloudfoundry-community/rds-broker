@@ -5,9 +5,9 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"encoding/json"
-	"github.com/cloudfoundry-community/aws-broker/common"
-	"github.com/cloudfoundry-community/aws-broker/config"
-	"github.com/cloudfoundry-community/aws-broker/db"
+	"github.com/18F/aws-broker/common"
+	"github.com/18F/aws-broker/config"
+	"github.com/18F/aws-broker/db"
 	"io"
 	"net/http"
 	"net/http/httptest"

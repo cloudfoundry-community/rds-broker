@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"github.com/cloudfoundry-community/aws-broker/common"
+	"github.com/18F/aws-broker/common"
 	"log"
 	"os"
 	"strconv"

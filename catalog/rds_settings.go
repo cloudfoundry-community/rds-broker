@@ -2,7 +2,7 @@ package catalog
 
 import (
 	"errors"
-	"github.com/cloudfoundry-community/aws-broker/common"
+	"github.com/18F/aws-broker/common"
 	"github.com/jinzhu/gorm"
 )
 

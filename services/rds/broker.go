@@ -1,11 +1,11 @@
 package rds
 
 import (
-	"github.com/cloudfoundry-community/aws-broker/base"
-	"github.com/cloudfoundry-community/aws-broker/catalog"
-	"github.com/cloudfoundry-community/aws-broker/config"
-	"github.com/cloudfoundry-community/aws-broker/helpers/request"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/18F/aws-broker/base"
+	"github.com/18F/aws-broker/catalog"
+	"github.com/18F/aws-broker/config"
+	"github.com/18F/aws-broker/helpers/request"
+	"github.com/18F/aws-broker/helpers/response"
 	"github.com/jinzhu/gorm"
 	"net/http"
 )

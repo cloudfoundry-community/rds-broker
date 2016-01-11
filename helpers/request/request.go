@@ -2,7 +2,7 @@ package request
 
 import (
 	"encoding/json"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/18F/aws-broker/helpers/response"
 	"io/ioutil"
 	"net/http"
 )

@@ -1,9 +1,9 @@
 package db
 
 import (
-	"github.com/cloudfoundry-community/aws-broker/base"
-	"github.com/cloudfoundry-community/aws-broker/common"
-	"github.com/cloudfoundry-community/aws-broker/services/rds"
+	"github.com/18F/aws-broker/base"
+	"github.com/18F/aws-broker/common"
+	"github.com/18F/aws-broker/services/rds"
 	"github.com/jinzhu/gorm"
 	"log"
 )

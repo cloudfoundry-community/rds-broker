@@ -6,7 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
-	"github.com/cloudfoundry-community/aws-broker/base"
+	"github.com/18F/aws-broker/base"
 	"github.com/jinzhu/gorm"
 
 	"errors"

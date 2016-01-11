@@ -1,8 +1,8 @@
 package base
 
 import (
-	"github.com/cloudfoundry-community/aws-broker/helpers/request"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/18F/aws-broker/helpers/request"
+	"github.com/18F/aws-broker/helpers/response"
 	"github.com/jinzhu/gorm"
 	"log"
 	"net/http"

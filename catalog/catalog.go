@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"errors"
-	"github.com/cloudfoundry-community/aws-broker/helpers/response"
+	"github.com/18F/aws-broker/helpers/response"
 	"gopkg.in/go-playground/validator.v8"
 	"gopkg.in/yaml.v2"
 	"net/http"
@@ -143,7 +143,6 @@ func InitCatalog(path string) *Catalog {
 		log.Println(validateErr)
 		return nil
 	}
-	log.Printf("%+v\n", catalog)
 
 	err = catalog.loadServicesResources(path)
 	if err != nil {

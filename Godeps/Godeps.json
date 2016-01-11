@@ -1,5 +1,5 @@
 {
-	"ImportPath": "github.com/cloudfoundry-community/aws-broker",
+	"ImportPath": "github.com/18F/aws-broker",
 	"GoVersion": "go1.5",
 	"Deps": [
 		{

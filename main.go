@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/cloudfoundry-community/aws-broker/config"
+	"github.com/18F/aws-broker/config"
 	"github.com/go-martini/martini"
 	"github.com/jinzhu/gorm"
 	"github.com/martini-contrib/auth"
 	"github.com/martini-contrib/render"
 
-	"github.com/cloudfoundry-community/aws-broker/catalog"
-	"github.com/cloudfoundry-community/aws-broker/db"
+	"github.com/18F/aws-broker/catalog"
+	"github.com/18F/aws-broker/db"
 	"log"
 	"os"
 )

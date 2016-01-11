@@ -1,7 +1,7 @@
 package catalog
 
 import (
-	"github.com/cloudfoundry-community/aws-broker/common"
+	"github.com/18F/aws-broker/common"
 	"gopkg.in/go-playground/validator.v8"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -43,6 +43,5 @@ func InitSecrets(path string) *Secrets {
 		log.Println(validateErr)
 		return nil
 	}
-	log.Printf("%+v\n", secrets)
 	return &secrets
 }
