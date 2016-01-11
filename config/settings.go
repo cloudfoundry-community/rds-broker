@@ -67,5 +67,4 @@ func (s *Settings) LoadFromEnv() error {
 	s.Environment = "production"
 
 	return nil
-
 }

@@ -49,16 +49,33 @@ type SharedDBAdapter struct {
 }
 
 func (d *SharedDBAdapter) CreateDB(i *RDSInstance, password string) (base.InstanceState, error) {
-	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
-		return base.InstanceNotCreated, db.Error
-	}
-	if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
-		// TODO. Revert CREATE DATABASE.
-		return base.InstanceNotCreated, db.Error
-	}
-	if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
-		// TODO. Revert CREATE DATABASE and CREATE USER.
-		return base.InstanceNotCreated, db.Error
+	switch i.DbType {
+	case "postgres":
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+			return base.InstanceNotCreated, db.Error
+		}
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
+			// TODO. Revert CREATE DATABASE.
+			return base.InstanceNotCreated, db.Error
+		}
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
+			// TODO. Revert CREATE DATABASE and CREATE USER.
+			return base.InstanceNotCreated, db.Error
+		}
+	case "mysql":
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+			return base.InstanceNotCreated, db.Error
+		}
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s IDENTIFIED BY '%s';", i.Username, password)); db.Error != nil {
+			// TODO. Revert CREATE DATABASE.
+			return base.InstanceNotCreated, db.Error
+		}
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON %s TO %s", i.Database, i.Username)); db.Error != nil {
+			// TODO. Revert CREATE DATABASE and CREATE USER.
+			return base.InstanceNotCreated, db.Error
+		}
+	default:
+		return base.InstanceNotCreated, errors.New(fmt.Sprintf("Unsupported database type: %s, cannot create shared database", i.DbType))
 	}
 	return base.InstanceReady, nil
 }

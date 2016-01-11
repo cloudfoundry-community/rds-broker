@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"errors"
-	"fmt"
 	"github.com/cloudfoundry-community/aws-broker/helpers/response"
 	"gopkg.in/go-playground/validator.v8"
 	"gopkg.in/yaml.v2"
@@ -81,7 +80,16 @@ func (s RDSService) FetchPlan(planId string) (RDSPlan, response.Response) {
 
 // Catalog struct holds a collections of services
 type Catalog struct {
+	// Instances of Services
 	RdsService RDSService `yaml:"rds" json:"-"`
+
+	// All helper structs to be unexported
+	secrets   Secrets          `yaml:"-" json:"-"`
+	resources CatalogResources `yaml:"-" json:"-"`
+}
+
+type CatalogResources struct {
+	RdsSettings *RDSSettings
 }
 
 // Service struct contains data for the Cloud Foundry service
@@ -98,15 +106,23 @@ type Service struct {
 func (c *Catalog) GetServices() []interface{} {
 	catalogStruct := reflect.ValueOf(*c)
 	numOfFields := catalogStruct.NumField()
-	services := make([]interface{}, numOfFields)
+	var services []interface{}
 	for i := 0; i < numOfFields; i++ {
-		services[i] = catalogStruct.Field(i).Interface()
+		structField := catalogStruct.Type().Field(i)
+		// Only add the exported values
+		if structField.PkgPath == "" {
+			services = append(services, catalogStruct.Field(i).Interface())
+		}
 	}
 	return services
 }
 
-// InitCatalog initalizes a Catalog struct that contains services and plans
-// defined in the catalog.yaml configuation file and returns a pointer to that catalog
+func (c *Catalog) GetResources() CatalogResources {
+	return c.resources
+}
+
+// InitCatalog initializes a Catalog struct that contains services and plans
+// defined in the catalog.yaml configuration file and returns a pointer to that catalog
 func InitCatalog(path string) *Catalog {
 	var catalog Catalog
 	catalogFile := filepath.Join(path, "catalog.yaml")
@@ -124,9 +140,29 @@ func InitCatalog(path string) *Catalog {
 	validate := validator.New(config)
 	validateErr := validate.Struct(catalog)
 	if validateErr != nil {
-		fmt.Println(validateErr)
+		log.Println(validateErr)
 		return nil
 	}
-	fmt.Printf("%+v\n", catalog)
+	log.Printf("%+v\n", catalog)
+
+	err = catalog.loadServicesResources(path)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+
 	return &catalog
+}
+
+func (c *Catalog) loadServicesResources(path string) error {
+	// Load secrets
+	secrets := InitSecrets(path)
+	if secrets == nil {
+		return errors.New("Unable to load secrets.")
+	}
+	rdsSettings, err := InitRDSSettings(secrets)
+	if err != nil {
+		return errors.New("Unable to load rds settings.")
+	}
+	c.resources.RdsSettings = rdsSettings
+	return nil
 }

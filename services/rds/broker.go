@@ -16,8 +16,7 @@ type rdsBroker struct {
 }
 
 // InitializeAdapter is the main function to create database instances
-func initializeAdapter(plan catalog.RDSPlan, s *config.Settings,
-	sharedDbConn *gorm.DB) (DBAdapter, response.Response) {
+func initializeAdapter(plan catalog.RDSPlan, s *config.Settings, c *catalog.Catalog) (DBAdapter, response.Response) {
 
 	var dbAdapter DBAdapter
 	// For test environments, use a mock adapter.
@@ -28,8 +27,15 @@ func initializeAdapter(plan catalog.RDSPlan, s *config.Settings,
 
 	switch plan.Adapter {
 	case "shared":
+		setting, err := c.GetResources().RdsSettings.GetRDSSettingByPlan(plan.ID)
+		if err != nil {
+			return nil, response.NewErrorResponse(http.StatusInternalServerError, err.Error())
+		}
+		if setting.DB == nil {
+			return nil, response.NewErrorResponse(http.StatusInternalServerError, "An internal error occurred setting up shared databases.")
+		}
 		dbAdapter = &SharedDBAdapter{
-			SharedDbConn: sharedDbConn,
+			SharedDbConn: setting.DB,
 		}
 	case "dedicated":
 		dbAdapter = &DedicatedDBAdapter{
@@ -72,7 +78,7 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		return response.NewErrorResponse(http.StatusBadRequest, "There was an error initializing the instance. Error: "+err.Error())
 	}
 
-	adapter, adapterErr := initializeAdapter(plan, broker.settings, broker.brokerDB)
+	adapter, adapterErr := initializeAdapter(plan, broker.settings, c)
 	if adapterErr != nil {
 		return adapterErr
 	}
@@ -88,14 +94,13 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 
 	newInstance.State = status
 
-	// FIXME
-	// Currently, if we are dealing with a shared database, it will not populate the host and port fields of the instance.
-	// Also, currently, the shared database instance just create a new database and user inside the internal broker database.
-	// Eventually we want to register a DBConfig or a pool of database connections for the shared instances to get the host and port
-	// and move the logic of storing it in the instance in the SharedDB's CreateDB.
 	if newInstance.Adapter == "shared" {
-		newInstance.Host = broker.settings.DbConfig.Url
-		newInstance.Port = broker.settings.DbConfig.Port
+		setting, err := c.GetResources().RdsSettings.GetRDSSettingByPlan(plan.ID)
+		if err != nil {
+			return response.NewErrorResponse(http.StatusInternalServerError, err.Error())
+		}
+		newInstance.Host = setting.Config.Url
+		newInstance.Port = setting.Config.Port
 	}
 	err = broker.brokerDB.Save(&newInstance).Error
 	if err != nil {
@@ -124,7 +129,7 @@ func (broker *rdsBroker) BindInstance(c *catalog.Catalog, id string, baseInstanc
 	}
 
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
-	adapter, adapterErr := initializeAdapter(plan, broker.settings, broker.brokerDB)
+	adapter, adapterErr := initializeAdapter(plan, broker.settings, c)
 	if adapterErr != nil {
 		return adapterErr
 	}
@@ -161,7 +166,7 @@ func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, baseInsta
 		return planErr
 	}
 
-	adapter, adapterErr := initializeAdapter(plan, broker.settings, broker.brokerDB)
+	adapter, adapterErr := initializeAdapter(plan, broker.settings, c)
 	if adapterErr != nil {
 		return adapterErr
 	}

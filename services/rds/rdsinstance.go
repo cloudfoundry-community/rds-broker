@@ -10,6 +10,7 @@ import (
 	"github.com/cloudfoundry-community/aws-broker/catalog"
 	"github.com/cloudfoundry-community/aws-broker/config"
 	"github.com/cloudfoundry-community/aws-broker/helpers"
+	"strconv"
 )
 
 type RDSInstance struct {
@@ -81,6 +82,7 @@ func (i *RDSInstance) GetCredentials(password string) (map[string]string, error)
 			"username": i.Username,
 			"password": password,
 			"host":     i.Host,
+			"port":     strconv.FormatInt(i.Port, 10),
 			"db_name":  i.Database,
 		}
 	default:

@@ -5,7 +5,9 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"encoding/json"
+	"github.com/cloudfoundry-community/aws-broker/common"
 	"github.com/cloudfoundry-community/aws-broker/config"
+	"github.com/cloudfoundry-community/aws-broker/db"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -27,13 +29,13 @@ func setup() *martini.ClassicMartini {
 	os.Setenv("AUTH_USER", "default")
 	os.Setenv("AUTH_PASS", "default")
 	var s config.Settings
-	var dbConfig config.DBConfig
+	var dbConfig common.DBConfig
 	s.DbConfig = &dbConfig
 	dbConfig.DbType = "sqlite3"
 	dbConfig.DbName = ":memory:"
 	s.EncryptionKey = "12345678901234567890123456789012"
 	s.Environment = "test"
-	brokerDB, _ = config.InternalDBInit(&dbConfig)
+	brokerDB, _ = db.InternalDBInit(&dbConfig)
 
 	m := App(&s, brokerDB)
 
