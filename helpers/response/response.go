@@ -8,9 +8,22 @@ type Response interface {
 	GetResponseType() Type
 }
 
-type errorResponse struct {
+type baseResponse struct {
 	StatusCode  int    `json:"-"`
-	Description string `json:"description"` // Necessary for all error responses.
+	StatusType  Type   `json:"-"`
+}
+
+func (resp *baseResponse) GetStatusCode() int {
+	return resp.StatusCode
+}
+
+func (resp *baseResponse) GetResponseType() Type {
+	return resp.StatusType
+}
+
+type genericResponse struct {
+	baseResponse
+	Description string `json:"description"`
 }
 
 // Type indicates the type of response. Nice for debug situations.
@@ -30,15 +43,11 @@ var (
 
 // NewErrorResponse is the constructor for an errorResponse.
 func NewErrorResponse(statusCode int, description string) Response {
-	return &errorResponse{statusCode, description}
+	return &genericResponse{baseResponse: baseResponse{StatusCode: statusCode, StatusType: ErrorResponseType}, Description: description}
 }
-
-func (resp *errorResponse) GetStatusCode() int {
-	return resp.StatusCode
-}
-
-func (resp *errorResponse) GetResponseType() Type {
-	return ErrorResponseType
+// NewSuccessResponse is the constructor for an errorResponse.
+func newSuccessResponse(statusCode int, responseType Type, description string) Response {
+	return &genericResponse{baseResponse: baseResponse{StatusCode: statusCode, StatusType: responseType}, Description: description}
 }
 
 var (
@@ -47,42 +56,19 @@ var (
 )
 
 type successBindResponse struct {
-	StatusCode  int               `json:"-"`
+	baseResponse
 	Credentials map[string]string `json:"credentials"` // Needed for sending credentials for service.
 }
 
 // NewSuccessBindResponse is the constructor for a successBindResponse.
 func NewSuccessBindResponse(credentials map[string]string) Response {
-	return &successBindResponse{http.StatusCreated, credentials}
+	return &successBindResponse{baseResponse: baseResponse{StatusCode: http.StatusCreated, StatusType: SuccessBindResponseType}, Credentials: credentials}
 }
 
-func (resp *successBindResponse) GetStatusCode() int {
-	return resp.StatusCode
-}
-
-func (resp *successBindResponse) GetResponseType() Type {
-	return SuccessBindResponseType
-}
-
-type genericSuccessResponse struct {
-	StatusCode  int    `json:"-"`
-	Description string `json:"description"`
-	StatusType Type `json:"-"`
-
-}
-
-func (resp *genericSuccessResponse) GetStatusCode() int {
-	return resp.StatusCode
-}
-
-func (resp *genericSuccessResponse) GetResponseType() Type {
-	return SuccessCreateResponseType
-}
 
 var (
 	// SuccessCreateResponse represents the response that all successful instance creations should return.
-	SuccessCreateResponse = &genericSuccessResponse{http.StatusCreated, "The instance was created", SuccessCreateResponseType}
+	SuccessCreateResponse = newSuccessResponse(http.StatusCreated, SuccessCreateResponseType, "The instance was created")
 	// SuccessDeleteResponse represents the response that all successful instance deletions should return.
-	SuccessDeleteResponse = &genericSuccessResponse{http.StatusOK, "The instance was deleted", SuccessDeleteResponseType}
+	SuccessDeleteResponse = newSuccessResponse(http.StatusOK, SuccessDeleteResponseType, "The instance was deleted")
 )
-

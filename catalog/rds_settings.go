@@ -23,7 +23,7 @@ func InitRDSSettings(secrets *Secrets) (*RDSSettings, error) {
 	for _, rdsSecret := range secrets.RdsSecret.RDSDBSecrets {
 		db, err := common.DBInit(&rdsSecret.DBConfig)
 		if err == nil {
-			rdsSettings.AddRDSSetting(&RDSSetting{DB: db, Config: rdsSecret.DBConfig}, rdsSecret.PlanId)
+			rdsSettings.AddRDSSetting(&RDSSetting{DB: db, Config: rdsSecret.DBConfig}, rdsSecret.PlanID)
 		} else {
 			return nil, err
 		}

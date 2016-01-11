@@ -15,7 +15,7 @@ func InternalDBInit(dbConfig *common.DBConfig) (*gorm.DB, error) {
 	if err == nil {
 		db.DB().SetMaxOpenConns(10)
 		log.Println("Migrating")
-		db.LogMode(true)
+		// db.LogMode(true)
 		// Automigrate!
 		db.AutoMigrate(&rds.RDSInstance{}, &base.Instance{}) // Add all your models here to help setup the database tables
 		log.Println("Migrated")
