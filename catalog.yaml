@@ -33,6 +33,12 @@ rds:
       free: true
       adapter: shared
       dbType: postgres
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
     -
       id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
       name: "micro-psql"
@@ -51,6 +57,12 @@ rds:
       adapter: dedicated
       instanceClass: db.t2.micro
       dbType: postgres
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
     -
       id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
       name: "medium-psql"
@@ -69,6 +81,12 @@ rds:
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: postgres
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
     -
       id: "44d24fc7-f7a4-4ac1-b7a0-de82836e89a4"
       name: "shared-mysql"
@@ -86,6 +104,12 @@ rds:
       free: true
       adapter: shared
       dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
     -
       id: "da91e15c-98c9-46a9-b114-02b8d28062c7"
       name: "micro-mysql"
@@ -104,6 +128,12 @@ rds:
       adapter: dedicated
       instanceClass: db.t2.micro
       dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
     -
       id: "332e0168-6969-4bd7-b07f-29f08c4bf78d"
       name: "medium-mysql"
@@ -122,3 +152,9 @@ rds:
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"

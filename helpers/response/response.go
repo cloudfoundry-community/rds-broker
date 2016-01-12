@@ -9,8 +9,8 @@ type Response interface {
 }
 
 type baseResponse struct {
-	StatusCode  int    `json:"-"`
-	StatusType  Type   `json:"-"`
+	StatusCode int  `json:"-"`
+	StatusType Type `json:"-"`
 }
 
 func (resp *baseResponse) GetStatusCode() int {
@@ -45,6 +45,7 @@ var (
 func NewErrorResponse(statusCode int, description string) Response {
 	return &genericResponse{baseResponse: baseResponse{StatusCode: statusCode, StatusType: ErrorResponseType}, Description: description}
 }
+
 // NewSuccessResponse is the constructor for an errorResponse.
 func newSuccessResponse(statusCode int, responseType Type, description string) Response {
 	return &genericResponse{baseResponse: baseResponse{StatusCode: statusCode, StatusType: responseType}, Description: description}
@@ -64,7 +65,6 @@ type successBindResponse struct {
 func NewSuccessBindResponse(credentials map[string]string) Response {
 	return &successBindResponse{baseResponse: baseResponse{StatusCode: http.StatusCreated, StatusType: SuccessBindResponseType}, Credentials: credentials}
 }
-
 
 var (
 	// SuccessCreateResponse represents the response that all successful instance creations should return.

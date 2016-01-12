@@ -117,12 +117,12 @@ func (i *RDSInstance) init(uuid string,
 	}
 
 	// Load tags
-	i.Tags = s.InstanceTags
+	i.Tags = plan.Tags
 
 	// Load AWS values
 	i.DbType = plan.DbType
-	i.DbSubnetGroup = s.SubnetGroup
-	i.SecGroup = s.SecGroup
+	i.DbSubnetGroup = plan.SubnetGroup
+	i.SecGroup = plan.SecurityGroup
 
 	return nil
 }

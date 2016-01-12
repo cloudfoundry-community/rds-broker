@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"errors"
 	"github.com/18F/aws-broker/common"
 	"log"
@@ -13,10 +12,7 @@ import (
 type Settings struct {
 	EncryptionKey string
 	DbConfig      *common.DBConfig
-	InstanceTags  map[string]string
 	Environment   string
-	SecGroup      string
-	SubnetGroup   string
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -52,16 +48,6 @@ func (s *Settings) LoadFromEnv() error {
 	if s.EncryptionKey == "" {
 		return errors.New("An encryption key is required")
 	}
-
-	// Load tags
-	tags := os.Getenv("INSTANCE_TAGS")
-	if tags != "" {
-		json.Unmarshal([]byte(tags), &s.InstanceTags)
-	}
-
-	// Load AWS settings
-	s.SecGroup = os.Getenv("AWS_SEC_GROUP")
-	s.SubnetGroup = os.Getenv("AWS_DB_SUBNET_GROUP")
 
 	// Set env to production
 	s.Environment = "production"

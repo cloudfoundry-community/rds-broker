@@ -53,7 +53,7 @@ var (
 	// ErrNoServiceFound represents the error to return when the service could not be found by its ID.
 	ErrNoServiceFound = errors.New("No service found for given service id.")
 	// ErrNoPlanFound represents the error to return when the plan could not be found by its ID.
-	ErrNoPlanFound    = errors.New("No plan found for given plan id.")
+	ErrNoPlanFound = errors.New("No plan found for given plan id.")
 )
 
 // RDSService describes the RDS Service. It contains the basic Service details as well as a list of RDS Plans
@@ -77,9 +77,12 @@ func (s RDSService) FetchPlan(planID string) (RDSPlan, response.Response) {
 // in the catalog API endpoint.
 type RDSPlan struct {
 	Plan          `yaml:",inline" validate:"required"`
-	Adapter       string `yaml:"adapter" json:"-" validate:"required"`
-	InstanceClass string `yaml:"instanceClass" json:"-"`
-	DbType        string `yaml:"dbType" json:"-" validate:"required"`
+	Adapter       string            `yaml:"adapter" json:"-" validate:"required"`
+	InstanceClass string            `yaml:"instanceClass" json:"-"`
+	DbType        string            `yaml:"dbType" json:"-" validate:"required"`
+	Tags          map[string]string `yaml:"tags" json:"-" validate:"required"`
+	SubnetGroup   string            `yaml:"subnetGroup" json:"-" validate:"required"`
+	SecurityGroup string            `yaml:"securityGroup" json:"-" validate:"required"`
 }
 
 // Catalog struct holds a collections of services
@@ -88,7 +91,7 @@ type Catalog struct {
 	RdsService RDSService `yaml:"rds" json:"-"`
 
 	// All helper structs to be unexported
-	secrets   Secrets          `yaml:"-" json:"-"`
+	secrets   Secrets   `yaml:"-" json:"-"`
 	resources Resources `yaml:"-" json:"-"`
 }
 
