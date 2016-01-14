@@ -103,7 +103,8 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		newInstance.Host = setting.Config.URL
 		newInstance.Port = setting.Config.Port
 	}
-	err = broker.brokerDB.Save(&newInstance).Error
+	broker.brokerDB.NewRecord(newInstance)
+	err = broker.brokerDB.Create(&newInstance).Error
 	if err != nil {
 		return response.NewErrorResponse(http.StatusBadRequest, err.Error())
 	}
@@ -179,6 +180,6 @@ func (broker *rdsBroker) DeleteInstance(c *catalog.Catalog, id string, baseInsta
 		}
 		return response.NewErrorResponse(http.StatusBadRequest, desc)
 	}
-	broker.brokerDB.Delete(&existingInstance)
+	broker.brokerDB.Unscoped().Delete(&existingInstance)
 	return response.SuccessDeleteResponse
 }
