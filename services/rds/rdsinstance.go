@@ -1,19 +1,22 @@
-package main
+package rds
 
 import (
-	// "github.com/jinzhu/gorm"
-	// _ "github.com/lib/pq"
+	"github.com/18F/aws-broker/base"
 
 	"crypto/aes"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"time"
+	"github.com/18F/aws-broker/catalog"
+	"github.com/18F/aws-broker/config"
+	"github.com/18F/aws-broker/helpers"
+	"strconv"
 )
 
-type Instance struct {
-	Id       int64
-	Uuid     string `sql:"size(255)"`
+// RDSInstance represents the information of a RDS Service instance.
+type RDSInstance struct {
+	base.Instance
+
 	Database string `sql:"size(255)"`
 	Username string `sql:"size(255)"`
 	Password string `sql:"size(255)"`
@@ -21,37 +24,23 @@ type Instance struct {
 
 	ClearPassword string `sql:"-"`
 
-	ServiceId string `sql:"size(255)"`
-	PlanId    string `sql:"size(255)"`
-	OrgGuid   string `sql:"size(255)"`
-	SpaceGuid string `sql:"size(255)"`
-
 	Tags          map[string]string `sql:"-"`
 	DbSubnetGroup string            `sql:"-"`
 	SecGroup      string            `sql:"-"`
 
 	Adapter string `sql:"size(255)"`
 
-	Host string `sql:"size(255)"`
-	Port int64
-
 	DbType string `sql:"size(255)"`
-
-	State DBInstanceState
-
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt time.Time
 }
 
-func (i *Instance) SetPassword(password, key string) error {
+func (i *RDSInstance) setPassword(password, key string) error {
 	if i.Salt == "" {
 		return errors.New("Salt has to be set before writing the password")
 	}
 
 	iv, _ := base64.StdEncoding.DecodeString(i.Salt)
 
-	encrypted, err := Encrypt(password, key, iv)
+	encrypted, err := helpers.Encrypt(password, key, iv)
 	if err != nil {
 		return err
 	}
@@ -62,14 +51,14 @@ func (i *Instance) SetPassword(password, key string) error {
 	return nil
 }
 
-func (i *Instance) GetPassword(key string) (string, error) {
+func (i *RDSInstance) getPassword(key string) (string, error) {
 	if i.Salt == "" || i.Password == "" {
 		return "", errors.New("Salt and password has to be set before writing the password")
 	}
 
 	iv, _ := base64.StdEncoding.DecodeString(i.Salt)
 
-	decrypted, err := Decrypt(i.Password, key, iv)
+	decrypted, err := helpers.Decrypt(i.Password, key, iv)
 	if err != nil {
 		return "", err
 	}
@@ -77,11 +66,12 @@ func (i *Instance) GetPassword(key string) (string, error) {
 	return decrypted, nil
 }
 
-func (i *Instance) GetCredentials(password string) (map[string]string, error) {
+func (i *RDSInstance) getCredentials(password string) (map[string]string, error) {
 	var credentials map[string]string
 	switch i.DbType {
-	case "postgres":
-		uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+	case "postgres", "mysql":
+		uri := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
+			i.DbType,
 			i.Username,
 			password,
 			i.Host,
@@ -93,6 +83,7 @@ func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 			"username": i.Username,
 			"password": password,
 			"host":     i.Host,
+			"port":     strconv.FormatInt(i.Port, 10),
 			"db_name":  i.Database,
 		}
 	default:
@@ -101,37 +92,37 @@ func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 	return credentials, nil
 }
 
-func (i *Instance) Init(uuid string,
-	orgGuid string,
-	spaceGuid string,
-	serviceId string,
-	plan *AWSPlan,
-	s *Settings) error {
+func (i *RDSInstance) init(uuid string,
+	orgGUID string,
+	spaceGUID string,
+	serviceID string,
+	plan catalog.RDSPlan,
+	s *config.Settings) error {
 
 	i.Uuid = uuid
-	i.ServiceId = serviceId
-	i.PlanId = plan.ID
-	i.OrgGuid = orgGuid
-	i.SpaceGuid = spaceGuid
+	i.ServiceID = serviceID
+	i.PlanID = plan.ID
+	i.OrganizationGUID = orgGUID
+	i.SpaceGUID = spaceGUID
 
 	i.Adapter = plan.Adapter
 
 	// Build random values
-	i.Database = "db" + randStr(15)
-	i.Username = "u" + randStr(15)
-	i.Salt = GenerateSalt(aes.BlockSize)
-	password := randStr(25)
-	if err := i.SetPassword(password, s.EncryptionKey); err != nil {
+	i.Database = "db" + helpers.RandStr(15)
+	i.Username = "u" + helpers.RandStr(15)
+	i.Salt = helpers.GenerateSalt(aes.BlockSize)
+	password := helpers.RandStr(25)
+	if err := i.setPassword(password, s.EncryptionKey); err != nil {
 		return err
 	}
 
 	// Load tags
-	i.Tags = s.InstanceTags
+	i.Tags = plan.Tags
 
 	// Load AWS values
 	i.DbType = plan.DbType
-	i.DbSubnetGroup = s.SubnetGroup
-	i.SecGroup = s.SecGroup
+	i.DbSubnetGroup = plan.SubnetGroup
+	i.SecGroup = plan.SecurityGroup
 
 	return nil
 }

@@ -1,4 +1,4 @@
-package main
+package helpers
 
 import (
 	"crypto/aes"
@@ -8,7 +8,7 @@ import (
 func TestEncryption(t *testing.T) {
 	msg := "Very secure message"
 	key := "12345678901234567890123456789012"
-	iv := GenerateIv(aes.BlockSize)
+	iv := generateIv(aes.BlockSize)
 
 	encrypted, _ := Encrypt(msg, key, iv)
 
@@ -26,8 +26,8 @@ func TestEncryption(t *testing.T) {
 func TestIvChangesEncryption(t *testing.T) {
 	msg := "Very secure message"
 	key := "12345678901234567890123456789012"
-	iv1 := GenerateIv(aes.BlockSize)
-	iv2 := GenerateIv(aes.BlockSize)
+	iv1 := generateIv(aes.BlockSize)
+	iv2 := generateIv(aes.BlockSize)
 
 	encrypted1, _ := Encrypt(msg, key, iv1)
 	encrypted2, _ := Encrypt(msg, key, iv2)
@@ -41,7 +41,7 @@ func TestKeyChangesEncryption(t *testing.T) {
 	msg := "Very secure message"
 	key1 := "12345678901234567890123456789012"
 	key2 := "21098765432109876543210987654321"
-	iv := GenerateIv(aes.BlockSize)
+	iv := generateIv(aes.BlockSize)
 
 	encrypted1, _ := Encrypt(msg, key1, iv)
 	encrypted2, _ := Encrypt(msg, key2, iv)
