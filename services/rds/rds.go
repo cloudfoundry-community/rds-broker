@@ -66,12 +66,13 @@ func (d *sharedDBAdapter) createDB(i *RDSInstance, password string) (base.Instan
 		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
 			return base.InstanceNotCreated, db.Error
 		}
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s IDENTIFIED BY '%s';", i.Username, password)); db.Error != nil {
+		// Double % escapes to one %.
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER '%s'@'%%' IDENTIFIED BY '%s';", i.Username, password)); db.Error != nil {
 			// TODO. Revert CREATE DATABASE.
 			return base.InstanceNotCreated, db.Error
 		}
 		// Double % escapes to one %.
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL ON %s TO '%s'@'%%';", i.Database, i.Username)); db.Error != nil {
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL ON %s.* TO '%s'@'%%';", i.Database, i.Username)); db.Error != nil {
 			// TODO. Revert CREATE DATABASE and CREATE USER.
 			return base.InstanceNotCreated, db.Error
 		}
