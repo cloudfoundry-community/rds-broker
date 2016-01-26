@@ -58,7 +58,7 @@ func (d *sharedDBAdapter) createDB(i *RDSInstance, password string) (base.Instan
 			// TODO. Revert CREATE DATABASE.
 			return base.InstanceNotCreated, db.Error
 		}
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s", i.Database, i.Username)); db.Error != nil {
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s;", i.Database, i.Username)); db.Error != nil {
 			// TODO. Revert CREATE DATABASE and CREATE USER.
 			return base.InstanceNotCreated, db.Error
 		}
