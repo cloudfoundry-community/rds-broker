@@ -2,6 +2,7 @@
 applications:
 - name: aws-broker
   memory: 256M
+  buildpack: https://github.com/cloudfoundry/go-buildpack#v1.7.0
   env:
     AUTH_USER: user
     AUTH_PASS: pass
