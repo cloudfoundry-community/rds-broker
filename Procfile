@@ -1,1 +1,1 @@
-web: rds-broker
+web: aws-broker

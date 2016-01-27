@@ -1,3 +1,6 @@
 .env
 gin-bin
+aws-broker
 .DS_Store
+secrets.yml
+Godeps/_workspace/

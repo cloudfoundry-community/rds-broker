@@ -1,0 +1,160 @@
+rds:
+  id: "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593"
+  name: "rds"
+  description: "RDS Database Broker"
+  bindable: true
+  tags:
+    - "database"
+    - "RDS"
+    - "postgresql"
+    - "mysql"
+  metadata:
+    displayName: RDS Database Broker
+    imageUrl:
+    longDescription:
+    providerDisplayName: RDS
+    documentationUrl:
+    supportUrl:
+  plans:
+    -
+      id: "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3"
+      name: "shared-psql"
+      description: "Shared infrastructure for Postgres DB"
+      metadata:
+        bullets:
+          - "Shared RDS Instance"
+          - "Postgres instance"
+        costs:
+          -
+            amount:
+              usd: 0
+            unit: "MONTHLY"
+        displayName: "Free Shared Plan"
+      free: true
+      adapter: shared
+      dbType: postgres
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
+    -
+      id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
+      name: "micro-psql"
+      description: "Dedicated Micro RDS Postgres DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "Postgres instance"
+        costs:
+          -
+            amount:
+              usd: 0.036
+            unit: "HOURLY"
+        displayName: "Dedicated Micro Postgres"
+      free: false
+      adapter: dedicated
+      instanceClass: db.t2.micro
+      dbType: postgres
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
+    -
+      id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
+      name: "medium-psql"
+      description: "Dedicated Medium RDS Postgres DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "Postgres instance"
+        costs:
+          -
+            amount:
+              usd: 0.19
+            unit: "HOURLY"
+        displayName: "Dedicated Medium Postgres"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.medium
+      dbType: postgres
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
+    -
+      id: "44d24fc7-f7a4-4ac1-b7a0-de82836e89a4"
+      name: "shared-mysql"
+      description: "Shared infrastructure for MySQL DB"
+      metadata:
+        bullets:
+          - "Shared RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0
+            unit: "MONTHLY"
+        displayName: "Free Shared Plan"
+      free: true
+      adapter: shared
+      dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
+    -
+      id: "da91e15c-98c9-46a9-b114-02b8d28062c7"
+      name: "micro-mysql"
+      description: "Dedicated Micro RDS Postgres DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0.036
+            unit: "HOURLY"
+        displayName: "Dedicated Micro MySQL"
+      free: false
+      adapter: dedicated
+      instanceClass: db.t2.micro
+      dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
+    -
+      id: "332e0168-6969-4bd7-b07f-29f08c4bf78d"
+      name: "medium-mysql"
+      description: "Dedicated Medium RDS MySQL DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0.19
+            unit: "HOURLY"
+        displayName: "Dedicated Medium MySQL"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.medium
+      dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"

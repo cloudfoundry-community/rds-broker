@@ -1,51 +1,49 @@
 {
-	"ImportPath": "github.com/dlapiduz/rds-broker",
-	"GoVersion": "go1.4.1",
+	"ImportPath": "github.com/18F/aws-broker",
+	"GoVersion": "go1.5",
+	"Packages": [
+		"./..."
+	],
 	"Deps": [
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/aws",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/endpoints",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/endpoints",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/ec2query",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/query",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/query",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/rest",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/rest",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/protocol/xml/xmlutil",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/signer/v4",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
-			"ImportPath": "github.com/aws/aws-sdk-go/internal/signer/v4",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
-		},
-		{
-			"ImportPath": "github.com/aws/aws-sdk-go/service/ec2",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"ImportPath": "github.com/aws/aws-sdk-go/private/waiter",
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
 			"ImportPath": "github.com/aws/aws-sdk-go/service/rds",
-			"Comment": "v0.6.3",
-			"Rev": "912c4af1b7e1dd2f8735668df44b2750c552c07b"
+			"Comment": "v1.0.7-2-g727e1f5",
+			"Rev": "727e1f596b6b59700b4d286af9ca41747066685d"
 		},
 		{
 			"ImportPath": "github.com/codegangsta/inject",
@@ -53,13 +51,32 @@
 			"Rev": "4b8172520a03fa190f427bbd284db01b459bfce7"
 		},
 		{
+			"ImportPath": "github.com/go-ini/ini",
+			"Comment": "v1.8.5-2-g6ec4abd",
+			"Rev": "6ec4abd8f8d587536da56f730858f0e27aeb4126"
+		},
+		{
 			"ImportPath": "github.com/go-martini/martini",
 			"Comment": "v1.0-52-gc842525",
 			"Rev": "c8425257dee954ab8b116b10ded3070821bcaec6"
 		},
 		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-127-gbb006fd",
+			"Rev": "bb006fd699a123d3eb514561dbefc352e978949d"
+		},
+		{
 			"ImportPath": "github.com/jinzhu/gorm",
-			"Rev": "52ba1858c31dcbe1573f46f994d3cdf334729ff4"
+			"Rev": "2f7811c55f286c55cfc3a2aefb5c4049b9cd5214"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/inflection",
+			"Rev": "3272df6c21d04180007eb3349844c89a3856bc25"
+		},
+		{
+			"ImportPath": "github.com/jmespath/go-jmespath",
+			"Comment": "0.2.2-2-gc01cf91",
+			"Rev": "c01cf91b011868172fdcd9f41838e80c9d716264"
 		},
 		{
 			"ImportPath": "github.com/lib/pq",
@@ -82,8 +99,13 @@
 			"Rev": "0f78ff9152c03745d1a47c9023af1b424e202c07"
 		},
 		{
-			"ImportPath": "github.com/vaughan0/go-ini",
-			"Rev": "a98ad7ee00ec53921f08832bc06ecf7fd600e6a1"
+			"ImportPath": "gopkg.in/go-playground/validator.v8",
+			"Comment": "v8.14",
+			"Rev": "43f534e6552e5be8d847665d342b9431ac3086d8"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "f7716cbe52baa25d2e9b0d0da546fcf909fc16b4"
 		}
 	]
 }
