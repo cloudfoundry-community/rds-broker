@@ -106,8 +106,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 
 	// Standard parameters
 	params := &rds.CreateDBInstanceInput{
-		// Everyone gets 10gb for now
-		AllocatedStorage: aws.Long(10),
+		AllocatedStorage: &i.DbStorage,
 		// Instance class is defined by the plan
 		DBInstanceClass:         &d.InstanceType,
 		DBInstanceIdentifier:    &i.Database,

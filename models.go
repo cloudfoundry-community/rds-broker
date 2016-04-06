@@ -37,6 +37,7 @@ type Instance struct {
 	Port int64
 
 	DbType    string `sql:"size(255)"`
+	DbStorage int64
 	AwsRegion string
 	MultiAz   bool
 
@@ -134,6 +135,7 @@ func (i *Instance) Init(uuid string,
 	// Load AWS values
 	i.DbType = plan.DbType
 	i.AwsRegion = os.Getenv("AWS_REGION")
+	i.DbStorage = plan.DbStorage
 	i.MultiAz = plan.MultiAz
 	i.DbSubnetGroup = s.SubnetGroup
 	i.SecGroup = s.SecGroup

@@ -38,6 +38,7 @@ type Plan struct {
 	Adapter      string       `yaml:"adapter" json:"-"`
 	InstanceType string       `yaml:"instanceType" json:"-"`
 	DbType       string       `yaml:"dbType" json:"-"`
+	DbStorage    int64        `yaml:"dbStorage" json:"-"`
 	MultiAz      bool         `yaml:"multiAz" json:"multiAz"`
 }
 
