@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -35,8 +36,9 @@ type Instance struct {
 	Host string `sql:"size(255)"`
 	Port int64
 
-	DbType  string `sql:"size(255)"`
-	MultiAz bool
+	DbType    string `sql:"size(255)"`
+	AwsRegion string
+	MultiAz   bool
 
 	State DBInstanceState
 
@@ -131,6 +133,7 @@ func (i *Instance) Init(uuid string,
 
 	// Load AWS values
 	i.DbType = plan.DbType
+	i.AwsRegion = os.Getenv("AWS_REGION")
 	i.MultiAz = plan.MultiAz
 	i.DbSubnetGroup = s.SubnetGroup
 	i.SecGroup = s.SecGroup
