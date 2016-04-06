@@ -33,6 +33,7 @@ services:
         free: true
         adapter: shared
         dbType: postgres
+        multiAz: false
       -
         id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
         name: "micro-psql"
@@ -51,6 +52,7 @@ services:
         adapter: dedicated
         instanceType: db.t2.micro
         dbType: postgres
+        multiAz: false
       -
         id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
         name: "medium-psql"
@@ -69,3 +71,4 @@ services:
         adapter: dedicated
         instanceType: db.m3.medium
         dbType: postgres
+        multiAz: false

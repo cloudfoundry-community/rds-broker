@@ -35,7 +35,8 @@ type Instance struct {
 	Host string `sql:"size(255)"`
 	Port int64
 
-	DbType string `sql:"size(255)"`
+	DbType  string `sql:"size(255)"`
+	MultiAz bool
 
 	State DBInstanceState
 
@@ -130,6 +131,7 @@ func (i *Instance) Init(uuid string,
 
 	// Load AWS values
 	i.DbType = plan.DbType
+	i.MultiAz = plan.MultiAz
 	i.DbSubnetGroup = s.SubnetGroup
 	i.SecGroup = s.SecGroup
 

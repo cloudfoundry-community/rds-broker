@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 )
 
 type DBInstanceState uint8
@@ -90,7 +91,8 @@ type DedicatedDBAdapter struct {
 }
 
 func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
-	svc := rds.New(&aws.Config{Region: "us-east-1"})
+	region := os.GetEnv("AWS_REGION")
+	svc := rds.New(&aws.Config{Region: region})
 
 	var rdsTags []*rds.Tag
 
@@ -116,7 +118,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Boolean(true),
-		MultiAZ:                 aws.Boolean(true),
+		MultiAZ:                 aws.Boolean(i.MultiAz),
 		StorageEncrypted:        aws.Boolean(true),
 		Tags:                    rdsTags,
 		PubliclyAccessible:      aws.Boolean(false),
@@ -143,7 +145,7 @@ func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[stri
 	// First, we need to check if the instance is up and available before binding.
 	// Only search for details if the instance was not indicated as ready.
 	if i.State != InstanceReady {
-		svc := rds.New(&aws.Config{Region: "us-east-1"})
+		svc := rds.New(&aws.Config{Region: region})
 		params := &rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: aws.String(i.Database),
 			// MaxRecords: aws.Long(1),
@@ -201,7 +203,7 @@ func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[stri
 }
 
 func (d *DedicatedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
-	svc := rds.New(&aws.Config{Region: "us-east-1"})
+	svc := rds.New(&aws.Config{Region: region})
 	params := &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(i.Database), // Required
 		// FinalDBSnapshotIdentifier: aws.String("String"),
