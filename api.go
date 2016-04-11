@@ -27,7 +27,7 @@ type CreateResponse struct {
 
 type ServiceReq struct {
 	ServiceId        string `json:"service_id"`
-	PlainId          string `json:"plan_id"`
+	PlanId           string `json:"plan_id"`
 	OrganizationGuid string `json:"organization_guid"`
 	SpaceGuid        string `json:"space_guid"`
 }
@@ -41,7 +41,7 @@ type ServiceReq struct {
 //   "organization_guid": "org-guid-here",
 //   "space_guid":        "space-guid-here"
 // }
-func CreateInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *Settings) {
+func CreateInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *Settings, catalog *Catalog) {
 	instance := Instance{}
 
 	brokerDb.Where("uuid = ?", p["id"]).First(&instance)
@@ -61,7 +61,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	body, _ := ioutil.ReadAll(req.Body)
 	json.Unmarshal(body, &sr)
 
-	plan := FindPlan(sr.PlainId)
+	plan := catalog.fetchPlan(sr.ServiceId, sr.PlanId)
 	if plan == nil {
 		r.JSON(http.StatusBadRequest, Response{"The plan requested does not exist"})
 		return
@@ -74,6 +74,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 		p["id"],
 		sr.OrganizationGuid,
 		sr.SpaceGuid,
+		sr.ServiceId,
 		plan,
 		s)
 
@@ -118,7 +119,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 //   "service_id":     "service-guid-here",
 //   "app_guid":       "app-guid-here"
 // }
-func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings) {
+func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings, catalog *Catalog) {
 	instance := Instance{}
 
 	brokerDb.Where("uuid = ?", p["instance_id"]).First(&instance)
@@ -131,7 +132,7 @@ func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Setti
 		r.JSON(http.StatusInternalServerError, "Unable to get instance password.")
 	}
 
-	plan := FindPlan(instance.PlanId)
+	plan := catalog.fetchPlan(instance.ServiceId, instance.PlanId)
 
 	if plan == nil {
 		r.JSON(http.StatusBadRequest, Response{"The plan requested does not exist"})
@@ -176,7 +177,7 @@ func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Setti
 //   "service_id": "service-id-here"
 //   "plan_id":    "plan-id-here"
 // }
-func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings) {
+func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Settings, catalog *Catalog) {
 	instance := Instance{}
 
 	brokerDb.Where("uuid = ?", p["id"]).First(&instance)
@@ -187,7 +188,7 @@ func DeleteInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Set
 	}
 
 	var plan *Plan
-	plan = FindPlan(instance.PlanId)
+	plan = catalog.fetchPlan(instance.ServiceId, instance.PlanId)
 
 	if plan == nil {
 		r.JSON(http.StatusBadRequest, Response{"The plan requested does not exist"})

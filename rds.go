@@ -90,7 +90,7 @@ type DedicatedDBAdapter struct {
 }
 
 func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
-	svc := rds.New(&aws.Config{Region: "us-east-1"})
+	svc := rds.New(&aws.Config{Region: i.AwsRegion})
 
 	var rdsTags []*rds.Tag
 
@@ -106,8 +106,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 
 	// Standard parameters
 	params := &rds.CreateDBInstanceInput{
-		// Everyone gets 10gb for now
-		AllocatedStorage: aws.Long(10),
+		AllocatedStorage: &i.DbStorage,
 		// Instance class is defined by the plan
 		DBInstanceClass:         &d.InstanceType,
 		DBInstanceIdentifier:    &i.Database,
@@ -116,7 +115,7 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Boolean(true),
-		MultiAZ:                 aws.Boolean(true),
+		MultiAZ:                 aws.Boolean(i.MultiAz),
 		StorageEncrypted:        aws.Boolean(true),
 		Tags:                    rdsTags,
 		PubliclyAccessible:      aws.Boolean(false),
@@ -143,7 +142,7 @@ func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[stri
 	// First, we need to check if the instance is up and available before binding.
 	// Only search for details if the instance was not indicated as ready.
 	if i.State != InstanceReady {
-		svc := rds.New(&aws.Config{Region: "us-east-1"})
+		svc := rds.New(&aws.Config{Region: i.AwsRegion})
 		params := &rds.DescribeDBInstancesInput{
 			DBInstanceIdentifier: aws.String(i.Database),
 			// MaxRecords: aws.Long(1),
@@ -201,7 +200,7 @@ func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[stri
 }
 
 func (d *DedicatedDBAdapter) DeleteDB(i *Instance) (DBInstanceState, error) {
-	svc := rds.New(&aws.Config{Region: "us-east-1"})
+	svc := rds.New(&aws.Config{Region: i.AwsRegion})
 	params := &rds.DeleteDBInstanceInput{
 		DBInstanceIdentifier: aws.String(i.Database), // Required
 		// FinalDBSnapshotIdentifier: aws.String("String"),

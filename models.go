@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -21,6 +22,7 @@ type Instance struct {
 
 	ClearPassword string `sql:"-"`
 
+	ServiceId string `sql:"size(255)"`
 	PlanId    string `sql:"size(255)"`
 	OrgGuid   string `sql:"size(255)"`
 	SpaceGuid string `sql:"size(255)"`
@@ -34,7 +36,10 @@ type Instance struct {
 	Host string `sql:"size(255)"`
 	Port int64
 
-	DbType string `sql:"size(255)"`
+	DbType    string `sql:"size(255)"`
+	DbStorage int64
+	AwsRegion string
+	MultiAz   bool
 
 	State DBInstanceState
 
@@ -103,10 +108,12 @@ func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 func (i *Instance) Init(uuid string,
 	orgGuid string,
 	spaceGuid string,
+	serviceId string,
 	plan *Plan,
 	s *Settings) error {
 
 	i.Uuid = uuid
+	i.ServiceId = serviceId
 	i.PlanId = plan.Id
 	i.OrgGuid = orgGuid
 	i.SpaceGuid = spaceGuid
@@ -127,6 +134,9 @@ func (i *Instance) Init(uuid string,
 
 	// Load AWS values
 	i.DbType = plan.DbType
+	i.AwsRegion = os.Getenv("AWS_REGION")
+	i.DbStorage = plan.DbStorage
+	i.MultiAz = plan.MultiAz
 	i.DbSubnetGroup = s.SubnetGroup
 	i.SecGroup = s.SecGroup
 

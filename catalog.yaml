@@ -1,0 +1,77 @@
+services:
+  -
+    id: "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593"
+    name: "rds"
+    description: "RDS Database Broker"
+    bindable: true
+    tags:
+      - "database"
+      - "RDS"
+      - "postgresql"
+    metadata:
+      displayName: RDS Database Broker
+      imageUrl:
+      longDescription:
+      providerDisplayName: RDS
+      documentationUrl:
+      supportUrl:
+    plans:
+      -
+        id: "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3"
+        name: "shared-psql"
+        description: "Shared infrastructure for Postgres DB"
+        metadata:
+          bullets:
+            - "Shared RDS Instance"
+            - "Postgres instance"
+          costs:
+            -
+              amount:
+                usd: 0
+              unit: "MONTHLY"
+          displayName: "Free Shared Plan"
+        free: true
+        adapter: shared
+        dbType: postgres
+        dbStorage: 5
+        multiAz: false
+      -
+        id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
+        name: "micro-psql"
+        description: "Dedicated Micro RDS Postgres DB Instance"
+        metadata:
+          bullets:
+            - "Dedicated Redundant RDS Instance"
+            - "Postgres instance"
+          costs:
+            -
+              amount:
+                usd: 0.036
+              unit: "HOURLY"
+          displayName: "Dedicated Micro Postgres"
+        free: false
+        adapter: dedicated
+        instanceType: db.t2.micro
+        dbType: postgres
+        dbStorage: 10
+        multiAz: false
+      -
+        id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
+        name: "medium-psql"
+        description: "Dedicated Medium RDS Postgres DB Instance"
+        metadata:
+          bullets:
+            - "Dedicated Redundant RDS Instance"
+            - "Postgres instance"
+          costs:
+            -
+              amount:
+                usd: 0.19
+              unit: "HOURLY"
+          displayName: "Dedicated Medium Postgres"
+        free: false
+        adapter: dedicated
+        instanceType: db.m3.medium
+        dbType: postgres
+        dbStorage: 20
+        multiAz: false
