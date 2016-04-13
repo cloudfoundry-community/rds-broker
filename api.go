@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 )
 
 type Response struct {
@@ -76,7 +75,7 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
 	adapter, _ := s.InitializeAdapter(plan, brokerDb)
 
-	shared := reflect.TypeOf(adapter) != reflect.TypeOf(&(DedicatedDBAdapter{}))
+	shared := plan.Adapter == AdapterShared
 
 	acceptsIncomplete := false
 	if req.URL.Query().Get("accepts_incomplete") == "true" {
