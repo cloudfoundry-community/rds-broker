@@ -58,6 +58,8 @@ func App(settings *Settings, DB *gorm.DB) *martini.ClassicMartini {
 
 	// Create the service instance (cf create-service-instance)
 	m.Put("/v2/service_instances/:id", CreateInstance)
+	// Last operation state used by async service instance creation
+	m.Get("/v2/service_instances/:id/last_operation", LastOperationInstance)
 
 	// Bind the service to app (cf bind-service)
 	m.Put("/v2/service_instances/:instance_id/service_bindings/:id", BindInstance)

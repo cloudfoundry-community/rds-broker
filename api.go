@@ -14,6 +14,11 @@ type Response struct {
 	Description string `json:"description"`
 }
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+	Description string `json:"description"`
+}
+
 type Operation struct {
 	State                    string
 	Description              string
@@ -70,6 +75,19 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	// Get the correct database logic depending on the type of plan. (shared vs dedicated)
 	adapter, _ := s.InitializeAdapter(plan, brokerDb)
 
+	shared := plan.Adapter == AdapterShared
+
+	acceptsIncomplete := false
+	if req.URL.Query().Get("accepts_incomplete") == "true" {
+		acceptsIncomplete = true
+	}
+
+	if !shared && !acceptsIncomplete {
+		// UNPROCESSABLE_ENTITY
+		r.JSON(422, ErrorResponse{Error: "AsyncRequired", Description: "This service plan requires client support for asynchronous service operations." })
+		return
+	}
+
 	err := instance.Init(
 		p["id"],
 		sr.OrganizationGuid,
@@ -108,7 +126,26 @@ func CreateInstance(p martini.Params, req *http.Request, r render.Render, broker
 	}
 	brokerDb.Save(&instance)
 
-	r.JSON(http.StatusCreated, Response{"The instance was created"})
+	if shared {
+		r.JSON(http.StatusCreated, Response{"The instance was created"})
+	} else {
+		r.JSON(http.StatusAccepted, Response{"The instance is being created asynchronously"})
+	}
+}
+
+func LastOperationInstance(p martini.Params, req *http.Request, r render.Render, brokerDb *gorm.DB, s *Settings, catalog *Catalog) {
+	instance := Instance{}
+
+	brokerDb.Where("uuid = ?", p["id"]).First(&instance)
+
+	if instance.Id <= 0 {
+		r.JSON(http.StatusNotFound, Response{"Requested instance id cannot be found"})
+		return
+	}
+	plan := catalog.fetchPlan(instance.ServiceId, instance.PlanId)
+	adapter, _ := s.InitializeAdapter(plan, brokerDb)
+	status, _ := adapter.GetDBStatus(&instance)
+	r.JSON(http.StatusOK, status)
 }
 
 // BindInstance
@@ -124,7 +161,7 @@ func BindInstance(p martini.Params, r render.Render, brokerDb *gorm.DB, s *Setti
 
 	brokerDb.Where("uuid = ?", p["instance_id"]).First(&instance)
 	if instance.Id == 0 {
-		r.JSON(404, Response{"Instance not found"})
+		r.JSON(http.StatusNotFound, Response{"Instance not found"})
 		return
 	}
 	password, err := instance.GetPassword(s.EncryptionKey)

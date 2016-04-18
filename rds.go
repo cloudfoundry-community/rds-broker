@@ -22,8 +22,22 @@ const (
 	InstanceNotGone                           // 4
 )
 
+type InstanceCreationState string
+
+const (
+	InstanceCreationSucceeded InstanceCreationState = "succeeded"
+	InstanceCreationFailed InstanceCreationState = "failed"
+	InstanceCreationInProgress InstanceCreationState = "in progress"
+)
+
+type InstanceStatus struct {
+	State       InstanceCreationState	`json:"state"`
+	Description string			`json:"description"`
+}
+
 type DBAdapter interface {
 	CreateDB(i *Instance, password string) (DBInstanceState, error)
+	GetDBStatus(i *Instance) (InstanceStatus, error)
 	BindDBToApp(i *Instance, password string) (map[string]string, error)
 	DeleteDB(i *Instance) (DBInstanceState, error)
 }
@@ -38,6 +52,11 @@ type MockDBAdapter struct {
 func (d *MockDBAdapter) CreateDB(i *Instance, password string) (DBInstanceState, error) {
 	// TODO
 	return InstanceReady, nil
+}
+
+func (d *MockDBAdapter) GetDBStatus(i *Instance) (InstanceStatus, error) {
+	// TODO
+	return InstanceStatus{}, nil
 }
 
 func (d *MockDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
@@ -69,6 +88,20 @@ func (d *SharedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceStat
 		return InstanceNotCreated, db.Error
 	}
 	return InstanceReady, nil
+}
+
+func (d *SharedDBAdapter) GetDBStatus(i *Instance) (InstanceStatus, error) {
+	rows, err := d.SharedDbConn.DB().Query(fmt.Sprintf("SELECT datname FROM pg_database WHERE datname='%s';", i.Database))
+	defer rows.Close()
+	result := InstanceStatus{}
+	if rows.Next() {
+		result.State = InstanceCreationSucceeded
+		result.Description = "Creation completed"
+	} else {
+		result.State = InstanceCreationFailed
+		result.Description = "Unknown"
+	}
+	return result, err
 }
 
 func (d *SharedDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {
@@ -136,6 +169,32 @@ func (d *DedicatedDBAdapter) CreateDB(i *Instance, password string) (DBInstanceS
 	} else {
 		return InstanceNotCreated, nil
 	}
+}
+
+func (d *DedicatedDBAdapter) GetDBStatus(i *Instance) (InstanceStatus, error) {
+	svc := rds.New(&aws.Config{Region: i.AwsRegion})
+	request := &rds.DescribeDBInstancesInput{
+		DBInstanceIdentifier: &i.Database,
+	}
+	result, err := svc.DescribeDBInstances(request)
+	instanceCount := len(result.DBInstances)
+	status := InstanceStatus{
+		State: InstanceCreationInProgress,
+		Description: fmt.Sprintf("Failed to retrieve state, %d instances found", instanceCount),
+	}
+	if yes := d.DidAwsCallSucceed(err); yes && instanceCount == 1 {
+		databaseInstance := result.DBInstances[0]
+		status.Description = "AWS status: " + *(databaseInstance.DBInstanceStatus)
+		switch *(databaseInstance.DBInstanceStatus) {
+		case "failed", "incompatible-parameters":
+			status.State = InstanceCreationFailed
+		case "available":
+			status.State = InstanceCreationSucceeded
+		default:
+			status.State = InstanceCreationInProgress
+		}
+	}
+	return status, err
 }
 
 func (d *DedicatedDBAdapter) BindDBToApp(i *Instance, password string) (map[string]string, error) {

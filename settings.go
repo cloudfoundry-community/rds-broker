@@ -10,6 +10,11 @@ import (
 	"strconv"
 )
 
+const (
+	AdapterShared string = "shared"
+	AdapterDedicated string = "dedicated"
+)
+
 type Settings struct {
 	EncryptionKey string
 	DbConfig      *DBConfig
@@ -31,11 +36,11 @@ func (s Settings) InitializeAdapter(plan *Plan,
 	}
 
 	switch plan.Adapter {
-	case "shared":
+	case AdapterShared:
 		dbAdapter = &SharedDBAdapter{
 			SharedDbConn: sharedDbConn,
 		}
-	case "dedicated":
+	case AdapterDedicated:
 		dbAdapter = &DedicatedDBAdapter{
 			InstanceType: plan.InstanceType,
 		}
