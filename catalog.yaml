@@ -35,6 +35,7 @@ services:
         dbType: postgres
         dbStorage: 5
         multiAz: false
+        publiclyAccessible: true
       -
         id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
         name: "micro-psql"
@@ -55,6 +56,7 @@ services:
         dbType: postgres
         dbStorage: 10
         multiAz: false
+        publiclyAccessible: true # set to false if you don't want to make your database accessible from internet
       -
         id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
         name: "medium-psql"
@@ -75,3 +77,88 @@ services:
         dbType: postgres
         dbStorage: 20
         multiAz: false
+        publiclyAccessible: true
+      -
+        id: "eab78c17-4512-4b7e-a3ee-f6146d174f35"
+        name: "micro-mariadb"
+        description: "Dedicated Micro RDS MariaDB Instance"
+        metadata:
+          bullets:
+            - "Dedicated Redundant RDS Instance"
+            - "MariaDB instance"
+          costs:
+            -
+              amount:
+                usd: 0
+              unit: "MONTHLY"
+          displayName: "Dedicated Micro MariaDB"
+        free: true
+        adapter: dedicated
+        instanceType: db.t2.micro # use this one to get free instance
+        dbType: mariadb
+        dbStorage: 5 # use only 5gb to get free instance
+        multiAz: false
+        publiclyAccessible: true
+      -
+        id: "f9802cf7-da1d-402d-b3e3-50dcdb3dd12f"
+        name: "micro-mysql"
+        description: "Dedicated Micro RDS MySQL Instance"
+        metadata:
+          bullets:
+            - "Dedicated Redundant RDS Instance"
+            - "Mysql instance"
+          costs:
+            -
+              amount:
+                usd: 0
+              unit: "MONTHLY"
+          displayName: "Dedicated Micro Mysql"
+        free: true
+        adapter: dedicated
+        instanceType: db.t2.micro # use this one to get free instance
+        dbType: MySQL
+        dbStorage: 5 # use only 5gb to get free instance
+        multiAz: false
+        publiclyAccessible: true
+      -
+        id: "02b440b6-6716-4af3-a041-195aa0cb39e1"
+        name: "micro-oracle"
+        description: "Dedicated Micro RDS Oracle Instance"
+        metadata:
+          bullets:
+            - "Dedicated Redundant RDS Instance"
+            - "Oracle instance"
+          costs:
+            -
+              amount:
+                usd: 0
+              unit: "MONTHLY"
+          displayName: "Dedicated Micro Oracle"
+        free: true
+        adapter: dedicated
+        instanceType: db.t2.micro # use this one to get free instance
+        dbType: oracle-se1
+        dbStorage: 5 # use only 5gb to get free instance
+        multiAz: false
+        publiclyAccessible: true
+      -
+        id: "d235d14d-dc14-479f-a982-204a2affd16e"
+        name: "micro-sqlserver"
+        description: "Dedicated Micro RDS SQLServer Instance"
+        metadata:
+          bullets:
+            - "Dedicated Redundant RDS Instance"
+            - "SQLServer instance"
+          costs:
+            -
+              amount:
+                usd: 0
+              unit: "MONTHLY"
+          displayName: "Dedicated Micro SQLServer"
+        free: true
+        adapter: dedicated
+        instanceType: db.t2.micro # use this one to get free instance
+        dbType: sqlserver-se
+        dbStorage: 5 # use only 5gb to get free instance
+        multiAz: false
+        publiclyAccessible: true

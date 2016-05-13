@@ -30,16 +30,17 @@ type PlanMetadata struct {
 }
 
 type Plan struct {
-	Id           string       `yaml:"id" json:"id"`
-	Name         string       `yaml:"name" json:"name"`
-	Description  string       `yaml:"description" json:"description"`
-	Metadata     PlanMetadata `yaml:"metadata" json:"metadata"`
-	Free         bool         `yaml:"free" json:"free"`
-	Adapter      string       `yaml:"adapter" json:"-"`
-	InstanceType string       `yaml:"instanceType" json:"-"`
-	DbType       string       `yaml:"dbType" json:"-"`
-	DbStorage    int64        `yaml:"dbStorage" json:"-"`
-	MultiAz      bool         `yaml:"multiAz" json:"multiAz"`
+	Id                 string       `yaml:"id" json:"id"`
+	Name               string       `yaml:"name" json:"name"`
+	Description        string       `yaml:"description" json:"description"`
+	Metadata           PlanMetadata `yaml:"metadata" json:"metadata"`
+	Free               bool         `yaml:"free" json:"free"`
+	Adapter            string       `yaml:"adapter" json:"-"`
+	InstanceType       string       `yaml:"instanceType" json:"-"`
+	DbType             string       `yaml:"dbType" json:"-"`
+	DbStorage          int64        `yaml:"dbStorage" json:"-"`
+	MultiAz            bool         `yaml:"multiAz" json:"multiAz"`
+	PubliclyAccessible bool         `yaml:"publiclyAccessible,omitempty" json:"publiclyAccessible,omitempty"`
 }
 
 type Service struct {
