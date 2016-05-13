@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strings"
 )
 
 type Instance struct {
@@ -40,6 +41,7 @@ type Instance struct {
 	DbStorage int64
 	AwsRegion string
 	MultiAz   bool
+	PubliclyAccessible bool
 
 	State DBInstanceState
 
@@ -48,6 +50,19 @@ type Instance struct {
 	DeletedAt time.Time
 }
 
+var mapDbTypeToScheme map[string]string = map[string]string{
+	"mysql": "mysql",
+	"mariadb": "mysql",
+	"aurora": "mysql",
+	"postgres": "postgres",
+	"oracle-se1": "oracle",
+	"oracle-se": "oracle",
+	"oracle-ee": "oracle",
+	"sqlserver-ee": "sqlserver",
+	"sqlserver-se": "sqlserver",
+	"sqlserver-ex": "sqlserver",
+	"sqlserver-web": "sqlserver",
+}
 func (i *Instance) SetPassword(password, key string) error {
 	if i.Salt == "" {
 		return errors.New("Salt has to be set before writing the password")
@@ -83,24 +98,25 @@ func (i *Instance) GetPassword(key string) (string, error) {
 
 func (i *Instance) GetCredentials(password string) (map[string]string, error) {
 	var credentials map[string]string
-	switch i.DbType {
-	case "postgres":
-		uri := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
-			i.Username,
-			password,
-			i.Host,
-			i.Port,
-			i.Database)
 
-		credentials = map[string]string{
-			"uri":      uri,
-			"username": i.Username,
-			"password": password,
-			"host":     i.Host,
-			"db_name":  i.Database,
-		}
-	default:
+	scheme, ok := mapDbTypeToScheme[strings.ToLower(i.DbType)]
+	if !ok {
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
+	}
+	uri := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
+		scheme,
+		i.Username,
+		password,
+		i.Host,
+		i.Port,
+		i.Database)
+
+	credentials = map[string]string{
+		"uri":      uri,
+		"username": i.Username,
+		"password": password,
+		"host":     i.Host,
+		"db_name":  i.Database,
 	}
 	return credentials, nil
 }
@@ -117,7 +133,7 @@ func (i *Instance) Init(uuid string,
 	i.PlanId = plan.Id
 	i.OrgGuid = orgGuid
 	i.SpaceGuid = spaceGuid
-
+	i.PubliclyAccessible = plan.PubliclyAccessible
 	i.Adapter = plan.Adapter
 
 	// Build random values
