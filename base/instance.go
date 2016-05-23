@@ -26,7 +26,7 @@ const (
 )
 
 type Instance struct {
-	Uuid   string `gorm:"primary_key" sql:"type:varchar(255) PRIMARY KEY"`
+	Uuid string `gorm:"primary_key" sql:"type:varchar(255) PRIMARY KEY"`
 
 	request.Request
 
@@ -43,12 +43,12 @@ type Instance struct {
 func FindBaseInstance(brokerDb *gorm.DB, id string) (Instance, response.Response) {
 	instance := Instance{}
 	log.Println("Looking for instance with id " + id)
-	err := brokerDb.Where("uuid = ?", id).First(&instance).Error
-	if err == nil {
+	result := brokerDb.Where("uuid = ?", id).First(&instance)
+	if result.Error == nil {
 		return instance, nil
-	} else if err == gorm.RecordNotFound {
-		return instance, response.NewErrorResponse(http.StatusNotFound, err.Error())
+	} else if result.RecordNotFound() {
+		return instance, response.NewErrorResponse(http.StatusNotFound, result.Error.Error())
 	} else {
-		return instance, response.NewErrorResponse(http.StatusInternalServerError, err.Error())
+		return instance, response.NewErrorResponse(http.StatusInternalServerError, result.Error.Error())
 	}
 }

@@ -43,7 +43,7 @@ type DBConfig struct {
 // * mysql
 // * sqlite3
 func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
-	var DB gorm.DB
+	var DB *gorm.DB
 	var err error
 	/*
 		log.Printf("Attempting to login as %s with password length %d and url %s to db name %s\n",
@@ -118,5 +118,5 @@ func DBInit(dbConfig *DBConfig) (*gorm.DB, error) {
 		log.Println("Unable to verify connection to database")
 		return nil, err
 	}
-	return &DB, nil
+	return DB, nil
 }
