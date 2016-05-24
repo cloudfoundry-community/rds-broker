@@ -1,0 +1,66 @@
+---
+jobs:
+- name: push-aws-broker
+  plan:
+  - aggregate:
+    - get: aws-broker-app
+      trigger: true
+  - put: deploy-aws-broker-app
+    params:
+      manifest: aws-broker-app/manifest.yml
+      path: aws-broker-app
+      current_app_name: aws-broker
+      environment_variables:
+        AUTH_PASS: {{ auth-pass }}
+        AUTH_USER: {{ auth-user }}
+        AWS_ACCESS_KEY_ID: {{ aws-access-key-id }}
+        AWS_SECRET_ACCESS_KEY: {{ aws-secret-access-key }}
+        DB_NAME: {{ db-name }}
+        DB_PASS: {{ db-pass }}
+        DB_PORT: {{ db-port }}
+        DB_SSLMODE: {{ db-sslmode }}
+        DB_TYPE: {{ db-type }}
+        DB_URL: {{ db-url }}
+        DB_USER: {{ db-user }}
+        ENC_KEY: {{ enc-key }}
+
+    on_failure:
+      put: slack
+      params:
+        text: |
+          :x: FAILED to deploy aws-broker on production
+          <https://ci.cloud.gov/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+        channel: {{slack-channel}}
+        username: {{slack-username}}
+        icon_url: {{slack-icon-url}}
+    on_success:
+      put: slack
+      params:
+        text: |
+          :white_check_mark: Successfully deployed aws-broker on production
+          <https://ci.cloud.gov/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+        channel: {{slack-channel}}
+        username: {{slack-username}}
+        icon_url: {{slack-icon-url}}
+
+resources:
+- name: aws-broker-app
+  type: git
+  source:
+    uri: {{aws-broker-url}}
+    branch: {{aws-broker-branch}}
+
+- name: deploy-aws-broker-app
+  type: cf
+  source:
+    api: {{cf-api-url}}
+    username: {{cf-deploy-username}}
+    password: {{cf-deploy-password}}
+    organization: {{cf-organization}}
+    space: {{cf-space}}
+    skip_cert_check: false
+
+- name: slack
+  type: slack-notification
+  source:
+    url: {{slack-webhook-url}}
