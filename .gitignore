@@ -3,6 +3,5 @@ gin-bin
 aws-broker
 .DS_Store
 secrets.yml
-Godeps/_workspace/
 ci/credentials.yml
 *.swp
