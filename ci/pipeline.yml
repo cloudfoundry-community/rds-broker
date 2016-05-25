@@ -44,6 +44,14 @@ jobs:
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
 
+  - task: update_broker
+    file: aws-broker-app/update_broker.yml
+    params:
+      BROKER_NAME: aws-broker
+      BROKER_URL: https://aws-broker.apps.cloud.gov
+      AUTH_PASS: {{auth-pass}}
+      AUTH_USER: {{auth-user}}
+
 resources:
 - name: aws-broker-app
   type: git
