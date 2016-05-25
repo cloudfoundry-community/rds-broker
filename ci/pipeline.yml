@@ -2,27 +2,28 @@
 jobs:
 - name: push-aws-broker
   plan:
-  - aggregate:
-    - get: aws-broker-app
-      trigger: true
+  - get: aws-broker-app
+    trigger: true
+  - task: run_tests
+    file: aws-broker-app/ci/run_tests.yml
   - put: deploy-aws-broker-app
     params:
       manifest: aws-broker-app/manifest.yml
       path: aws-broker-app
       current_app_name: aws-broker
       environment_variables:
-        AUTH_PASS: {{ auth-pass }}
-        AUTH_USER: {{ auth-user }}
-        AWS_ACCESS_KEY_ID: {{ aws-access-key-id }}
-        AWS_SECRET_ACCESS_KEY: {{ aws-secret-access-key }}
-        DB_NAME: {{ db-name }}
-        DB_PASS: {{ db-pass }}
-        DB_PORT: {{ db-port }}
-        DB_SSLMODE: {{ db-sslmode }}
-        DB_TYPE: {{ db-type }}
-        DB_URL: {{ db-url }}
-        DB_USER: {{ db-user }}
-        ENC_KEY: {{ enc-key }}
+        AUTH_PASS: {{auth-pass}}
+        AUTH_USER: {{auth-user}}
+        AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+        AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+        DB_NAME: {{db-name}}
+        DB_PASS: {{db-pass}}
+        DB_PORT: {{db-port}}
+        DB_SSLMODE: {{db-sslmode}}
+        DB_TYPE: {{db-type}}
+        DB_URL: {{db-url}}
+        DB_USER: {{db-user}}
+        ENC_KEY: {{enc-key}}
 
     on_failure:
       put: slack
