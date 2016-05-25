@@ -1,18 +1,5 @@
 ---
 applications:
 - name: aws-broker
+  buildpack: go_buildpack
   memory: 256M
-  buildpack: https://github.com/cloudfoundry/go-buildpack#v1.7.0
-  env:
-    AUTH_USER: user
-    AUTH_PASS: pass
-    DB_URL: 10.244.0.30
-    DB_NAME: rdsbroker
-    DB_USER: rds
-    DB_PASS: rds
-    DB_PORT: 5524
-    DB_TYPE: postgres
-    DB_SSLMODE: verify-ca
-    ENC_KEY: "12345678901234567890123456789012"
-    AWS_ACCESS_KEY_ID: AKID1234567890
-    AWS_SECRET_ACCESS_KEY: MY-SECRET-KEY

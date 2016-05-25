@@ -22,4 +22,5 @@ build:
     - script:
         name: godep go test
         code: |
+          cp secrets-test.yml secrets.yml
           godep go test ./...
