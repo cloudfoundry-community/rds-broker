@@ -6,8 +6,10 @@ jobs:
     - get: aws-broker-app
       trigger: true
     - get: pipeline-tasks
+
   - task: run_tests
     file: aws-broker-app/ci/run_tests.yml
+
   - task: provision-rds
     file: pipeline-tasks/terraform-apply.yml
     input_mapping:
@@ -19,22 +21,42 @@ jobs:
       AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
       AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{aws-default-region}}
+
       TF_VAR_stack_description: {{stack-name}}
-      TF_VAR_rds_instance_type: {{rds-instance-type}}
-      TF_VAR_rds_db_size: {{rds-db-size}}
-      TF_VAR_rds_db_name: {{rds-db-name}}
-      TF_VAR_rds_db_engine: {{rds-db-engine}}
-      TF_VAR_rds_db_engine_version: {{rds-db-engine-version}}
-      TF_VAR_rds_username: {{rds-username}}
-      TF_VAR_rds_password: {{rds-password}}
       TF_VAR_rds_subnet_group: {{rds-subnet-group}}
       TF_VAR_rds_security_groups: {{rds-security-groups}}
+
+      TF_VAR_rds_internal_instance_type: {{rds-internal-instance-type}}
+      TF_VAR_rds_internal_db_size: {{rds-internal-db-size}}
+      TF_VAR_rds_internal_db_name: {{rds-internal-db-name}}
+      TF_VAR_rds_internal_db_engine: {{rds-internal-db-engine}}
+      TF_VAR_rds_internal_db_engine_version: {{rds-internal-db-engine-version}}
+      TF_VAR_rds_internal_username: {{rds-internal-username}}
+      TF_VAR_rds_internal_password: {{rds-internal-password}}
+
+      TF_VAR_rds_shared_mysql_instance_type: {{rds-shared-mysql-instance-type}}
+      TF_VAR_rds_shared_mysql_db_size: {{rds-shared-mysql-db-size}}
+      TF_VAR_rds_shared_mysql_db_name: {{rds-shared-mysql-db-name}}
+      TF_VAR_rds_shared_mysql_db_engine: {{rds-shared-mysql-db-engine}}
+      TF_VAR_rds_shared_mysql_db_engine_version: {{rds-shared-mysql-db-engine-version}}
+      TF_VAR_rds_shared_mysql_username: {{rds-shared-mysql-username}}
+      TF_VAR_rds_shared_mysql_password: {{rds-shared-mysql-password}}
+
+      TF_VAR_rds_shared_postgres_instance_type: {{rds-shared-postgres-instance-type}}
+      TF_VAR_rds_shared_postgres_db_size: {{rds-shared-postgres-db-size}}
+      TF_VAR_rds_shared_postgres_db_name: {{rds-shared-postgres-db-name}}
+      TF_VAR_rds_shared_postgres_db_engine: {{rds-shared-postgres-db-engine}}
+      TF_VAR_rds_shared_postgres_db_engine_version: {{rds-shared-postgres-db-engine-version}}
+      TF_VAR_rds_shared_postgres_username: {{rds-shared-postgres-username}}
+      TF_VAR_rds_shared_postgres_password: {{rds-shared-postgres-password}}
+
   - task: build-manifest
     file: aws-broker-app/ci/build-manifest.yml
     params:
       BASE_FILE: aws-broker-app/manifest.yml
       STATE_FILE: terraform-state/terraform.tfstate
       OUTPUT_FILE: manifest-built/manifest.yml
+
   - put: deploy-aws-broker-app
     params:
       manifest: manifest-built/manifest.yml
@@ -46,10 +68,10 @@ jobs:
         AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
         AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
         DB_SSLMODE: {{rds-db-sslmode}}
-        DB_USER: {{rds-username}}
-        DB_PASS: {{rds-password}}
-        DB_TYPE: {{rds-db-engine}}
-        DB_NAME: {{rds-db-name}}
+        DB_USER: {{rds-internal-username}}
+        DB_PASS: {{rds-internal-password}}
+        DB_TYPE: {{rds-internal-db-engine}}
+        DB_NAME: {{rds-internal-db-name}}
         ENC_KEY: {{enc-key}}
 
     on_failure:
