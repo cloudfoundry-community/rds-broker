@@ -2,13 +2,49 @@
 jobs:
 - name: push-aws-broker
   plan:
-  - get: aws-broker-app
-    trigger: true
+  - aggregate:
+    - get: aws-broker-app
+      trigger: true
+    - get: pipeline-tasks
   - task: run_tests
     file: aws-broker-app/ci/run_tests.yml
+  - task: provision-rds
+    file: pipeline-tasks/terraform-apply.yml
+    params:
+      TEMPLATE_DIR: aws-broker-app/ci/terraform
+      STACK_NAME: {{stack-name}}
+      S3_TFSTATE_BUCKET: {{s3-tfstate-bucket}}
+      AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
+      AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
+      AWS_DEFAULT_REGION: {{aws-default-region}}
+      TF_VAR_stack_description: {{stack-name}}
+      TF_VAR_rds_instance_type: {{rds-instance-type}}
+      TF_VAR_rds_db_size: {{rds-db-size}}
+      TF_VAR_rds_db_name: {{rds-db-name}}
+      TF_VAR_rds_db_engine: {{rds-db-engine}}
+      TF_VAR_rds_db_engine_version: {{rds-db-engine-version}}
+      TF_VAR_rds_username: {{rds_username}}
+      TF_VAR_rds_password: {{rds-password}}
+      TF_VAR_rds_subnet_group: {{rds-subnet-group}}
+      TF_VAR_rds_security_groups: {{rds-security-groups}}
+  - task: write-manifest-env
+    file: aws-broker-app/ci/write-manifest-env.yml
+    params:
+      STATE_FILE: terraform-state/terraform.tfstate
+      OUTPUT_FILE: manifest-env/manifest-env.yml
+  - task: merge-manifest
+    file: pipeline-tasks/spiff-merge.yml
+    config:
+      inputs:
+        - name: pipeline-tasks
+        - name: manifest-env
+    params:
+      SOURCE_FILE: aws-broker-app/manifest.yml
+      MERGE_FILE: manifest-env/manifest-env.yml
+      OUTPUT_FILE: spiff-merge/manifest-merged.yml
   - put: deploy-aws-broker-app
     params:
-      manifest: aws-broker-app/manifest.yml
+      manifest: spiff-merge/manifest-merged.yml
       path: aws-broker-app
       current_app_name: aws-broker
       environment_variables:
@@ -16,12 +52,7 @@ jobs:
         AUTH_USER: {{auth-user}}
         AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
         AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-        DB_NAME: {{db-name}}
-        DB_PASS: {{db-pass}}
-        DB_PORT: {{db-port}}
         DB_SSLMODE: {{db-sslmode}}
-        DB_TYPE: {{db-type}}
-        DB_URL: {{db-url}}
         DB_USER: {{db-user}}
         ENC_KEY: {{enc-key}}
 
@@ -45,6 +76,12 @@ jobs:
         icon_url: {{slack-icon-url}}
 
 resources:
+- name: pipeline-tasks
+  type: git
+  source:
+    uri: {{pipeline-tasks-git-url}}
+    branch: {{pipeline-tasks-git-branch}}
+
 - name: aws-broker-app
   type: git
   source:
