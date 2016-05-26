@@ -25,28 +25,19 @@ jobs:
       TF_VAR_rds_db_name: {{rds-db-name}}
       TF_VAR_rds_db_engine: {{rds-db-engine}}
       TF_VAR_rds_db_engine_version: {{rds-db-engine-version}}
-      TF_VAR_rds_username: {{rds_username}}
+      TF_VAR_rds_username: {{rds-username}}
       TF_VAR_rds_password: {{rds-password}}
       TF_VAR_rds_subnet_group: {{rds-subnet-group}}
       TF_VAR_rds_security_groups: {{rds-security-groups}}
-  - task: write-manifest-env
-    file: aws-broker-app/ci/write-manifest-env.yml
+  - task: build-manifest
+    file: aws-broker-app/ci/build-manifest.yml
     params:
+      BASE_FILE: aws-broker-app/manifest.yml
       STATE_FILE: terraform-state/terraform.tfstate
-      OUTPUT_FILE: manifest-env/manifest-env.yml
-  - task: merge-manifest
-    file: pipeline-tasks/spiff-merge.yml
-    config:
-      inputs:
-        - name: pipeline-tasks
-        - name: manifest-env
-    params:
-      SOURCE_FILE: aws-broker-app/manifest.yml
-      MERGE_FILE: manifest-env/manifest-env.yml
-      OUTPUT_FILE: spiff-merge/manifest-merged.yml
+      OUTPUT_FILE: manifest-built/manifest.yml
   - put: deploy-aws-broker-app
     params:
-      manifest: spiff-merge/manifest-merged.yml
+      manifest: manifest-built/manifest.yml
       path: aws-broker-app
       current_app_name: aws-broker
       environment_variables:
@@ -54,8 +45,11 @@ jobs:
         AUTH_USER: {{auth-user}}
         AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
         AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-        DB_SSLMODE: {{db-sslmode}}
-        DB_USER: {{db-user}}
+        DB_SSLMODE: {{rds-db-sslmode}}
+        DB_USER: {{rds-username}}
+        DB_PASS: {{rds-password}}
+        DB_TYPE: {{rds-db-engine}}
+        DB_NAME: {{rds-db-name}}
         ENC_KEY: {{enc-key}}
 
     on_failure:

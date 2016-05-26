@@ -1,7 +1,5 @@
 ---
 applications:
-- name: aws-broker
+- name: aws-broker-staging
   buildpack: go_buildpack
   memory: 256M
-env:
-  <<: (( env ))

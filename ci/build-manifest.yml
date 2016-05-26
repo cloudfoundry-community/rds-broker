@@ -11,7 +11,7 @@ inputs:
   - name: terraform-state
 
 outputs:
-  - name: manifest-env
+  - name: manifest-built
 
 run:
-  path: aws-broker-app/ci/write-manifest-env.sh
+  path: aws-broker-app/ci/build-manifest.sh
