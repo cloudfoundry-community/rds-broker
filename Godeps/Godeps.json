@@ -179,6 +179,16 @@
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "f7716cbe52baa25d2e9b0d0da546fcf909fc16b4"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/go-ini/ini",
+			"Comment": "v1.1.26-6-g95f7f7c",
+			"Rev": "95f7f7cde38ddb26cafde0dddffca99e1950d5ec"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/jmespath/go-jmespath",
+			"Comment": "v1.1.26-6-g95f7f7c",
+			"Rev": "95f7f7cde38ddb26cafde0dddffca99e1950d5ec"
 		}
 	]
 }
