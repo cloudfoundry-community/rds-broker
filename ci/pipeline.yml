@@ -10,8 +10,10 @@ jobs:
     file: aws-broker-app/ci/run_tests.yml
   - task: provision-rds
     file: pipeline-tasks/terraform-apply.yml
+    input_mapping:
+      terraform-templates: aws-broker-app
     params:
-      TEMPLATE_DIR: aws-broker-app/ci/terraform
+      TEMPLATE_SUBDIR: ci/terraform
       STACK_NAME: {{stack-name}}
       S3_TFSTATE_BUCKET: {{s3-tfstate-bucket}}
       AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
