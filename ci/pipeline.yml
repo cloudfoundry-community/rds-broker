@@ -53,14 +53,20 @@ jobs:
   - task: build-manifest
     file: aws-broker-app/ci/build-manifest.yml
     params:
-      BASE_FILE: aws-broker-app/manifest.yml
       STATE_FILE: terraform-state/terraform.tfstate
-      OUTPUT_FILE: manifest-built/manifest.yml
+      RDS_SUBNET_GROUP: {{rds-subnet-group}}
+      RDS_SECURITY_GROUPS: {{rds-security-groups}}
+      RDS_SHARED_MYSQL_NAME: {{rds-shared-mysql-db-name}}
+      RDS_SHARED_MYSQL_USERNAME: {{rds-shared-mysql-username}}
+      RDS_SHARED_MYSQL_PASSWORD: {{rds-shared-mysql-password}}
+      RDS_SHARED_POSTGRES_NAME: {{rds-shared-postgres-db-name}}
+      RDS_SHARED_POSTGRES_USERNAME: {{rds-shared-postgres-username}}
+      RDS_SHARED_POSTGRES_PASSWORD: {{rds-shared-postgres-password}}
 
   - put: deploy-aws-broker-app
     params:
-      manifest: manifest-built/manifest.yml
-      path: aws-broker-app
+      manifest: built/manifest.yml
+      path: built
       current_app_name: aws-broker
       environment_variables:
         AUTH_PASS: {{auth-pass}}

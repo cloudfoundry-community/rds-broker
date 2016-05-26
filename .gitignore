@@ -1,7 +1,8 @@
 .env
 gin-bin
 aws-broker
-.DS_Store
 secrets.yml
+catalog.yml
 ci/credentials.yml
+.DS_Store
 *.swp
