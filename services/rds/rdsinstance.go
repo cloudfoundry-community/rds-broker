@@ -11,7 +11,7 @@ import (
 	"github.com/18F/aws-broker/config"
 	"github.com/18F/aws-broker/helpers"
 	"strconv"
-	"strings"
+	"regexp"
 )
 
 // RDSInstance represents the information of a RDS Service instance.
@@ -32,6 +32,11 @@ type RDSInstance struct {
 	Adapter string `sql:"size(255)"`
 
 	DbType string `sql:"size(255)"`
+}
+
+func (i *RDSInstance) FormatName() string {
+	re, _ := regexp.Compile("(i?)[^a-z0-9]")
+	return re.ReplaceAllString(i.Database, "")
 }
 
 func (i *RDSInstance) setPassword(password, key string) error {
@@ -77,7 +82,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			password,
 			i.Host,
 			i.Port,
-			strings.Replace(i.Database, "-", "", -1))
+			i.FormatName())
 
 		credentials = map[string]string{
 			"uri":      uri,
@@ -85,7 +90,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			"password": password,
 			"host":     i.Host,
 			"port":     strconv.FormatInt(i.Port, 10),
-			"db_name":  strings.Replace(i.Database, "-", "", -1),
+			"db_name":  i.FormatName(),
 		}
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)

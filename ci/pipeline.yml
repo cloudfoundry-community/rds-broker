@@ -54,6 +54,7 @@ jobs:
     file: aws-broker-app/ci/build-manifest.yml
     params:
       STATE_FILE: terraform-state/terraform.tfstate
+      ENVIRONMENT: {{environment}}
       RDS_SUBNET_GROUP: {{rds-subnet-group}}
       RDS_SECURITY_GROUPS: {{rds-security-groups}}
       RDS_SHARED_MYSQL_NAME: {{rds-shared-mysql-db-name}}
@@ -103,25 +104,40 @@ jobs:
   - task: update-broker
     file: aws-broker-app/ci/update-broker.yml
     params:
-      CF_API_URL: {{cf-api-url}}
-      CF_DEPLOY_USERNAME: {{cf-deploy-username}}
-      CF_DEPLOY_PASSWORD: {{cf-deploy-password}}
-      CF_ORGANIZATION: {{cf-organization}}
-      CF_SPACE: {{cf-space}}
+      <<: *cf-creds
       BROKER_NAME: {{broker-name}}
       AUTH_PASS: {{auth-pass}}
       AUTH_USER: {{auth-user}}
-      PLAN_NAME: rds
+      PLAN_NAME: aws-rds
 
-  - task: smoke-tests
-    file: aws-broker-app/ci/run-smoke-tests.yml
-    params:
-      CF_API_URL: {{cf-api-url}}
-      CF_DEPLOY_USERNAME: {{cf-deploy-username}}
-      CF_DEPLOY_PASSWORD: {{cf-deploy-password}}
-      CF_ORGANIZATION: {{cf-organization}}
-      CF_SPACE: {{cf-space}}
-      SERVICE_PLAN: micro-psql
+  - aggregate:
+    - task: smoke-tests-postgres
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *cf-creds
+        SERVICE_PLAN: micro-psql
+        DB_TYPE: postgres
+
+    - task: smoke-tests-shared-postgres
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *cf-creds
+        SERVICE_PLAN: shared-psql
+        DB_TYPE: postgres
+
+    - task: smoke-tests-mysql
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *cf-creds
+        SERVICE_PLAN: micro-mysql
+        DB_TYPE: mysql
+
+    - task: smoke-tests-shared-mysql
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *cf-creds
+        SERVICE_PLAN: shared-mysql
+        DB_TYPE: mysql
 
 resources:
 - name: pipeline-tasks
@@ -150,3 +166,10 @@ resources:
   type: slack-notification
   source:
     url: {{slack-webhook-url}}
+
+cf-creds: &cf-creds
+  CF_API_URL: {{cf-api-url}}
+  CF_DEPLOY_USERNAME: {{cf-deploy-username}}
+  CF_DEPLOY_PASSWORD: {{cf-deploy-password}}
+  CF_ORGANIZATION: {{cf-organization}}
+  CF_SPACE: {{cf-space}}

@@ -15,6 +15,7 @@ EOF
 # Build secrets for merging into templates
 cat << EOF > built/credentials.yml
 meta:
+  environment: $ENVIRONMENT
   aws_broker:
     subnet_group: $RDS_SUBNET_GROUP
     security_group: $RDS_SECURITY_GROUPS

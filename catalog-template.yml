@@ -1,9 +1,10 @@
 meta:
+  environment: (( merge ))
   aws_broker: (( merge ))
 
 rds:
-  id: "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593"
-  name: "rds"
+  id: "ec0fd2fa-2aff-49ce-97f4-518d6937e365"
+  name: "aws-rds"
   description: "RDS Database Broker"
   bindable: true
   tags:
@@ -20,7 +21,7 @@ rds:
     supportUrl:
   plans:
     -
-      id: "44d24fc7-f7a4-4ac1-b7a0-de82836e89a3"
+      id: "1bbd9c4f-adb8-43dc-bbec-ab0315bcb14e"
       name: "shared-psql"
       description: "Shared infrastructure for Postgres DB"
       metadata:
@@ -39,11 +40,11 @@ rds:
       securityGroup: (( meta.aws_broker.security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
-        environment: "cf-env"
-        client: "the client"
+        environment: (( meta.environment ))
+        client: "paas-cf"
         service: "aws-broker"
     -
-      id: "da91e15c-98c9-46a9-b114-02b8d28062c6"
+      id: "52bf678a-43f6-4c0f-961a-bc5009d874a6"
       name: "micro-psql"
       description: "Dedicated Micro RDS Postgres DB Instance"
       metadata:
@@ -63,11 +64,11 @@ rds:
       securityGroup: (( meta.aws_broker.security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
-        environment: "cf-env"
-        client: "the client"
+        environment: (( meta.environment ))
+        client: "paas-cf"
         service: "aws-broker"
     -
-      id: "332e0168-6969-4bd7-b07f-29f08c4bf78e"
+      id: "ee75aef3-7697-4906-9330-fb1f83d719be"
       name: "medium-psql"
       description: "Dedicated Medium RDS Postgres DB Instance"
       metadata:
@@ -87,11 +88,11 @@ rds:
       securityGroup: (( meta.aws_broker.security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
-        environment: "cf-env"
-        client: "the client"
+        environment: (( meta.environment ))
+        client: "paas-cf"
         service: "aws-broker"
     -
-      id: "44d24fc7-f7a4-4ac1-b7a0-de82836e89a4"
+      id: "57dd4bf0-465b-4e11-838d-2142caa6d763"
       name: "shared-mysql"
       description: "Shared infrastructure for MySQL DB"
       metadata:
@@ -110,11 +111,11 @@ rds:
       securityGroup: (( meta.aws_broker.security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
-        environment: "cf-env"
-        client: "the client"
+        environment: (( meta.environment ))
+        client: "paas-cf"
         service: "aws-broker"
     -
-      id: "da91e15c-98c9-46a9-b114-02b8d28062c7"
+      id: "f35bc854-e393-41ed-825e-7f66a6118dfa"
       name: "micro-mysql"
       description: "Dedicated Micro RDS Postgres DB Instance"
       metadata:
@@ -134,11 +135,11 @@ rds:
       securityGroup: (( meta.aws_broker.security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
-        environment: "cf-env"
-        client: "the client"
+        environment: (( meta.environment ))
+        client: "paas-cf"
         service: "aws-broker"
     -
-      id: "332e0168-6969-4bd7-b07f-29f08c4bf78d"
+      id: "30e19cab-8d4e-492a-ac2c-33dd59d436d8"
       name: "medium-mysql"
       description: "Dedicated Medium RDS MySQL DB Instance"
       metadata:
@@ -158,6 +159,6 @@ rds:
       securityGroup: (( meta.aws_broker.security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
-        environment: "cf-env"
-        client: "the client"
+        environment: (( meta.environment ))
+        client: "paas-cf"
         service: "aws-broker"
