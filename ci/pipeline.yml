@@ -100,13 +100,18 @@ jobs:
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
 
-  - task: update_broker
-    file: aws-broker-app/update_broker.yml
+  - task: update-broker
+    file: aws-broker-app/ci/update-broker.yml
     params:
-      BROKER_NAME: aws-broker
-      BROKER_URL: https://aws-broker.apps.cloud.gov
+      CF_API_URL: {{cf-api-url}}
+      CF_DEPLOY_USERNAME: {{cf-deploy-username}}
+      CF_DEPLOY_PASSWORD: {{cf-deploy-password}}
+      CF_ORGANIZATION: {{cf-organization}}
+      CF_SPACE: {{cf-space}}
+      BROKER_NAME: {{broker-name}}
       AUTH_PASS: {{auth-pass}}
       AUTH_USER: {{auth-user}}
+      PLAN_NAME: rds
 
 resources:
 - name: pipeline-tasks

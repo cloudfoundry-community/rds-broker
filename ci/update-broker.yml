@@ -10,4 +10,4 @@ inputs:
   - name: aws-broker-app
 
 run:
-  path: aws-broker-app/ci/update_broker.sh
+  path: aws-broker-app/ci/update-broker.sh
