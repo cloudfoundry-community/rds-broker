@@ -1,0 +1,8 @@
+---
+applications:
+  - name: smoke-tests
+    buildpack: binary_buildpack
+    command: ./smoke-tests.sh
+    services:
+      - rds-smoke-test
+    no-route: true

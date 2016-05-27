@@ -113,6 +113,16 @@ jobs:
       AUTH_USER: {{auth-user}}
       PLAN_NAME: rds
 
+  - task: smoke-tests
+    file: aws-broker-app/ci/run-smoke-tests.yml
+    params:
+      CF_API_URL: {{cf-api-url}}
+      CF_DEPLOY_USERNAME: {{cf-deploy-username}}
+      CF_DEPLOY_PASSWORD: {{cf-deploy-password}}
+      CF_ORGANIZATION: {{cf-organization}}
+      CF_SPACE: {{cf-space}}
+      SERVICE_PLAN: micro-psql
+
 resources:
 - name: pipeline-tasks
   type: git
