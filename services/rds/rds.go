@@ -10,6 +10,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"errors"
+	"strings"
 	"fmt"
 	"log"
 )
@@ -121,7 +122,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		// Instance class is defined by the plan
 		DBInstanceClass:         &d.InstanceClass,
 		DBInstanceIdentifier:    &i.Database,
-		DBName:                  &i.Database,
+		DBName:                  aws.String(strings.Replace(i.Database, "-", "", -1)),
 		Engine:                  aws.String(i.DbType),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,

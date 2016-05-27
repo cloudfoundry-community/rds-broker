@@ -69,6 +69,7 @@ jobs:
       path: built
       current_app_name: aws-broker
       environment_variables:
+        DB_PREFIX: {{db-name-prefix}}
         AUTH_PASS: {{auth-pass}}
         AUTH_USER: {{auth-user}}
         AWS_ACCESS_KEY_ID: {{aws-access-key-id}}

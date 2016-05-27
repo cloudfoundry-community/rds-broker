@@ -11,6 +11,7 @@ import (
 // Settings stores settings used to run the application
 type Settings struct {
 	EncryptionKey string
+	DbNamePrefix  string
 	DbConfig      *common.DBConfig
 	Environment   string
 }
@@ -47,6 +48,11 @@ func (s *Settings) LoadFromEnv() error {
 	s.EncryptionKey = os.Getenv("ENC_KEY")
 	if s.EncryptionKey == "" {
 		return errors.New("An encryption key is required")
+	}
+
+	s.DbNamePrefix = os.Getenv("DB_PREFIX")
+	if s.DbNamePrefix == "" {
+		s.DbNamePrefix = "db"
 	}
 
 	// Set env to production
