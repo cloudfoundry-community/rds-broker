@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"github.com/18F/aws-broker/common"
 	"log"
 	"os"
@@ -28,6 +29,13 @@ func (s *Settings) LoadFromEnv() error {
 	dbConfig.DbName = os.Getenv("DB_NAME")
 	if dbConfig.Sslmode = os.Getenv("DB_SSLMODE"); dbConfig.Sslmode == "" {
 		dbConfig.Sslmode = "require"
+	}
+
+	// Ensure AWS credentials exist in environment
+	for _, key := range []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"} {
+		if os.Getenv(key) == "" {
+			return fmt.Errorf("Must set environment variable %s", key)
+		}
 	}
 
 	if os.Getenv("DB_PORT") != "" {
