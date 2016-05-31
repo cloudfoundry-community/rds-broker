@@ -9,21 +9,20 @@ cf create-service aws-rds $SERVICE_PLAN rds-smoke-tests-$SERVICE_PLAN
 cat << EOF > aws-broker-app/ci/smoke-tests/manifest.yml
 ---
 applications:
-  - name: smoke-tests-$SERVICE_PLAN
-    buildpack: binary_buildpack
-    command: ./smoke-tests.sh
-    no-route: true
-    env:
-      DB_TYPE: $DB_TYPE
-    services:
-      - rds-smoke-tests-$SERVICE_PLAN
+- name: smoke-tests-$SERVICE_PLAN
+  buildpack: binary_buildpack
+  command: ./smoke-tests.sh
+  env:
+    DB_TYPE: $DB_TYPE
+  services:
+  - rds-smoke-tests-$SERVICE_PLAN
 EOF
 
 while true; do
-  if cf push -f aws-broker-app/ci/smoke-tests/manifest.yml -p aws-broker-app/ci/smoke-tests > out.txt ; then
+  if OUT=`cf push -f aws-broker-app/ci/smoke-tests/manifest.yml -p aws-broker-app/ci/smoke-tests` ; then
     break
   fi
-  if ! grep "Instance not available yet" out.txt ; then
+  if ! echo $OUT | grep "Instance not available yet" ; then
     cat out.txt
     exit 1
   fi

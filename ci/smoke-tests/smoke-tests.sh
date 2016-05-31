@@ -26,4 +26,4 @@ else
   exit 1
 fi
 
-sleep infinity
+python -m SimpleHTTPServer $PORT
