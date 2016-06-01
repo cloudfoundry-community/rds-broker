@@ -1,29 +1,230 @@
 ---
 jobs:
-- name: push-aws-broker
+- name: deploy-aws-broker-staging
   plan:
-  - get: aws-broker-app
-    trigger: true
+  - aggregate:
+    - get: aws-broker-app
+      trigger: true
+    - get: pipeline-tasks
+
   - task: run_tests
     file: aws-broker-app/ci/run_tests.yml
-  - put: deploy-aws-broker-app
+
+  - task: provision-rds
+    file: pipeline-tasks/terraform-apply.yml
+    input_mapping:
+      terraform-templates: aws-broker-app
     params:
-      manifest: aws-broker-app/manifest.yml
-      path: aws-broker-app
+      TEMPLATE_SUBDIR: ci/terraform
+      STACK_NAME: {{staging-stack-name}}
+      S3_TFSTATE_BUCKET: {{staging-s3-tfstate-bucket}}
+      AWS_ACCESS_KEY_ID: {{staging-aws-access-key-id}}
+      AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
+      AWS_DEFAULT_REGION: {{staging-aws-default-region}}
+
+      TF_VAR_stack_description: {{staging-stack-name}}
+      TF_VAR_rds_subnet_group: {{staging-rds-subnet-group}}
+      TF_VAR_rds_security_groups: {{staging-rds-security-groups}}
+
+      TF_VAR_rds_internal_instance_type: {{staging-rds-internal-instance-type}}
+      TF_VAR_rds_internal_db_size: {{staging-rds-internal-db-size}}
+      TF_VAR_rds_internal_db_name: {{staging-rds-internal-db-name}}
+      TF_VAR_rds_internal_db_engine: {{staging-rds-internal-db-engine}}
+      TF_VAR_rds_internal_db_engine_version: {{staging-rds-internal-db-engine-version}}
+      TF_VAR_rds_internal_username: {{staging-rds-internal-username}}
+      TF_VAR_rds_internal_password: {{staging-rds-internal-password}}
+
+      TF_VAR_rds_shared_mysql_instance_type: {{staging-rds-shared-mysql-instance-type}}
+      TF_VAR_rds_shared_mysql_db_size: {{staging-rds-shared-mysql-db-size}}
+      TF_VAR_rds_shared_mysql_db_name: {{staging-rds-shared-mysql-db-name}}
+      TF_VAR_rds_shared_mysql_db_engine: {{staging-rds-shared-mysql-db-engine}}
+      TF_VAR_rds_shared_mysql_db_engine_version: {{staging-rds-shared-mysql-db-engine-version}}
+      TF_VAR_rds_shared_mysql_username: {{staging-rds-shared-mysql-username}}
+      TF_VAR_rds_shared_mysql_password: {{staging-rds-shared-mysql-password}}
+
+      TF_VAR_rds_shared_postgres_instance_type: {{staging-rds-shared-postgres-instance-type}}
+      TF_VAR_rds_shared_postgres_db_size: {{staging-rds-shared-postgres-db-size}}
+      TF_VAR_rds_shared_postgres_db_name: {{staging-rds-shared-postgres-db-name}}
+      TF_VAR_rds_shared_postgres_db_engine: {{staging-rds-shared-postgres-db-engine}}
+      TF_VAR_rds_shared_postgres_db_engine_version: {{staging-rds-shared-postgres-db-engine-version}}
+      TF_VAR_rds_shared_postgres_username: {{staging-rds-shared-postgres-username}}
+      TF_VAR_rds_shared_postgres_password: {{staging-rds-shared-postgres-password}}
+
+  - task: build-manifest
+    file: aws-broker-app/ci/build-manifest.yml
+    params:
+      STATE_FILE: terraform-state/terraform.tfstate
+      ENVIRONMENT: {{staging-environment}}
+      RDS_SUBNET_GROUP: {{staging-rds-subnet-group}}
+      RDS_SECURITY_GROUPS: {{staging-rds-security-groups}}
+      RDS_SHARED_MYSQL_NAME: {{staging-rds-shared-mysql-db-name}}
+      RDS_SHARED_MYSQL_USERNAME: {{staging-rds-shared-mysql-username}}
+      RDS_SHARED_MYSQL_PASSWORD: {{staging-rds-shared-mysql-password}}
+      RDS_SHARED_POSTGRES_NAME: {{staging-rds-shared-postgres-db-name}}
+      RDS_SHARED_POSTGRES_USERNAME: {{staging-rds-shared-postgres-username}}
+      RDS_SHARED_POSTGRES_PASSWORD: {{staging-rds-shared-postgres-password}}
+
+  - put: deploy-aws-broker-staging
+    params:
+      manifest: built/manifest.yml
+      path: built
       current_app_name: aws-broker
       environment_variables:
-        AUTH_PASS: {{auth-pass}}
-        AUTH_USER: {{auth-user}}
-        AWS_ACCESS_KEY_ID: {{aws-access-key-id}}
-        AWS_SECRET_ACCESS_KEY: {{aws-secret-access-key}}
-        DB_NAME: {{db-name}}
-        DB_PASS: {{db-pass}}
-        DB_PORT: {{db-port}}
-        DB_SSLMODE: {{db-sslmode}}
-        DB_TYPE: {{db-type}}
-        DB_URL: {{db-url}}
-        DB_USER: {{db-user}}
-        ENC_KEY: {{enc-key}}
+        DB_PREFIX: {{staging-db-name-prefix}}
+        AUTH_PASS: {{staging-auth-pass}}
+        AUTH_USER: {{staging-auth-user}}
+        AWS_ACCESS_KEY_ID: {{staging-aws-access-key-id}}
+        AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
+        AWS_DEFAULT_REGION: {{staging-aws-default-region}}
+        DB_SSLMODE: {{staging-rds-db-sslmode}}
+        DB_USER: {{staging-rds-internal-username}}
+        DB_PASS: {{staging-rds-internal-password}}
+        DB_TYPE: {{staging-rds-internal-db-engine}}
+        DB_NAME: {{staging-rds-internal-db-name}}
+        ENC_KEY: {{staging-enc-key}}
+
+    on_failure:
+      put: slack
+      params:
+        text: |
+          :x: FAILED to deploy aws-broker on staging
+          <https://ci.cloud.gov/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+        channel: {{slack-channel}}
+        username: {{slack-username}}
+        icon_url: {{slack-icon-url}}
+    on_success:
+      put: slack
+      params:
+        text: |
+          :white_check_mark: Successfully deployed aws-broker on staging
+          <https://ci.cloud.gov/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+        channel: {{slack-channel}}
+        username: {{slack-username}}
+        icon_url: {{slack-icon-url}}
+
+  - task: update-broker
+    file: aws-broker-app/ci/update-broker.yml
+    params:
+      <<: *staging-cf-creds
+      BROKER_NAME: {{staging-broker-name}}
+      AUTH_PASS: {{staging-auth-pass}}
+      AUTH_USER: {{staging-auth-user}}
+      PLAN_NAME: aws-rds
+
+- name: acceptance-tests-staging
+  plan:
+  - get: aws-broker-app
+    passed: [deploy-aws-broker-staging]
+    trigger: true
+  - aggregate:
+    - task: smoke-tests-postgres
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *staging-cf-creds
+        SERVICE_PLAN: micro-psql
+        DB_TYPE: postgres
+
+    - task: smoke-tests-shared-postgres
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *staging-cf-creds
+        SERVICE_PLAN: shared-psql
+        DB_TYPE: postgres
+
+    - task: smoke-tests-mysql
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *staging-cf-creds
+        SERVICE_PLAN: micro-mysql
+        DB_TYPE: mysql
+
+    - task: smoke-tests-shared-mysql
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *staging-cf-creds
+        SERVICE_PLAN: shared-mysql
+        DB_TYPE: mysql
+
+- name: deploy-aws-broker-prod
+  plan:
+  - aggregate:
+    - get: aws-broker-app
+      passed: [acceptance-tests-staging]
+      trigger: true
+    - get: pipeline-tasks
+
+  - task: provision-rds
+    file: pipeline-tasks/terraform-apply.yml
+    input_mapping:
+      terraform-templates: aws-broker-app
+    params:
+      TEMPLATE_SUBDIR: ci/terraform
+      STACK_NAME: {{prod-stack-name}}
+      S3_TFSTATE_BUCKET: {{prod-s3-tfstate-bucket}}
+      AWS_ACCESS_KEY_ID: {{prod-aws-access-key-id}}
+      AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
+      AWS_DEFAULT_REGION: {{prod-aws-default-region}}
+
+      TF_VAR_stack_description: {{prod-stack-name}}
+      TF_VAR_rds_subnet_group: {{prod-rds-subnet-group}}
+      TF_VAR_rds_security_groups: {{prod-rds-security-groups}}
+
+      TF_VAR_rds_internal_instance_type: {{prod-rds-internal-instance-type}}
+      TF_VAR_rds_internal_db_size: {{prod-rds-internal-db-size}}
+      TF_VAR_rds_internal_db_name: {{prod-rds-internal-db-name}}
+      TF_VAR_rds_internal_db_engine: {{prod-rds-internal-db-engine}}
+      TF_VAR_rds_internal_db_engine_version: {{prod-rds-internal-db-engine-version}}
+      TF_VAR_rds_internal_username: {{prod-rds-internal-username}}
+      TF_VAR_rds_internal_password: {{prod-rds-internal-password}}
+
+      TF_VAR_rds_shared_mysql_instance_type: {{prod-rds-shared-mysql-instance-type}}
+      TF_VAR_rds_shared_mysql_db_size: {{prod-rds-shared-mysql-db-size}}
+      TF_VAR_rds_shared_mysql_db_name: {{prod-rds-shared-mysql-db-name}}
+      TF_VAR_rds_shared_mysql_db_engine: {{prod-rds-shared-mysql-db-engine}}
+      TF_VAR_rds_shared_mysql_db_engine_version: {{prod-rds-shared-mysql-db-engine-version}}
+      TF_VAR_rds_shared_mysql_username: {{prod-rds-shared-mysql-username}}
+      TF_VAR_rds_shared_mysql_password: {{prod-rds-shared-mysql-password}}
+
+      TF_VAR_rds_shared_postgres_instance_type: {{prod-rds-shared-postgres-instance-type}}
+      TF_VAR_rds_shared_postgres_db_size: {{prod-rds-shared-postgres-db-size}}
+      TF_VAR_rds_shared_postgres_db_name: {{prod-rds-shared-postgres-db-name}}
+      TF_VAR_rds_shared_postgres_db_engine: {{prod-rds-shared-postgres-db-engine}}
+      TF_VAR_rds_shared_postgres_db_engine_version: {{prod-rds-shared-postgres-db-engine-version}}
+      TF_VAR_rds_shared_postgres_username: {{prod-rds-shared-postgres-username}}
+      TF_VAR_rds_shared_postgres_password: {{prod-rds-shared-postgres-password}}
+
+  - task: build-manifest
+    file: aws-broker-app/ci/build-manifest.yml
+    params:
+      STATE_FILE: terraform-state/terraform.tfstate
+      ENVIRONMENT: {{prod-environment}}
+      RDS_SUBNET_GROUP: {{prod-rds-subnet-group}}
+      RDS_SECURITY_GROUPS: {{prod-rds-security-groups}}
+      RDS_SHARED_MYSQL_NAME: {{prod-rds-shared-mysql-db-name}}
+      RDS_SHARED_MYSQL_USERNAME: {{prod-rds-shared-mysql-username}}
+      RDS_SHARED_MYSQL_PASSWORD: {{prod-rds-shared-mysql-password}}
+      RDS_SHARED_POSTGRES_NAME: {{prod-rds-shared-postgres-db-name}}
+      RDS_SHARED_POSTGRES_USERNAME: {{prod-rds-shared-postgres-username}}
+      RDS_SHARED_POSTGRES_PASSWORD: {{prod-rds-shared-postgres-password}}
+
+  - put: deploy-aws-broker-prod
+    params:
+      manifest: built/manifest.yml
+      path: built
+      current_app_name: aws-broker
+      environment_variables:
+        DB_PREFIX: {{prod-db-name-prefix}}
+        AUTH_PASS: {{prod-auth-pass}}
+        AUTH_USER: {{prod-auth-user}}
+        AWS_ACCESS_KEY_ID: {{prod-aws-access-key-id}}
+        AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
+        AWS_DEFAULT_REGION: {{prod-aws-default-region}}
+        DB_SSLMODE: {{prod-rds-db-sslmode}}
+        DB_USER: {{prod-rds-internal-username}}
+        DB_PASS: {{prod-rds-internal-password}}
+        DB_TYPE: {{prod-rds-internal-db-engine}}
+        DB_NAME: {{prod-rds-internal-db-name}}
+        ENC_KEY: {{prod-enc-key}}
 
     on_failure:
       put: slack
@@ -44,24 +245,97 @@ jobs:
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
 
+  - task: update-broker
+    file: aws-broker-app/ci/update-broker.yml
+    params:
+      <<: *prod-cf-creds
+      BROKER_NAME: {{prod-broker-name}}
+      AUTH_PASS: {{prod-auth-pass}}
+      AUTH_USER: {{prod-auth-user}}
+      PLAN_NAME: aws-rds
+
+- name: acceptance-tests-prod
+  plan:
+  - get: aws-broker-app
+    passed: [deploy-aws-broker-prod]
+    trigger: true
+  - aggregate:
+    - task: smoke-tests-postgres
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *prod-cf-creds
+        SERVICE_PLAN: micro-psql
+        DB_TYPE: postgres
+
+    - task: smoke-tests-shared-postgres
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *prod-cf-creds
+        SERVICE_PLAN: shared-psql
+        DB_TYPE: postgres
+
+    - task: smoke-tests-mysql
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *prod-cf-creds
+        SERVICE_PLAN: micro-mysql
+        DB_TYPE: mysql
+
+    - task: smoke-tests-shared-mysql
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *prod-cf-creds
+        SERVICE_PLAN: shared-mysql
+        DB_TYPE: mysql
+
 resources:
+- name: pipeline-tasks
+  type: git
+  source:
+    uri: {{pipeline-tasks-git-url}}
+    branch: {{pipeline-tasks-git-branch}}
+
 - name: aws-broker-app
   type: git
   source:
     uri: {{aws-broker-url}}
     branch: {{aws-broker-branch}}
 
-- name: deploy-aws-broker-app
+- name: deploy-aws-broker-staging
   type: cf
   source:
-    api: {{cf-api-url}}
-    username: {{cf-deploy-username}}
-    password: {{cf-deploy-password}}
-    organization: {{cf-organization}}
-    space: {{cf-space}}
+    api: {{staging-cf-api-url}}
+    username: {{staging-cf-deploy-username}}
+    password: {{staging-cf-deploy-password}}
+    organization: {{staging-cf-organization}}
+    space: {{staging-cf-space}}
+    skip_cert_check: false
+
+- name: deploy-aws-broker-prod
+  type: cf
+  source:
+    api: {{prod-cf-api-url}}
+    username: {{prod-cf-deploy-username}}
+    password: {{prod-cf-deploy-password}}
+    organization: {{prod-cf-organization}}
+    space: {{prod-cf-space}}
     skip_cert_check: false
 
 - name: slack
   type: slack-notification
   source:
     url: {{slack-webhook-url}}
+
+staging-cf-creds: &staging-cf-creds
+  CF_API_URL: {{staging-cf-api-url}}
+  CF_DEPLOY_USERNAME: {{staging-cf-deploy-username}}
+  CF_DEPLOY_PASSWORD: {{staging-cf-deploy-password}}
+  CF_ORGANIZATION: {{staging-cf-organization}}
+  CF_SPACE: {{staging-cf-space}}
+
+prod-cf-creds: &prod-cf-creds
+  CF_API_URL: {{prod-cf-api-url}}
+  CF_DEPLOY_USERNAME: {{prod-cf-deploy-username}}
+  CF_DEPLOY_PASSWORD: {{prod-cf-deploy-password}}
+  CF_ORGANIZATION: {{prod-cf-organization}}
+  CF_SPACE: {{prod-cf-space}}

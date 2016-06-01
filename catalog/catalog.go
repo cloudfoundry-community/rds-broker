@@ -136,7 +136,7 @@ func (c *Catalog) GetResources() Resources {
 // defined in the catalog.yaml configuration file and returns a pointer to that catalog
 func InitCatalog(path string) *Catalog {
 	var catalog Catalog
-	catalogFile := filepath.Join(path, "catalog.yaml")
+	catalogFile := filepath.Join(path, "catalog.yml")
 	data, err := ioutil.ReadFile(catalogFile)
 	if err != nil {
 		log.Fatalf("error: %v", err)

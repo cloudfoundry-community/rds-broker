@@ -11,6 +11,7 @@ import (
 	"github.com/18F/aws-broker/config"
 	"github.com/18F/aws-broker/helpers"
 	"strconv"
+	"regexp"
 )
 
 // RDSInstance represents the information of a RDS Service instance.
@@ -31,6 +32,11 @@ type RDSInstance struct {
 	Adapter string `sql:"size(255)"`
 
 	DbType string `sql:"size(255)"`
+}
+
+func (i *RDSInstance) FormatName() string {
+	re, _ := regexp.Compile("(i?)[^a-z0-9]")
+	return re.ReplaceAllString(i.Database, "")
 }
 
 func (i *RDSInstance) setPassword(password, key string) error {
@@ -76,7 +82,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			password,
 			i.Host,
 			i.Port,
-			i.Database)
+			i.FormatName())
 
 		credentials = map[string]string{
 			"uri":      uri,
@@ -84,7 +90,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			"password": password,
 			"host":     i.Host,
 			"port":     strconv.FormatInt(i.Port, 10),
-			"db_name":  i.Database,
+			"db_name":  i.FormatName(),
 		}
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
@@ -108,7 +114,7 @@ func (i *RDSInstance) init(uuid string,
 	i.Adapter = plan.Adapter
 
 	// Build random values
-	i.Database = "db" + helpers.RandStr(15)
+	i.Database = s.DbNamePrefix + helpers.RandStr(15)
 	i.Username = "u" + helpers.RandStr(15)
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)

@@ -49,21 +49,22 @@ type sharedDBAdapter struct {
 }
 
 func (d *sharedDBAdapter) createDB(i *RDSInstance, password string) (base.InstanceState, error) {
+	dbName := i.FormatName()
 	switch i.DbType {
 	case "postgres":
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", dbName)); db.Error != nil {
 			return base.InstanceNotCreated, db.Error
 		}
 		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE USER %s WITH PASSWORD '%s';", i.Username, password)); db.Error != nil {
 			// TODO. Revert CREATE DATABASE.
 			return base.InstanceNotCreated, db.Error
 		}
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s;", i.Database, i.Username)); db.Error != nil {
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL PRIVILEGES ON DATABASE %s TO %s;", dbName, i.Username)); db.Error != nil {
 			// TODO. Revert CREATE DATABASE and CREATE USER.
 			return base.InstanceNotCreated, db.Error
 		}
 	case "mysql":
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", i.Database)); db.Error != nil {
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", dbName)); db.Error != nil {
 			return base.InstanceNotCreated, db.Error
 		}
 		// Double % escapes to one %.
@@ -72,7 +73,7 @@ func (d *sharedDBAdapter) createDB(i *RDSInstance, password string) (base.Instan
 			return base.InstanceNotCreated, db.Error
 		}
 		// Double % escapes to one %.
-		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL ON %s.* TO '%s'@'%%';", i.Database, i.Username)); db.Error != nil {
+		if db := d.SharedDbConn.Exec(fmt.Sprintf("GRANT ALL ON %s.* TO '%s'@'%%';", dbName, i.Username)); db.Error != nil {
 			// TODO. Revert CREATE DATABASE and CREATE USER.
 			return base.InstanceNotCreated, db.Error
 		}
@@ -87,7 +88,7 @@ func (d *sharedDBAdapter) bindDBToApp(i *RDSInstance, password string) (map[stri
 }
 
 func (d *sharedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error) {
-	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.Database)); db.Error != nil {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.FormatName())); db.Error != nil {
 		return base.InstanceNotGone, db.Error
 	}
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP USER %s;", i.Username)); db.Error != nil {
@@ -121,7 +122,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		// Instance class is defined by the plan
 		DBInstanceClass:         &d.InstanceClass,
 		DBInstanceIdentifier:    &i.Database,
-		DBName:                  &i.Database,
+		DBName:                  aws.String(i.FormatName()),
 		Engine:                  aws.String(i.DbType),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
