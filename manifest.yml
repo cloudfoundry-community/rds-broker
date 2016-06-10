@@ -1,5 +1,5 @@
 ---
 applications:
-- name: aws-broker-staging
+- name: aws-broker
   buildpack: https://github.com/cloudfoundry/go-buildpack.git#v1.7.8
   memory: 256M

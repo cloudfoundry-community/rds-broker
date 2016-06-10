@@ -5,6 +5,9 @@ set -e -x
 # Copy application to output
 cp -r aws-broker-app/* built
 
+# Fetch remote stack state
+aws s3 cp s3://$S3_TFSTATE_BUCKET/$BASE_STACK_NAME/terraform.tfstate stack.tfstate
+
 # Append environment variables to manifest
 cat << EOF >> built/manifest.yml
 env:
@@ -17,8 +20,9 @@ cat << EOF > built/credentials.yml
 meta:
   environment: $ENVIRONMENT
   aws_broker:
-    subnet_group: $RDS_SUBNET_GROUP
-    security_group: $RDS_SECURITY_GROUPS
+    subnet_group: `terraform output -state stack.tfstate rds_subnet_group`
+    postgres_security_group: `terraform output -state=stack.tfstate rds_mysql_security_group`
+    mysql_security_group: `terraform output -state=stack.tfstate rds_mysql_security_group`
   shared_mysql:
     name: $RDS_SHARED_MYSQL_NAME
     username: $RDS_SHARED_MYSQL_USERNAME

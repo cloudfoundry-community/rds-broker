@@ -23,11 +23,15 @@ func main() {
 		return
 	}
 
+	log.Println("Loaded settings")
+
 	DB, err := db.InternalDBInit(settings.DbConfig)
 	if err != nil {
 		log.Println("There was an error with the DB. Error: " + err.Error())
 		return
 	}
+
+	log.Println("Connected to DB")
 
 	// Try to connect and create the app.
 	if m := App(&settings, DB); m != nil {

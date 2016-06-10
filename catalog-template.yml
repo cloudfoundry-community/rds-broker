@@ -37,7 +37,7 @@ rds:
       free: true
       adapter: shared
       dbType: postgres
-      securityGroup: (( meta.aws_broker.security_group ))
+      securityGroup: (( meta.aws_broker.postgres_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
@@ -61,7 +61,7 @@ rds:
       adapter: dedicated
       instanceClass: db.t2.micro
       dbType: postgres
-      securityGroup: (( meta.aws_broker.security_group ))
+      securityGroup: (( meta.aws_broker.postgres_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
@@ -85,7 +85,7 @@ rds:
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: postgres
-      securityGroup: (( meta.aws_broker.security_group ))
+      securityGroup: (( meta.aws_broker.postgres_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
@@ -108,7 +108,7 @@ rds:
       free: true
       adapter: shared
       dbType: mysql
-      securityGroup: (( meta.aws_broker.security_group ))
+      securityGroup: (( meta.aws_broker.mysql_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
@@ -132,7 +132,7 @@ rds:
       adapter: dedicated
       instanceClass: db.t2.micro
       dbType: mysql
-      securityGroup: (( meta.aws_broker.security_group ))
+      securityGroup: (( meta.aws_broker.mysql_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
@@ -156,7 +156,7 @@ rds:
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: mysql
-      securityGroup: (( meta.aws_broker.security_group ))
+      securityGroup: (( meta.aws_broker.mysql_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))

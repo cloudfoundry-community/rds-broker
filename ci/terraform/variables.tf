@@ -1,6 +1,6 @@
+variable "base_stack" {}
 variable "stack_description" {}
-variable "rds_subnet_group" {}
-variable "rds_security_groups" {}
+variable "remote_state_bucket" {}
 
 variable "rds_internal_instance_type" {}
 variable "rds_internal_db_size" {}

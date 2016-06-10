@@ -22,9 +22,9 @@ jobs:
       AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{staging-aws-default-region}}
 
+      TF_VAR_base_stack: {{staging-stack-base}}
       TF_VAR_stack_description: {{staging-stack-name}}
-      TF_VAR_rds_subnet_group: {{staging-rds-subnet-group}}
-      TF_VAR_rds_security_groups: {{staging-rds-security-groups}}
+      TF_VAR_remote_state_bucket: {{staging-s3-tfstate-bucket}}
 
       TF_VAR_rds_internal_instance_type: {{staging-rds-internal-instance-type}}
       TF_VAR_rds_internal_db_size: {{staging-rds-internal-db-size}}
@@ -53,10 +53,13 @@ jobs:
   - task: build-manifest
     file: aws-broker-app/ci/build-manifest.yml
     params:
+      S3_TFSTATE_BUCKET: {{staging-s3-tfstate-bucket}}
+      BASE_STACK_NAME: {{staging-stack-base}}
+      AWS_ACCESS_KEY_ID: {{staging-aws-access-key-id}}
+      AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
+      AWS_DEFAULT_REGION: {{staging-aws-default-region}}
       STATE_FILE: terraform-state/terraform.tfstate
       ENVIRONMENT: {{staging-environment}}
-      RDS_SUBNET_GROUP: {{staging-rds-subnet-group}}
-      RDS_SECURITY_GROUPS: {{staging-rds-security-groups}}
       RDS_SHARED_MYSQL_NAME: {{staging-rds-shared-mysql-db-name}}
       RDS_SHARED_MYSQL_USERNAME: {{staging-rds-shared-mysql-username}}
       RDS_SHARED_MYSQL_PASSWORD: {{staging-rds-shared-mysql-password}}
@@ -165,9 +168,9 @@ jobs:
       AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{prod-aws-default-region}}
 
+      TF_VAR_base_stack: {{prod-stack-base}}
       TF_VAR_stack_description: {{prod-stack-name}}
-      TF_VAR_rds_subnet_group: {{prod-rds-subnet-group}}
-      TF_VAR_rds_security_groups: {{prod-rds-security-groups}}
+      TF_VAR_remote_state_bucket: {{prod-s3-tfstate-bucket}}
 
       TF_VAR_rds_internal_instance_type: {{prod-rds-internal-instance-type}}
       TF_VAR_rds_internal_db_size: {{prod-rds-internal-db-size}}
@@ -196,10 +199,13 @@ jobs:
   - task: build-manifest
     file: aws-broker-app/ci/build-manifest.yml
     params:
+      S3_TFSTATE_BUCKET: {{prod-s3-tfstate-bucket}}
+      BASE_STACK_NAME: {{prod-stack-base}}
+      AWS_ACCESS_KEY_ID: {{prod-aws-access-key-id}}
+      AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
+      AWS_DEFAULT_REGION: {{prod-aws-default-region}}
       STATE_FILE: terraform-state/terraform.tfstate
       ENVIRONMENT: {{prod-environment}}
-      RDS_SUBNET_GROUP: {{prod-rds-subnet-group}}
-      RDS_SECURITY_GROUPS: {{prod-rds-security-groups}}
       RDS_SHARED_MYSQL_NAME: {{prod-rds-shared-mysql-db-name}}
       RDS_SHARED_MYSQL_USERNAME: {{prod-rds-shared-mysql-username}}
       RDS_SHARED_MYSQL_PASSWORD: {{prod-rds-shared-mysql-password}}
