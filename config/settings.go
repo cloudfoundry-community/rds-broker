@@ -15,6 +15,7 @@ type Settings struct {
 	DbNamePrefix  string
 	DbConfig      *common.DBConfig
 	Environment   string
+	Region        string
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -65,6 +66,8 @@ func (s *Settings) LoadFromEnv() error {
 
 	// Set env to production
 	s.Environment = "production"
+
+	s.Region = os.Getenv("AWS_DEFAULT_REGION")
 
 	return nil
 }
