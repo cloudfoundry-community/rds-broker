@@ -23,7 +23,7 @@ while true; do
     break
   fi
   if ! echo $OUT | grep "Instance not available yet" ; then
-    cat out.txt
+    echo $OUT
     exit 1
   fi
   sleep 90

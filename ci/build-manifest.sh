@@ -21,7 +21,7 @@ meta:
   environment: $ENVIRONMENT
   aws_broker:
     subnet_group: `terraform output -state stack.tfstate rds_subnet_group`
-    postgres_security_group: `terraform output -state=stack.tfstate rds_mysql_security_group`
+    postgres_security_group: `terraform output -state=stack.tfstate rds_postgres_security_group`
     mysql_security_group: `terraform output -state=stack.tfstate rds_mysql_security_group`
   shared_mysql:
     name: $RDS_SHARED_MYSQL_NAME
