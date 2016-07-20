@@ -20,8 +20,7 @@ rds:
     documentationUrl:
     supportUrl:
   plans:
-    -
-      id: "1bbd9c4f-adb8-43dc-bbec-ab0315bcb14e"
+    - id: "1bbd9c4f-adb8-43dc-bbec-ab0315bcb14e"
       name: "shared-psql"
       description: "Shared infrastructure for Postgres DB"
       metadata:
@@ -43,33 +42,33 @@ rds:
         environment: (( meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
-    -
-      id: "52bf678a-43f6-4c0f-961a-bc5009d874a6"
-      name: "micro-psql"
-      description: "Dedicated Micro RDS Postgres DB Instance"
+    - id: "1070028c-b5fb-4de8-989b-4e00d07ef5e8"
+      name: "medium-psql"
+      description: "Dedicated Medium RDS Postgres DB Instance"
       metadata:
         bullets:
-          - "Dedicated Redundant RDS Instance"
+          - "Dedicated RDS Instance"
           - "Postgres instance"
         costs:
           -
             amount:
-              usd: 0.036
+              usd: 0.115
             unit: "HOURLY"
-        displayName: "Dedicated Micro Postgres"
+        displayName: "Dedicated Medium Postgres"
       free: false
       adapter: dedicated
-      instanceClass: db.t2.micro
+      instanceClass: db.m3.medium
       dbType: postgres
+      redundant: false
+      encrypted: true
       securityGroup: (( meta.aws_broker.postgres_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
-    -
-      id: "ee75aef3-7697-4906-9330-fb1f83d719be"
-      name: "medium-psql"
+    - id: "ee75aef3-7697-4906-9330-fb1f83d719be"
+      name: "medium-psql-redundant"
       description: "Dedicated Medium RDS Postgres DB Instance"
       metadata:
         bullets:
@@ -78,21 +77,72 @@ rds:
         costs:
           -
             amount:
-              usd: 0.19
+              usd: 0.230
             unit: "HOURLY"
-        displayName: "Dedicated Medium Postgres"
+        displayName: "Dedicated Redundant Medium Postgres"
       free: false
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: postgres
+      redundant: true
+      encrypted: true
       securityGroup: (( meta.aws_broker.postgres_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
-    -
-      id: "57dd4bf0-465b-4e11-838d-2142caa6d763"
+    - id: "0201f24a-8e6d-4864-a597-f4752a2834f4"
+      name: "large-psql"
+      description: "Dedicated Large RDS Postgres DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated RDS Instance"
+          - "Postgres instance"
+        costs:
+          -
+            amount:
+              usd: 0.235
+            unit: "HOURLY"
+        displayName: "Dedicated Large Postgres"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.large
+      dbType: postgres
+      redundant: false
+      encrypted: true
+      securityGroup: (( meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( meta.aws_broker.subnet_group ))
+      tags:
+        environment: (( meta.environment ))
+        client: "paas-cf"
+        service: "aws-broker"
+    - id: "d81ef27e-a49e-465e-b3bb-ea8a4a2f5571"
+      name: "medium-psql-redundant"
+      description: "Dedicated Large RDS Postgres DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "Postgres instance"
+        costs:
+          -
+            amount:
+              usd: 0.470
+            unit: "HOURLY"
+        displayName: "Dedicated Redundant Large Postgres"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.large
+      dbType: postgres
+      redundant: true
+      encrypted: true
+      securityGroup: (( meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( meta.aws_broker.subnet_group ))
+      tags:
+        environment: (( meta.environment ))
+        client: "paas-cf"
+        service: "aws-broker"
+    - id: "57dd4bf0-465b-4e11-838d-2142caa6d763"
       name: "shared-mysql"
       description: "Shared infrastructure for MySQL DB"
       metadata:
@@ -114,33 +164,33 @@ rds:
         environment: (( meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
-    -
-      id: "f35bc854-e393-41ed-825e-7f66a6118dfa"
-      name: "micro-mysql"
-      description: "Dedicated Micro RDS Postgres DB Instance"
+    - id: "2ba54329-8264-486f-85bf-50c9f24085a9"
+      name: "medium-mysql"
+      description: "Dedicated Medium RDS MySQL DB Instance"
       metadata:
         bullets:
-          - "Dedicated Redundant RDS Instance"
+          - "Dedicated RDS Instance"
           - "MySQL instance"
         costs:
           -
             amount:
-              usd: 0.036
+              usd: 0.110
             unit: "HOURLY"
-        displayName: "Dedicated Micro MySQL"
+        displayName: "Dedicated Medium MySQL"
       free: false
       adapter: dedicated
-      instanceClass: db.t2.micro
+      instanceClass: db.m3.medium
       dbType: mysql
+      redundant: false
+      encrypted: true
       securityGroup: (( meta.aws_broker.mysql_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:
         environment: (( meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
-    -
-      id: "30e19cab-8d4e-492a-ac2c-33dd59d436d8"
-      name: "medium-mysql"
+    - id: "30e19cab-8d4e-492a-ac2c-33dd59d436d8"
+      name: "medium-mysql-redundant"
       description: "Dedicated Medium RDS MySQL DB Instance"
       metadata:
         bullets:
@@ -149,13 +199,65 @@ rds:
         costs:
           -
             amount:
-              usd: 0.19
+              usd: 0.220
             unit: "HOURLY"
-        displayName: "Dedicated Medium MySQL"
+        displayName: "Dedicated Redundant Medium MySQL"
       free: false
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: mysql
+      redundant: true
+      encrypted: true
+      securityGroup: (( meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( meta.aws_broker.subnet_group ))
+      tags:
+        environment: (( meta.environment ))
+        client: "paas-cf"
+        service: "aws-broker"
+    - id: "29cc73ed-f9c9-4901-b12b-bd4890aedf30"
+      name: "large-mysql"
+      description: "Dedicated Large RDS MySQL DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0.220
+            unit: "HOURLY"
+        displayName: "Dedicated Large MySQL"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.large
+      dbType: mysql
+      redundant: false
+      encrypted: true
+      securityGroup: (( meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( meta.aws_broker.subnet_group ))
+      tags:
+        environment: (( meta.environment ))
+        client: "paas-cf"
+        service: "aws-broker"
+    - id: "a0246f47-aeae-4c08-ba22-1d188bb51554"
+      name: "large-mysql-redundant"
+      description: "Dedicated Large RDS MySQL DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "MySQL instance"
+        costs:
+          -
+            amount:
+              usd: 0.440
+            unit: "HOURLY"
+        displayName: "Dedicated Redundant Large MySQL"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.large
+      dbType: mysql
+      redundant: true
+      encrypted: true
       securityGroup: (( meta.aws_broker.mysql_security_group ))
       subnetGroup: (( meta.aws_broker.subnet_group ))
       tags:

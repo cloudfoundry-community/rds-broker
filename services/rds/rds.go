@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/jinzhu/gorm"
 
+	"github.com/18F/aws-broker/catalog"
 	"github.com/18F/aws-broker/config"
 
 	"errors"
@@ -100,8 +101,8 @@ func (d *sharedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error) {
 }
 
 type dedicatedDBAdapter struct {
-	InstanceClass string
-	settings      config.Settings
+	Plan     catalog.RDSPlan
+	settings config.Settings
 }
 
 func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.InstanceState, error) {
@@ -123,25 +124,21 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		// Everyone gets 10gb for now
 		AllocatedStorage: aws.Int64(10),
 		// Instance class is defined by the plan
-		DBInstanceClass:         &d.InstanceClass,
+		DBInstanceClass:         &d.Plan.InstanceClass,
 		DBInstanceIdentifier:    &i.Database,
 		DBName:                  aws.String(i.FormatName()),
 		Engine:                  aws.String(i.DbType),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Bool(true),
-		MultiAZ:                 aws.Bool(true),
-		StorageEncrypted:        aws.Bool(true),
+		MultiAZ:                 aws.Bool(d.Plan.Redundant),
+		StorageEncrypted:        aws.Bool(d.Plan.Encrypted),
 		Tags:                    rdsTags,
 		PubliclyAccessible:      aws.Bool(false),
 		DBSubnetGroupName:       &i.DbSubnetGroup,
 		VpcSecurityGroupIds: []*string{
 			&i.SecGroup,
 		},
-	}
-
-	if *params.DBInstanceClass == "db.t2.micro" {
-		params.StorageEncrypted = aws.Bool(false)
 	}
 
 	resp, err := svc.CreateDBInstance(params)
