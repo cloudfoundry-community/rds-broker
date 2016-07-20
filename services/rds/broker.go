@@ -39,8 +39,8 @@ func initializeAdapter(plan catalog.RDSPlan, s *config.Settings, c *catalog.Cata
 		}
 	case "dedicated":
 		dbAdapter = &dedicatedDBAdapter{
-			InstanceClass: plan.InstanceClass,
-			settings:      *s,
+			Plan:     plan,
+			settings: *s,
 		}
 	default:
 		return nil, response.NewErrorResponse(http.StatusInternalServerError, "Adapter not found")

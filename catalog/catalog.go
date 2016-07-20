@@ -81,6 +81,8 @@ type RDSPlan struct {
 	InstanceClass string            `yaml:"instanceClass" json:"-"`
 	DbType        string            `yaml:"dbType" json:"-" validate:"required"`
 	Tags          map[string]string `yaml:"tags" json:"-" validate:"required"`
+	Redundant     bool              `yaml:"redundant" json:"-"`
+	Encrypted     bool              `yaml:"encrypted" json:"-"`
 	SubnetGroup   string            `yaml:"subnetGroup" json:"-" validate:"required"`
 	SecurityGroup string            `yaml:"securityGroup" json:"-" validate:"required"`
 }
