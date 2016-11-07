@@ -7,11 +7,11 @@ image_resource:
     repository: 18fgsa/concourse-task
 
 inputs:
-  - name: aws-broker-app
-  - name: terraform-state
+- name: aws-broker-app
+- name: terraform-state
 
 outputs:
-  - name: built
+- name: built
 
 run:
   path: aws-broker-app/ci/build-manifest.sh
