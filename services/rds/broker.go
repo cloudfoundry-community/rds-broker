@@ -2,6 +2,7 @@ package rds
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/jinzhu/gorm"
@@ -17,7 +18,10 @@ type RDSOptions struct {
 	AllocatedStorage int64 `json:"storage"`
 }
 
-func (r RDSOptions) Validate() error {
+func (r RDSOptions) Validate(settings *config.Settings) error {
+	if r.AllocatedStorage > settings.MaxAllocatedStorage {
+		return fmt.Errorf("Invalid storage %d; must be <= %d", r.AllocatedStorage, settings.MaxAllocatedStorage)
+	}
 	return nil
 }
 
@@ -70,11 +74,11 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 
 	options := RDSOptions{}
 	if len(createRequest.RawParameters) > 0 {
-		err := json.Unmarshal(createRequest.RawParameters, options)
+		err := json.Unmarshal(createRequest.RawParameters, &options)
 		if err != nil {
 			return response.NewErrorResponse(http.StatusBadRequest, "Invalid parameters. Error: "+err.Error())
 		}
-		err = options.Validate()
+		err = options.Validate(broker.settings)
 		if err != nil {
 			return response.NewErrorResponse(http.StatusBadRequest, "Invalid parameters. Error: "+err.Error())
 		}

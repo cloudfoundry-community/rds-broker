@@ -11,11 +11,12 @@ import (
 
 // Settings stores settings used to run the application
 type Settings struct {
-	EncryptionKey string
-	DbNamePrefix  string
-	DbConfig      *common.DBConfig
-	Environment   string
-	Region        string
+	EncryptionKey       string
+	DbNamePrefix        string
+	MaxAllocatedStorage int64
+	DbConfig            *common.DBConfig
+	Environment         string
+	Region              string
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -68,6 +69,17 @@ func (s *Settings) LoadFromEnv() error {
 	s.Environment = "production"
 
 	s.Region = os.Getenv("AWS_DEFAULT_REGION")
+
+	storage := os.Getenv("MAX_ALLOCATED_STORAGE")
+	if storage != "" {
+		var err error
+		s.MaxAllocatedStorage, err = strconv.ParseInt(storage, 10, 64)
+		if err != nil {
+			return errors.New("Couldn't load max storage")
+		}
+	} else {
+		s.MaxAllocatedStorage = 1024
+	}
 
 	return nil
 }
