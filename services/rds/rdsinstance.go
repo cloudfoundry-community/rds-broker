@@ -10,8 +10,8 @@ import (
 	"github.com/18F/aws-broker/catalog"
 	"github.com/18F/aws-broker/config"
 	"github.com/18F/aws-broker/helpers"
-	"strconv"
 	"regexp"
+	"strconv"
 )
 
 // RDSInstance represents the information of a RDS Service instance.
@@ -25,9 +25,10 @@ type RDSInstance struct {
 
 	ClearPassword string `sql:"-"`
 
-	Tags          map[string]string `sql:"-"`
-	DbSubnetGroup string            `sql:"-"`
-	SecGroup      string            `sql:"-"`
+	Tags             map[string]string `sql:"-"`
+	DbSubnetGroup    string            `sql:"-"`
+	AllocatedStorage int64             `sql:"-"`
+	SecGroup         string            `sql:"-"`
 
 	Adapter string `sql:"size(255)"`
 
@@ -103,6 +104,7 @@ func (i *RDSInstance) init(uuid string,
 	spaceGUID string,
 	serviceID string,
 	plan catalog.RDSPlan,
+	options RDSOptions,
 	s *config.Settings) error {
 
 	i.Uuid = uuid
@@ -129,6 +131,11 @@ func (i *RDSInstance) init(uuid string,
 	i.DbType = plan.DbType
 	i.DbSubnetGroup = plan.SubnetGroup
 	i.SecGroup = plan.SecurityGroup
+
+	i.AllocatedStorage = options.AllocatedStorage
+	if i.AllocatedStorage == 0 {
+		i.AllocatedStorage = plan.AllocatedStorage
+	}
 
 	return nil
 }

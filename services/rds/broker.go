@@ -1,14 +1,25 @@
 package rds
 
 import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/jinzhu/gorm"
+
 	"github.com/18F/aws-broker/base"
 	"github.com/18F/aws-broker/catalog"
 	"github.com/18F/aws-broker/config"
 	"github.com/18F/aws-broker/helpers/request"
 	"github.com/18F/aws-broker/helpers/response"
-	"github.com/jinzhu/gorm"
-	"net/http"
 )
+
+type RDSOptions struct {
+	AllocatedStorage int64 `json:"storage"`
+}
+
+func (r RDSOptions) Validate() error {
+	return nil
+}
 
 type rdsBroker struct {
 	brokerDB *gorm.DB
@@ -57,6 +68,18 @@ func InitRDSBroker(brokerDB *gorm.DB, settings *config.Settings) base.Broker {
 func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createRequest request.Request) response.Response {
 	newInstance := RDSInstance{}
 
+	options := RDSOptions{}
+	if len(createRequest.RawParameters) > 0 {
+		err := json.Unmarshal(createRequest.RawParameters, options)
+		if err != nil {
+			return response.NewErrorResponse(http.StatusBadRequest, "Invalid parameters. Error: "+err.Error())
+		}
+		err = options.Validate()
+		if err != nil {
+			return response.NewErrorResponse(http.StatusBadRequest, "Invalid parameters. Error: "+err.Error())
+		}
+	}
+
 	var count int64
 	broker.brokerDB.Where("uuid = ?", id).First(&newInstance).Count(&count)
 	if count != 0 {
@@ -74,6 +97,7 @@ func (broker *rdsBroker) CreateInstance(c *catalog.Catalog, id string, createReq
 		createRequest.SpaceGUID,
 		createRequest.ServiceID,
 		plan,
+		options,
 		broker.settings)
 
 	if err != nil {

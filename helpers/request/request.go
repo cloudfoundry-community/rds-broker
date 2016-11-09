@@ -2,9 +2,10 @@ package request
 
 import (
 	"encoding/json"
-	"github.com/18F/aws-broker/helpers/response"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/18F/aws-broker/helpers/response"
 )
 
 // Request is the format of the body for all create instance requests.
@@ -15,10 +16,11 @@ import (
 //   "space_guid":        "space-guid-here"
 // }
 type Request struct {
-	ServiceID        string `json:"service_id" sql:"size(255)"`
-	PlanID           string `json:"plan_id" sql:"size(255)"`
-	OrganizationGUID string `json:"organization_guid" sql:"size(255)"`
-	SpaceGUID        string `json:"space_guid" sql:"size(255)"`
+	ServiceID        string          `json:"service_id" sql:"size(255)"`
+	PlanID           string          `json:"plan_id" sql:"size(255)"`
+	OrganizationGUID string          `json:"organization_guid" sql:"size(255)"`
+	SpaceGUID        string          `json:"space_guid" sql:"size(255)"`
+	RawParameters    json.RawMessage `json:"parameters,omitempty" sql:"-"`
 }
 
 // ExtractRequest will look at the request body and parse it into a Request struct to be used programmatically.
