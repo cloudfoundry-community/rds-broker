@@ -58,6 +58,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.medium
+      allocatedStorage: 10
       dbType: postgres
       redundant: false
       encrypted: true
@@ -83,6 +84,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.medium
+      allocatedStorage: 10
       dbType: postgres
       redundant: true
       encrypted: true
@@ -108,6 +110,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.large
+      allocatedStorage: 10
       dbType: postgres
       redundant: false
       encrypted: true
@@ -133,6 +136,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.large
+      allocatedStorage: 10
       dbType: postgres
       redundant: true
       encrypted: true
@@ -180,6 +184,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.medium
+      allocatedStorage: 10
       dbType: mysql
       redundant: false
       encrypted: true
@@ -205,6 +210,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.medium
+      allocatedStorage: 10
       dbType: mysql
       redundant: true
       encrypted: true
@@ -230,6 +236,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.large
+      allocatedStorage: 10
       dbType: mysql
       redundant: false
       encrypted: true
@@ -255,6 +262,7 @@ rds:
       free: false
       adapter: dedicated
       instanceClass: db.m3.large
+      allocatedStorage: 10
       dbType: mysql
       redundant: true
       encrypted: true
