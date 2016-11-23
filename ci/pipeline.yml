@@ -51,6 +51,13 @@ jobs:
       TF_VAR_rds_shared_postgres_username: {{staging-rds-shared-postgres-username}}
       TF_VAR_rds_shared_postgres_password: {{staging-rds-shared-postgres-password}}
 
+  - task: init-shared-db
+    file: aws-broker-app/ci/init-shared-db.yml
+    params:
+      STATE_FILE: terraform-state/terraform.tfstate
+      POSTGRES_USERNAME: {{staging-rds-shared-postgres-username}}
+      POSTGRES_PASSWORD: {{staging-rds-shared-postgres-password}}
+
   - task: build-manifest
     file: aws-broker-app/ci/build-manifest.yml
     params:
@@ -197,6 +204,13 @@ jobs:
       TF_VAR_rds_shared_postgres_db_engine_version: {{prod-rds-shared-postgres-db-engine-version}}
       TF_VAR_rds_shared_postgres_username: {{prod-rds-shared-postgres-username}}
       TF_VAR_rds_shared_postgres_password: {{prod-rds-shared-postgres-password}}
+
+  - task: init-shared-db
+    file: aws-broker-app/ci/init-shared-db.yml
+    params:
+      STATE_FILE: terraform-state/terraform.tfstate
+      POSTGRES_USERNAME: {{prod-rds-shared-postgres-username}}
+      POSTGRES_PASSWORD: {{prod-rds-shared-postgres-password}}
 
   - task: build-manifest
     file: aws-broker-app/ci/build-manifest.yml
