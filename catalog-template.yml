@@ -5,7 +5,7 @@ meta:
 rds:
   id: "ec0fd2fa-2aff-49ce-97f4-518d6937e365"
   name: "aws-rds"
-  description: "RDS Database Broker"
+  description: "Use AWS RDS to create a database instance"
   bindable: true
   tags:
     - "database"
@@ -13,12 +13,12 @@ rds:
     - "postgresql"
     - "mysql"
   metadata:
-    displayName: RDS Database Broker
+    displayName: "Relational databases"
     imageUrl:
     longDescription:
     providerDisplayName: RDS
-    documentationUrl:
-    supportUrl:
+    documentationUrl: "https://cloud.gov/docs/services/relational-database/"
+    supportUrl: 
   plans:
     - id: "1bbd9c4f-adb8-43dc-bbec-ab0315bcb14e"
       name: "shared-psql"
