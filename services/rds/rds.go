@@ -132,6 +132,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		AutoMinorVersionUpgrade: aws.Bool(true),
 		MultiAZ:                 aws.Bool(d.Plan.Redundant),
 		StorageEncrypted:        aws.Bool(d.Plan.Encrypted),
+		StorageType:             aws.String(d.Plan.StorageType),
 		Tags:                    rdsTags,
 		PubliclyAccessible:      aws.Bool(false),
 		DBSubnetGroupName:       &i.DbSubnetGroup,
