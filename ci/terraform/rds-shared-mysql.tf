@@ -12,4 +12,5 @@ module "rds_shared_mysql" {
     rds_db_engine_version = "${var.rds_shared_mysql_db_engine_version}"
     rds_username = "${var.rds_shared_mysql_username}"
     rds_password = "${var.rds_shared_mysql_password}"
+    use_rds_parameter_group = "no"
 }
