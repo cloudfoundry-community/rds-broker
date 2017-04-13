@@ -12,5 +12,5 @@ module "rds_internal" {
     rds_db_engine_version = "${var.rds_internal_db_engine_version}"
     rds_username = "${var.rds_internal_username}"
     rds_password = "${var.rds_internal_password}"
-    use_rds_parameter_group = "no"
+    rds_parameter_group_family = "postgres9.4"
 }
