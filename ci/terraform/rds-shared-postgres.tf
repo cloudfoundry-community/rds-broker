@@ -12,4 +12,5 @@ module "rds_shared_postgres" {
     rds_db_engine_version = "${var.rds_shared_postgres_db_engine_version}"
     rds_username = "${var.rds_shared_postgres_username}"
     rds_password = "${var.rds_shared_postgres_password}"
+    use_rds_parameter_group = "no"
 }
