@@ -127,6 +127,13 @@ func (i *RDSInstance) init(uuid string,
 	// Load tags
 	i.Tags = plan.Tags
 
+	// Tag instance with broker details
+	i.Tags["Instance GUID"] = uuid
+	i.Tags["Space GUID"] = spaceGUID
+	i.Tags["Organization GUID"] = orgGUID
+	i.Tags["Plan GUID"] = plan.ID
+	i.Tags["Service GUID"] = serviceID
+
 	// Load AWS values
 	i.DbType = plan.DbType
 	i.DbSubnetGroup = plan.SubnetGroup
