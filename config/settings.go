@@ -35,7 +35,7 @@ func (s *Settings) LoadFromEnv() error {
 	}
 
 	// Ensure AWS credentials exist in environment
-	for _, key := range []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_DEFAULT_REGION"} {
+	for _, key := range []string{"AWS_DEFAULT_REGION"} {
 		if os.Getenv(key) == "" {
 			return fmt.Errorf("Must set environment variable %s", key)
 		}
