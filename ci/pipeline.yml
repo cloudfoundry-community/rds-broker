@@ -84,8 +84,6 @@ jobs:
         DB_PREFIX: {{staging-db-name-prefix}}
         AUTH_PASS: {{staging-auth-pass}}
         AUTH_USER: {{staging-auth-user}}
-        AWS_ACCESS_KEY_ID: {{staging-aws-access-key-id}}
-        AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
         AWS_DEFAULT_REGION: {{staging-aws-default-region}}
         DB_SSLMODE: {{staging-rds-db-sslmode}}
         DB_USER: {{staging-rds-internal-username}}
@@ -238,8 +236,6 @@ jobs:
         DB_PREFIX: {{prod-db-name-prefix}}
         AUTH_PASS: {{prod-auth-pass}}
         AUTH_USER: {{prod-auth-user}}
-        AWS_ACCESS_KEY_ID: {{prod-aws-access-key-id}}
-        AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
         AWS_DEFAULT_REGION: {{prod-aws-default-region}}
         DB_SSLMODE: {{prod-rds-db-sslmode}}
         DB_USER: {{prod-rds-internal-username}}
