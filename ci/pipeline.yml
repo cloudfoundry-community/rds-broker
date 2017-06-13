@@ -11,6 +11,8 @@ jobs:
     file: aws-broker-app/ci/run_tests.yml
 
   - task: provision-rds
+    tags:
+    - iaas
     file: pipeline-tasks/terraform-apply.yml
     input_mapping:
       terraform-templates: aws-broker-app
@@ -19,8 +21,6 @@ jobs:
       TEMPLATE_SUBDIR: ci/terraform
       STACK_NAME: {{staging-stack-name}}
       S3_TFSTATE_BUCKET: {{staging-s3-tfstate-bucket}}
-      AWS_ACCESS_KEY_ID: {{staging-aws-access-key-id}}
-      AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{staging-aws-default-region}}
 
       TF_VAR_base_stack: {{staging-stack-base}}
@@ -59,12 +59,12 @@ jobs:
       POSTGRES_PASSWORD: {{staging-rds-shared-postgres-password}}
 
   - task: build-manifest
+    tags:
+    - iaas
     file: aws-broker-app/ci/build-manifest.yml
     params:
       S3_TFSTATE_BUCKET: {{staging-s3-tfstate-bucket}}
       BASE_STACK_NAME: {{staging-stack-base}}
-      AWS_ACCESS_KEY_ID: {{staging-aws-access-key-id}}
-      AWS_SECRET_ACCESS_KEY: {{staging-aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{staging-aws-default-region}}
       STATE_FILE: terraform-state/terraform.tfstate
       ENVIRONMENT: {{staging-environment}}
@@ -163,6 +163,8 @@ jobs:
     - get: pipeline-tasks
 
   - task: provision-rds
+    tags:
+    - iaas
     file: pipeline-tasks/terraform-apply.yml
     input_mapping:
       terraform-templates: aws-broker-app
@@ -171,8 +173,6 @@ jobs:
       TEMPLATE_SUBDIR: ci/terraform
       STACK_NAME: {{prod-stack-name}}
       S3_TFSTATE_BUCKET: {{prod-s3-tfstate-bucket}}
-      AWS_ACCESS_KEY_ID: {{prod-aws-access-key-id}}
-      AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{prod-aws-default-region}}
 
       TF_VAR_base_stack: {{prod-stack-base}}
@@ -211,12 +211,12 @@ jobs:
       POSTGRES_PASSWORD: {{prod-rds-shared-postgres-password}}
 
   - task: build-manifest
+    tags:
+    - iaas
     file: aws-broker-app/ci/build-manifest.yml
     params:
       S3_TFSTATE_BUCKET: {{prod-s3-tfstate-bucket}}
       BASE_STACK_NAME: {{prod-stack-base}}
-      AWS_ACCESS_KEY_ID: {{prod-aws-access-key-id}}
-      AWS_SECRET_ACCESS_KEY: {{prod-aws-secret-access-key}}
       AWS_DEFAULT_REGION: {{prod-aws-default-region}}
       STATE_FILE: terraform-state/terraform.tfstate
       ENVIRONMENT: {{prod-environment}}
