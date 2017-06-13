@@ -59,8 +59,6 @@ jobs:
       POSTGRES_PASSWORD: {{staging-rds-shared-postgres-password}}
 
   - task: build-manifest
-    tags:
-    - iaas
     file: aws-broker-app/ci/build-manifest.yml
     params:
       S3_TFSTATE_BUCKET: {{staging-s3-tfstate-bucket}}
@@ -211,8 +209,6 @@ jobs:
       POSTGRES_PASSWORD: {{prod-rds-shared-postgres-password}}
 
   - task: build-manifest
-    tags:
-    - iaas
     file: aws-broker-app/ci/build-manifest.yml
     params:
       S3_TFSTATE_BUCKET: {{prod-s3-tfstate-bucket}}
