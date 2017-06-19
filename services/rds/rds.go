@@ -127,6 +127,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		DBInstanceIdentifier:    &i.Database,
 		DBName:                  aws.String(i.FormatName()),
 		Engine:                  aws.String(i.DbType),
+		LicenseModel:            aws.String(i.LicenseModel),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
 		AutoMinorVersionUpgrade: aws.Bool(true),
