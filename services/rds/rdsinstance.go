@@ -41,6 +41,17 @@ func (i *RDSInstance) FormatName() string {
 	return re.ReplaceAllString(i.Database, "")
 }
 
+func (i *RDSInstance) getDbName(DbNamePrefix, RandStr string) string {
+	
+    name := DbNamePrefix + RandStr
+	
+    if i.DbType == "oracle-se1" {
+		return name[0:7]
+	}
+	
+    return name
+}
+
 func (i *RDSInstance) setPassword(password, key string) error {
 	if i.Salt == "" {
 		return errors.New("Salt has to be set before writing the password")
@@ -117,7 +128,7 @@ func (i *RDSInstance) init(uuid string,
 	i.Adapter = plan.Adapter
 
 	// Build random values
-	i.Database = s.DbNamePrefix + helpers.RandStr(15)
+	i.Database = i.getDbName(s.DbNamePrefix, helpers.RandStr(15))
 	i.Username = "u" + helpers.RandStr(15)
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)
