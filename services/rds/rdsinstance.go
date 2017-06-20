@@ -33,6 +33,7 @@ type RDSInstance struct {
 	Adapter string `sql:"size(255)"`
 
 	DbType string `sql:"size(255)"`
+	LicenseModel string `sql:"size(255)"`
 }
 
 func (i *RDSInstance) FormatName() string {
