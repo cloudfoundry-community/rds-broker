@@ -32,7 +32,7 @@ type RDSInstance struct {
 
 	Adapter string `sql:"size(255)"`
 
-	DbType string `sql:"size(255)"`
+	DbType       string `sql:"size(255)"`
 	LicenseModel string `sql:"size(255)"`
 }
 
@@ -139,6 +139,7 @@ func (i *RDSInstance) init(uuid string,
 	i.DbType = plan.DbType
 	i.DbSubnetGroup = plan.SubnetGroup
 	i.SecGroup = plan.SecurityGroup
+	i.LicenseModel = plan.LicenseModel
 
 	i.AllocatedStorage = options.AllocatedStorage
 	if i.AllocatedStorage == 0 {

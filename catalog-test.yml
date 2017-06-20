@@ -9,7 +9,7 @@ rds:
     - "postgresql"
     - "mysql"
     - "oracle-se2"
-    - "sqlserver-ex"
+    - "sqlserver-se"
   metadata:
     displayName: RDS Database Broker
     imageUrl:
