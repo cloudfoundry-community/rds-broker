@@ -7,11 +7,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
+	"regexp"
+	"strconv"
+
 	"github.com/18F/aws-broker/catalog"
 	"github.com/18F/aws-broker/config"
 	"github.com/18F/aws-broker/helpers"
-	"regexp"
-	"strconv"
 )
 
 // RDSInstance represents the information of a RDS Service instance.
@@ -42,14 +44,14 @@ func (i *RDSInstance) FormatName() string {
 }
 
 func (i *RDSInstance) getDbName(DbNamePrefix, RandStr string) string {
-	
-    name := DbNamePrefix + RandStr
-	
-    if i.DbType == "oracle-se1" {
-		return name[0:7]
+
+	name := DbNamePrefix + RandStr
+
+	if i.DbType == "oracle-se1" {
+		return "ose" + name[len(name)-4:len(name)]
 	}
-	
-    return name
+
+	return name
 }
 
 func (i *RDSInstance) setPassword(password, key string) error {
@@ -129,6 +131,7 @@ func (i *RDSInstance) init(uuid string,
 
 	// Build random values
 	i.Database = i.getDbName(s.DbNamePrefix, helpers.RandStr(15))
+	log.Println("DbName: " + i.Database)
 	i.Username = "u" + helpers.RandStr(15)
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)
