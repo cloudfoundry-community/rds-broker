@@ -129,9 +129,16 @@ func (i *RDSInstance) init(uuid string,
 
 	i.Adapter = plan.Adapter
 
+	// Load AWS values
+	i.DbType = plan.DbType
+	i.DbSubnetGroup = plan.SubnetGroup
+	i.SecGroup = plan.SecurityGroup
+	i.LicenseModel = plan.LicenseModel
+
 	// Build random values
 	i.Database = i.getDbName(s.DbNamePrefix, helpers.RandStr(15))
 	log.Println("DbName: " + i.Database)
+	log.Println("DbType: " + i.DbType)
 	i.Username = "u" + helpers.RandStr(15)
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)
@@ -148,12 +155,6 @@ func (i *RDSInstance) init(uuid string,
 	i.Tags["Organization GUID"] = orgGUID
 	i.Tags["Plan GUID"] = plan.ID
 	i.Tags["Service GUID"] = serviceID
-
-	// Load AWS values
-	i.DbType = plan.DbType
-	i.DbSubnetGroup = plan.SubnetGroup
-	i.SecGroup = plan.SecurityGroup
-	i.LicenseModel = plan.LicenseModel
 
 	i.AllocatedStorage = options.AllocatedStorage
 	if i.AllocatedStorage == 0 {
