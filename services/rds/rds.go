@@ -144,8 +144,6 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		params.LicenseModel = aws.String(i.LicenseModel)
 	}
 
-	fmt.Println("[rds] createDBInstance params:")
-	fmt.Printf("%+v\n", params)
 	resp, err := svc.CreateDBInstance(params)
 	// Pretty-print the response data.
 	log.Println(awsutil.StringValue(resp))
