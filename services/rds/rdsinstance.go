@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 
@@ -38,20 +37,12 @@ type RDSInstance struct {
 	LicenseModel string `sql:"size(255)"`
 }
 
-func (i *RDSInstance) FormatName() string {
+func (i *RDSInstance) FormatDBName() string {
+	if i.DbType == "oracle-se1" {
+		return "ORCL"
+	}
 	re, _ := regexp.Compile("(i?)[^a-z0-9]")
 	return re.ReplaceAllString(i.Database, "")
-}
-
-func (i *RDSInstance) getDbName(DbNamePrefix, RandStr string) string {
-
-	name := DbNamePrefix + RandStr
-
-	if i.DbType == "oracle-se1" {
-		return "ose" + name[len(name)-4:len(name)]
-	}
-
-	return name
 }
 
 func (i *RDSInstance) setPassword(password, key string) error {
@@ -97,7 +88,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			password,
 			i.Host,
 			i.Port,
-			i.FormatName())
+			i.FormatDBName())
 
 		credentials = map[string]string{
 			"uri":      uri,
@@ -105,7 +96,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			"password": password,
 			"host":     i.Host,
 			"port":     strconv.FormatInt(i.Port, 10),
-			"db_name":  i.FormatName(),
+			"db_name":  i.FormatDBName(),
 		}
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
@@ -136,9 +127,7 @@ func (i *RDSInstance) init(uuid string,
 	i.LicenseModel = plan.LicenseModel
 
 	// Build random values
-	i.Database = i.getDbName(s.DbNamePrefix, helpers.RandStr(15))
-	log.Println("DbName: " + i.Database)
-	log.Println("DbType: " + i.DbType)
+	i.Database = s.DbNamePrefix + helpers.RandStr(15)
 	i.Username = "u" + helpers.RandStr(15)
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)
