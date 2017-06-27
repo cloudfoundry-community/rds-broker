@@ -127,7 +127,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			"password": password,
 			"host":     i.Host,
 			"port":     strconv.FormatInt(i.Port, 10),
-			"db_name":  i.FormatDBName(),
+			"sid":  i.FormatDBName(),
 		}
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
