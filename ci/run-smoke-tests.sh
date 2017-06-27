@@ -2,7 +2,7 @@
 
 set -e -u
 
-cf login -a $CF_API_URL -u $CF_DEPLOY_USERNAME -p $CF_DEPLOY_PASSWORD -o $CF_ORGANIZATION -s $CF_SPACE
+cf login -a $CF_API_URL -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORGANIZATION -s $CF_SPACE
 
 # Clean up existing app and service if present
 cf delete -f smoke-tests-$SERVICE_PLAN
