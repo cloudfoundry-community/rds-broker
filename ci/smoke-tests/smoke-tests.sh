@@ -21,8 +21,28 @@ elif [ $DB_TYPE = "mysql" ] ; then
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "create table smoke (id integer, name text);" $MYSQL_DB
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "insert into smoke values (1, 'smoke');" $MYSQL_DB
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "drop table smoke;" $MYSQL_DB
+elif [ $DB_TYPE = "oracle-se1" ] || [ $DB_TYPE = "oracle-se2" ] || [ $DB_TYPE = "oracle-ee" ] ; then
+  unzip ../oracle-instantclient/instantclient-basiclite-linux.x64-${CLIENT_VERSION}.zip
+  unzip ../oracle-instantclient/instantclient-sqlplus-linux.x64-${CLIENT_VERSION}.zip
+  ORCL_PATH=$(echo $CLIENT_VERSION | perl -F'\.' -ane 'print "instantclient_$F[0]_$F[1]\n"')
+  SQL_HOST=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.host')
+  SQL_USER=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.username')
+  SQL_PASS=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.password')
+  SQL_DB=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.db_name')
+  # http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToOracleInstance.html notes
+  # that this connection string may fail if SQL_HOST string is > 63 chars, but
+  # works OK with 80 chars in testing
+  export LD_LIBRARY_PATH="/home/vcap/app/${ORCL_PATH}"
+  cat <<END_SMOKE > smoke.sql
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+CREATE TABLE smoke (id integer, name varchar2(10));
+INSERT INTO smoke VALUES (1, 'smoke');
+DROP TABLE smoke;
+EXIT;
+END_SMOKE
+$ORCL_PATH/sqlplus -S "${SQL_USER}/${SQL_PASS}@${SQL_HOST}:1521/$SQL_DB" @smoke.sql
 else
-  echo "\$DB_TYPE must be postgres or mysql"
+  echo "\$DB_TYPE must be one of: postgres mysql oracle-se1" # oracle-se2 oracle-ee
   exit 1
 fi
 

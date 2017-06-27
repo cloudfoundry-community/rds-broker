@@ -123,6 +123,7 @@ jobs:
   - get: aws-broker-app
     passed: [deploy-aws-broker-staging]
     trigger: true
+  - get: oracle-instantclient
   - aggregate:
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
@@ -151,6 +152,14 @@ jobs:
         <<: *staging-cf-creds
         SERVICE_PLAN: shared-mysql
         DB_TYPE: mysql
+
+    - task: smoke-tests-oracle
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *staging-cf-creds
+        SERVICE_PLAN: large-oracle-se1
+        DB_TYPE: oracle-se1
+        CLIENT_VERSION: 12.2.0.1.0
 
 - name: deploy-aws-broker-prod
   plan:
@@ -340,11 +349,24 @@ resources:
   source:
     url: {{slack-webhook-url}}
 
+- name: oracle-instantclient
+  type: s3-iam
+  source: 
+    server_side_encryption: AES256
+    region_name: us-gov-west-1
+    regexp: instantclient/instantclient(.*).zip
+    bucket: cg-binaries
+    
 resource_types:
 - name: slack-notification
   type: docker-image
   source:
     repository: cfcommunity/slack-notification-resource
+
+- name: s3-iam
+  type: docker-image
+  source:
+    repository: 18fgsa/s3-resource
 
 staging-cf-creds: &staging-cf-creds
   CF_API_URL: {{staging-cf-api-url}}

@@ -8,6 +8,7 @@ image_resource:
 
 inputs:
 - name: aws-broker-app
+  name: oracle-instantclient
 
 run:
   path: aws-broker-app/ci/run-smoke-tests.sh
