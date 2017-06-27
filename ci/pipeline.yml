@@ -173,7 +173,24 @@ jobs:
         <<: *staging-cf-creds
         SERVICE_PLAN: medium-oracle-se1
         DB_TYPE: oracle-se1
-
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Acceptance Tests for aws-broker on staging PASSED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: Acceptance Tests for aws-broker on staging FAILED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
 - name: deploy-aws-broker-prod
   plan:
   - aggregate:
@@ -310,7 +327,6 @@ jobs:
     - get: sqlclient-oracle-sqlplus
     - get: sqlclient-postgres
     - get: sqlclient-mysql
-  - aggregate:
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
       params:
@@ -338,6 +354,31 @@ jobs:
         <<: *prod-cf-creds
         SERVICE_PLAN: shared-mysql
         DB_TYPE: mysql
+
+    - task: smoke-tests-oracle
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *prod-cf-creds
+        SERVICE_PLAN: medium-oracle-se1
+        DB_TYPE: oracle-se1
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Acceptance Tests for aws-broker on production PASSED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: Acceptance Tests for aws-broker on production FAILED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
 
 resources:
 - name: pipeline-tasks
