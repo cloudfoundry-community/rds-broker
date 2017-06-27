@@ -123,8 +123,12 @@ jobs:
   - get: aws-broker-app
     passed: [deploy-aws-broker-staging]
     trigger: true
-  - get: sql-client-binaries
   - aggregate:
+    - get: sqlclient-oracle-basiclite
+    - get: sqlclient-oracle-sqlplus
+    - get: sqlclient-postgres
+    - get: sqlclient-mysql
+  - aggregate:   
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
       params:
@@ -160,7 +164,7 @@ jobs:
         SERVICE_PLAN: large-oracle-se1
         DB_TYPE: oracle-se1
 
- name: deploy-aws-broker-prod
+- name: deploy-aws-broker-prod
   plan:
   - aggregate:
     - get: aws-broker-app
@@ -348,12 +352,33 @@ resources:
   source:
     url: {{slack-webhook-url}}
 
-- name: sql-client-binaries
+- name: sqlclient-oracle-basiclite
   type: s3-iam
   source: 
-    region_name: us-gov-west-1
-    regexp: sql-client-binaries/(.*)
-    bucket: cg-binaries
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/instantclient-basiclite-(.*).zip
+    bucket: {{cg-s3-binaries-bucket}}
+
+- name: sqlclient-oracle-sqlplus
+  type: s3-iam
+  source: 
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/instantclient-sqlplus-(.*).zip
+    bucket: {{cg-s3-binaries-bucket}}
+
+- name: sqlclient-postgres
+  type: s3-iam
+  source: 
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/psql-(.*)-ubuntu-(.*).tar.gz
+    bucket: {{cg-s3-binaries-bucket}}
+
+- name: sqlclient-mysql
+  type: s3-iam
+  source: 
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/mysql-(.*).gz
+    bucket: {{cg-s3-binaries-bucket}}
     
 resource_types:
 - name: slack-notification

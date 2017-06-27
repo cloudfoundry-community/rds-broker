@@ -8,7 +8,10 @@ image_resource:
 
 inputs:
 - name: aws-broker-app
-#  name: oracle-instantclient
+- name: sqlclient-oracle-basiclite
+- name: sqlclient-oracle-sqlplus
+- name: sqlclient-postgres
+- name: sqlclient-mysql
 
 run:
   path: aws-broker-app/ci/run-smoke-tests.sh

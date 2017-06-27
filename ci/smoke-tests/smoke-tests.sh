@@ -7,12 +7,13 @@ JQ=./jq-linux64
 chmod +x $JQ
 
 if [ $DB_TYPE = "postgres" ] ; then
-  tar -xvzf ../sql-client-binaries/psql-9.4.4-ubuntu-14.04.tar.gz
+  PSQLCLIENT=$(find ../sqlclient-postgres -type f -name "psql*")
+  tar -xvzf $PSQLCLIENT
   ./psql/bin/psql $DATABASE_URL -c "create table smoke (id integer, name text);"
   ./psql/bin/psql $DATABASE_URL -c "insert into smoke values (1, 'smoke');"
   ./psql/bin/psql $DATABASE_URL -c "drop table smoke;"
 elif [ $DB_TYPE = "mysql" ] ; then
-  gunzip -c ../sql-client-binaries/mysql.gz > mysql
+  gunzip -c ../sqlclient-mysql/mysql.gz > mysql
   chmod +x ./mysql
   MYSQL_HOST=`echo $VCAP_SERVICES | $JQ -c -r '.["aws-rds"] | .[0].credentials.host'`
   MYSQL_USER=`echo $VCAP_SERVICES | $JQ -c -r '.["aws-rds"] | .[0].credentials.username'`
@@ -22,8 +23,10 @@ elif [ $DB_TYPE = "mysql" ] ; then
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "insert into smoke values (1, 'smoke');" $MYSQL_DB
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "drop table smoke;" $MYSQL_DB
 elif [ $DB_TYPE = "oracle-se1" ] || [ $DB_TYPE = "oracle-se2" ] || [ $DB_TYPE = "oracle-ee" ] ; then
-  unzip ../sql-client-binaries/instantclient-basiclite-linux.x64-${CLIENT_VERSION}.zip
-  unzip ../sql-client-binaries/instantclient-sqlplus-linux.x64-${CLIENT_VERSION}.zip
+  ORCLLIB=$(find ../sqlclient-oracle-basiclite -type f -name "instantclient*")
+  ORCLCLIENT=$(find ../sqlclient-oracle-sqlplus -type f -name "instantclient*")
+  unzip $ORCLLIB
+  unzip $ORCLCLIENT
   ORCL_PATH=$(find . -type d -name "instantclient*")
   SQL_HOST=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.host')
   SQL_USER=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.username')
