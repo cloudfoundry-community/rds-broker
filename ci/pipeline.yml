@@ -161,7 +161,7 @@ jobs:
       file: aws-broker-app/ci/run-smoke-tests.yml
       params:
         <<: *staging-cf-creds
-        SERVICE_PLAN: large-oracle-se1
+        SERVICE_PLAN: medium-oracle-se1
         DB_TYPE: oracle-se1
 
 - name: deploy-aws-broker-prod
