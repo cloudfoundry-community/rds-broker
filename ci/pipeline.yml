@@ -123,7 +123,7 @@ jobs:
   - get: aws-broker-app
     passed: [deploy-aws-broker-staging]
     trigger: true
-  - get: oracle-instantclient
+  - get: sql-client-binaries
   - aggregate:
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
@@ -159,9 +159,8 @@ jobs:
         <<: *staging-cf-creds
         SERVICE_PLAN: large-oracle-se1
         DB_TYPE: oracle-se1
-        CLIENT_VERSION: 12.2.0.1.0
 
-- name: deploy-aws-broker-prod
+ name: deploy-aws-broker-prod
   plan:
   - aggregate:
     - get: aws-broker-app
@@ -349,12 +348,11 @@ resources:
   source:
     url: {{slack-webhook-url}}
 
-- name: oracle-instantclient
+- name: sql-client-binaries
   type: s3-iam
   source: 
-    server_side_encryption: AES256
     region_name: us-gov-west-1
-    regexp: instantclient/instantclient(.*).zip
+    regexp: sql-client-binaries/(.*)
     bucket: cg-binaries
     
 resource_types:
