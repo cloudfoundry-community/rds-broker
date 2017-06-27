@@ -327,6 +327,7 @@ jobs:
     - get: sqlclient-oracle-sqlplus
     - get: sqlclient-postgres
     - get: sqlclient-mysql
+  - aggregate:
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
       params:
