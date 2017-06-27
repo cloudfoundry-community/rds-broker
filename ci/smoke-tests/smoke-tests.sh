@@ -12,8 +12,7 @@ if [ $DB_TYPE = "postgres" ] ; then
   ./psql/bin/psql $DATABASE_URL -c "insert into smoke values (1, 'smoke');"
   ./psql/bin/psql $DATABASE_URL -c "drop table smoke;"
 elif [ $DB_TYPE = "mysql" ] ; then
-#  gunzip -c $(find sqlclient-mysql -type f -name "mysql*") > mysql
-  gunzip -c sqlclient-mysql/mysql-1.gz > mysql
+  gunzip -c $(find sqlclient-mysql -type f -name "mysql*") > mysql
   chmod +x ./mysql
   MYSQL_HOST=`echo $VCAP_SERVICES | $JQ -c -r '.["aws-rds"] | .[0].credentials.host'`
   MYSQL_USER=`echo $VCAP_SERVICES | $JQ -c -r '.["aws-rds"] | .[0].credentials.username'`

@@ -24,6 +24,11 @@ applications:
   - rds-smoke-tests-$SERVICE_PLAN
 EOF
 
+cp -R sqlclient-oracle-basiclite aws-broker-app/ci/smoke-tests/.
+cp -R sqlclient-oracle-sqlplus aws-broker-app/ci/smoke-tests/.
+cp -R sqlclient-postgres aws-broker-app/ci/smoke-tests/.
+cp -R sqlclient-mysql aws-broker-app/ci/smoke-tests/.
+
 # Wait until service is available
 while true; do
   if OUT=`cf push -f aws-broker-app/ci/smoke-tests/manifest.yml -p aws-broker-app/ci/smoke-tests` ; then
