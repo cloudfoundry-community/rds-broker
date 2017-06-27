@@ -28,7 +28,7 @@ elif [ $DB_TYPE = "oracle-se1" ] || [ $DB_TYPE = "oracle-se2" ] || [ $DB_TYPE = 
   SQL_HOST=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.host')
   SQL_USER=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.username')
   SQL_PASS=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.password')
-  SQL_DB=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.db_name')
+  SQL_DB=$(echo $VCAP_SERVICES | $JQ -r '."aws-rds"[0].credentials.sid')
   # http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToOracleInstance.html notes
   # that this connection string may fail if SQL_HOST string is > 63 chars, but
   # works OK with 80 chars in testing
