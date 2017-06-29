@@ -52,7 +52,7 @@ type sharedDBAdapter struct {
 }
 
 func (d *sharedDBAdapter) createDB(i *RDSInstance, password string) (base.InstanceState, error) {
-	dbName := i.FormatName()
+	dbName := i.FormatDBName()
 	switch i.DbType {
 	case "postgres":
 		if db := d.SharedDbConn.Exec(fmt.Sprintf("CREATE DATABASE %s;", dbName)); db.Error != nil {
@@ -91,7 +91,7 @@ func (d *sharedDBAdapter) bindDBToApp(i *RDSInstance, password string) (map[stri
 }
 
 func (d *sharedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error) {
-	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.FormatName())); db.Error != nil {
+	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP DATABASE %s;", i.FormatDBName())); db.Error != nil {
 		return base.InstanceNotGone, db.Error
 	}
 	if db := d.SharedDbConn.Exec(fmt.Sprintf("DROP USER %s;", i.Username)); db.Error != nil {
@@ -125,7 +125,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		// Instance class is defined by the plan
 		DBInstanceClass:         &d.Plan.InstanceClass,
 		DBInstanceIdentifier:    &i.Database,
-		DBName:                  aws.String(i.FormatName()),
+		DBName:                  aws.String(i.FormatDBName()),
 		Engine:                  aws.String(i.DbType),
 		MasterUserPassword:      &password,
 		MasterUsername:          &i.Username,
@@ -139,6 +139,9 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		VpcSecurityGroupIds: []*string{
 			&i.SecGroup,
 		},
+	}
+	if i.LicenseModel != "" {
+		params.LicenseModel = aws.String(i.LicenseModel)
 	}
 
 	resp, err := svc.CreateDBInstance(params)

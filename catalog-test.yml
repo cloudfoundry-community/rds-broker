@@ -8,6 +8,8 @@ rds:
     - "RDS"
     - "postgresql"
     - "mysql"
+    - "oracle-se2"
+    - "sqlserver-se"
   metadata:
     displayName: RDS Database Broker
     imageUrl:
@@ -152,6 +154,32 @@ rds:
       adapter: dedicated
       instanceClass: db.m3.medium
       dbType: mysql
+      securityGroup: sg-123456
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env"
+        client: "the client"
+        service: "aws-broker"
+    -
+      id: "332e0168-6969-4bd7-b07f-29f08c4bf78f"
+      name: "medium-oracle-se2"
+      description: "Dedicated Medium RDS Oracle Standard Edition 2 DB Instance"
+      metadata:
+        bullets:
+          - "Dedicated Redundant RDS Instance"
+          - "Oracle DB instance"
+          - "Oracle Standard Edition 2"
+        costs:
+          -
+            amount:
+              usd: 19.19
+            unit: "HOURLY"
+        displayName: "Dedicated Medium Oracle SE2"
+      free: false
+      adapter: dedicated
+      instanceClass: db.m3.medium
+      dbType: oracle-se2
+      licenseModel: license-included
       securityGroup: sg-123456
       subnetGroup: subnet-group
       tags:

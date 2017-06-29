@@ -7,11 +7,12 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"regexp"
+	"strconv"
+
 	"github.com/18F/aws-broker/catalog"
 	"github.com/18F/aws-broker/config"
 	"github.com/18F/aws-broker/helpers"
-	"regexp"
-	"strconv"
 )
 
 // RDSInstance represents the information of a RDS Service instance.
@@ -32,10 +33,14 @@ type RDSInstance struct {
 
 	Adapter string `sql:"size(255)"`
 
-	DbType string `sql:"size(255)"`
+	DbType       string `sql:"size(255)"`
+	LicenseModel string `sql:"size(255)"`
 }
 
-func (i *RDSInstance) FormatName() string {
+func (i *RDSInstance) FormatDBName() string {
+	if i.DbType == "oracle-se1" {
+		return "ORCL"
+	}
 	re, _ := regexp.Compile("(i?)[^a-z0-9]")
 	return re.ReplaceAllString(i.Database, "")
 }
@@ -74,6 +79,21 @@ func (i *RDSInstance) getPassword(key string) (string, error) {
 }
 
 func (i *RDSInstance) getCredentials(password string) (map[string]string, error) {
+	/*
+		What is the correct format for Oracle?
+			https://msdn.microsoft.com/en-us/library/dd787819.aspx
+			oracledb://User=[USER_NAME];Password=[PASSWORD]@[NET_SERVICE_NAME]?PollingId=[POLLING_ID]
+			http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToOracleInstance.html
+			'mydbusr@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=<dns name of db instance>)
+			(PORT=<listener port>))(CONNECT_DATA=(SID=<database name>)))
+
+			sqlplus 'mydbusr@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=<dns name of db instance>)(PORT=<listener port>))(CONNECT_DATA=(SID=<database name>)))'
+
+
+			https://www.connectionstrings.com/oracle/
+			SERVER=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));
+			uid=myUsername;pwd=myPassword;
+	*/
 	var credentials map[string]string
 	switch i.DbType {
 	case "postgres", "mysql":
@@ -83,7 +103,7 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			password,
 			i.Host,
 			i.Port,
-			i.FormatName())
+			i.FormatDBName())
 
 		credentials = map[string]string{
 			"uri":      uri,
@@ -91,7 +111,23 @@ func (i *RDSInstance) getCredentials(password string) (map[string]string, error)
 			"password": password,
 			"host":     i.Host,
 			"port":     strconv.FormatInt(i.Port, 10),
-			"db_name":  i.FormatName(),
+			"db_name":  i.FormatDBName(),
+		}
+	case "oracle-se1", "oracle-se2", "oracle-ee":
+		uri := fmt.Sprintf("oracledb://User=%s;Password=%s@%s:%d/%s",
+			i.Username,
+			password,
+			i.Host,
+			i.Port,
+			i.FormatDBName())
+
+		credentials = map[string]string{
+			"uri":      uri,
+			"username": i.Username,
+			"password": password,
+			"host":     i.Host,
+			"port":     strconv.FormatInt(i.Port, 10),
+			"sid":      i.FormatDBName(),
 		}
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
@@ -115,6 +151,12 @@ func (i *RDSInstance) init(uuid string,
 
 	i.Adapter = plan.Adapter
 
+	// Load AWS values
+	i.DbType = plan.DbType
+	i.DbSubnetGroup = plan.SubnetGroup
+	i.SecGroup = plan.SecurityGroup
+	i.LicenseModel = plan.LicenseModel
+
 	// Build random values
 	i.Database = s.DbNamePrefix + helpers.RandStr(15)
 	i.Username = "u" + helpers.RandStr(15)
@@ -133,11 +175,6 @@ func (i *RDSInstance) init(uuid string,
 	i.Tags["Organization GUID"] = orgGUID
 	i.Tags["Plan GUID"] = plan.ID
 	i.Tags["Service GUID"] = serviceID
-
-	// Load AWS values
-	i.DbType = plan.DbType
-	i.DbSubnetGroup = plan.SubnetGroup
-	i.SecGroup = plan.SecurityGroup
 
 	i.AllocatedStorage = options.AllocatedStorage
 	if i.AllocatedStorage == 0 {

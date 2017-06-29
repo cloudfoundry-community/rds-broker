@@ -6,11 +6,12 @@ import (
 	"path/filepath"
 
 	"errors"
+	"net/http"
+	"reflect"
+
 	"github.com/18F/aws-broker/helpers/response"
 	"gopkg.in/go-playground/validator.v8"
 	"gopkg.in/yaml.v2"
-	"net/http"
-	"reflect"
 )
 
 // ServiceMetadata contains the service metadata fields listed in the Cloud Foundry docs:
@@ -80,6 +81,7 @@ type RDSPlan struct {
 	Adapter          string            `yaml:"adapter" json:"-" validate:"required"`
 	InstanceClass    string            `yaml:"instanceClass" json:"-"`
 	DbType           string            `yaml:"dbType" json:"-" validate:"required"`
+	LicenseModel     string            `yaml:"licenseModel" json:"-"`
 	Tags             map[string]string `yaml:"tags" json:"-" validate:"required"`
 	Redundant        bool              `yaml:"redundant" json:"-"`
 	Encrypted        bool              `yaml:"encrypted" json:"-"`

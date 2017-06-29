@@ -2,7 +2,7 @@
 
 set -e -u
 
-cf login -a $CF_API_URL -u $CF_DEPLOY_USERNAME -p $CF_DEPLOY_PASSWORD -o $CF_ORGANIZATION -s $CF_SPACE
+cf login -a $CF_API_URL -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORGANIZATION -s $CF_SPACE
 
 # Clean up existing app and service if present
 cf delete -f smoke-tests-$SERVICE_PLAN
@@ -23,6 +23,11 @@ applications:
   services:
   - rds-smoke-tests-$SERVICE_PLAN
 EOF
+
+cp -R sqlclient-oracle-basiclite aws-broker-app/ci/smoke-tests/.
+cp -R sqlclient-oracle-sqlplus aws-broker-app/ci/smoke-tests/.
+cp -R sqlclient-postgres aws-broker-app/ci/smoke-tests/.
+cp -R sqlclient-mysql aws-broker-app/ci/smoke-tests/.
 
 # Wait until service is available
 while true; do

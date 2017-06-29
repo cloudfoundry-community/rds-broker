@@ -95,7 +95,7 @@ jobs:
       params:
         text: |
           :x: FAILED to deploy aws-broker on staging
-          <$ATC_EXTERNAL_URL/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
         channel: {{slack-channel}}
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
@@ -104,25 +104,40 @@ jobs:
       params:
         text: |
           :white_check_mark: Successfully deployed aws-broker on staging
-          <$ATC_EXTERNAL_URL/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
         channel: {{slack-channel}}
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
 
   - task: update-broker
-    file: aws-broker-app/ci/update-broker.yml
+    file: pipeline-tasks/register-service-broker.yml
     params:
       <<: *staging-cf-creds
       BROKER_NAME: {{staging-broker-name}}
-      AUTH_PASS: {{staging-auth-pass}}
       AUTH_USER: {{staging-auth-user}}
-      PLAN_NAME: aws-rds
+      AUTH_PASS: {{staging-auth-pass}}
+      SERVICES: aws-rds:shared-psql aws-rds:medium-psql aws-rds:medium-psql-redundant aws-rds:large-psql aws-rds:large-psql-redundant aws-rds:xlarge-psql aws-rds:xlarge-psql-redundant aws-rds:shared-mysql aws-rds:medium-mysql aws-rds:medium-mysql-redundant aws-rds:large-mysql aws-rds:large-mysql-redundant aws-rds:xlarge-mysql aws-rds:xlarge-mysql-redundant
+
+  - task: update-broker-enterprise
+    file: pipeline-tasks/register-service-broker.yml
+    params:
+      <<: *staging-cf-creds
+      BROKER_NAME: {{staging-broker-name}}
+      AUTH_USER: {{staging-auth-user}}
+      AUTH_PASS: {{staging-auth-pass}}
+      SERVICES: aws-rds:medium-oracle-se1 aws-rds:large-sqlserver-se
+      SERVICE_ORGANIZATION: cloud-gov
 
 - name: acceptance-tests-staging
   plan:
   - get: aws-broker-app
     passed: [deploy-aws-broker-staging]
     trigger: true
+  - aggregate:
+    - get: sqlclient-oracle-basiclite
+    - get: sqlclient-oracle-sqlplus
+    - get: sqlclient-postgres
+    - get: sqlclient-mysql
   - aggregate:
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
@@ -152,6 +167,30 @@ jobs:
         SERVICE_PLAN: shared-mysql
         DB_TYPE: mysql
 
+    - task: smoke-tests-oracle
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *staging-cf-creds
+        SERVICE_PLAN: medium-oracle-se1
+        DB_TYPE: oracle-se1
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Acceptance Tests for aws-broker on staging PASSED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: Acceptance Tests for aws-broker on staging FAILED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
 - name: deploy-aws-broker-prod
   plan:
   - aggregate:
@@ -245,7 +284,7 @@ jobs:
       params:
         text: |
           :x: FAILED to deploy aws-broker on production
-          <$ATC_EXTERNAL_URL/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
         channel: {{slack-channel}}
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
@@ -254,25 +293,40 @@ jobs:
       params:
         text: |
           :white_check_mark: Successfully deployed aws-broker on production
-          <$ATC_EXTERNAL_URL/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+          <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
         channel: {{slack-channel}}
         username: {{slack-username}}
         icon_url: {{slack-icon-url}}
 
   - task: update-broker
-    file: aws-broker-app/ci/update-broker.yml
+    file: pipeline-tasks/register-service-broker.yml
     params:
       <<: *prod-cf-creds
       BROKER_NAME: {{prod-broker-name}}
-      AUTH_PASS: {{prod-auth-pass}}
       AUTH_USER: {{prod-auth-user}}
-      PLAN_NAME: aws-rds
+      AUTH_PASS: {{prod-auth-pass}}
+      SERVICES: aws-rds:shared-psql aws-rds:medium-psql aws-rds:medium-psql-redundant aws-rds:large-psql aws-rds:large-psql-redundant aws-rds:xlarge-psql aws-rds:xlarge-psql-redundant aws-rds:shared-mysql aws-rds:medium-mysql aws-rds:medium-mysql-redundant aws-rds:large-mysql aws-rds:large-mysql-redundant aws-rds:xlarge-mysql aws-rds:xlarge-mysql-redundant
+
+  - task: update-broker-enterprise
+    file: pipeline-tasks/register-service-broker.yml
+    params:
+      <<: *prod-cf-creds
+      BROKER_NAME: {{prod-broker-name}}
+      AUTH_USER: {{prod-auth-user}}
+      AUTH_PASS: {{prod-auth-pass}}
+      SERVICES: aws-rds:medium-oracle-se1 aws-rds:large-sqlserver-se
+      SERVICE_ORGANIZATION: cloud-gov
 
 - name: acceptance-tests-prod
   plan:
   - get: aws-broker-app
     passed: [deploy-aws-broker-prod]
     trigger: true
+  - aggregate:
+    - get: sqlclient-oracle-basiclite
+    - get: sqlclient-oracle-sqlplus
+    - get: sqlclient-postgres
+    - get: sqlclient-mysql
   - aggregate:
     - task: smoke-tests-postgres
       file: aws-broker-app/ci/run-smoke-tests.yml
@@ -301,6 +355,31 @@ jobs:
         <<: *prod-cf-creds
         SERVICE_PLAN: shared-mysql
         DB_TYPE: mysql
+
+    - task: smoke-tests-oracle
+      file: aws-broker-app/ci/run-smoke-tests.yml
+      params:
+        <<: *prod-cf-creds
+        SERVICE_PLAN: medium-oracle-se1
+        DB_TYPE: oracle-se1
+  on_success:
+    put: slack
+    params:
+      text: |
+        :white_check_mark: Acceptance Tests for aws-broker on production PASSED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
+  on_failure:
+    put: slack
+    params:
+      text: |
+        :x: Acceptance Tests for aws-broker on production FAILED
+        <$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|View build details>
+      channel: {{slack-channel}}
+      username: {{slack-username}}
+      icon_url: {{slack-icon-url}}
 
 resources:
 - name: pipeline-tasks
@@ -340,22 +419,55 @@ resources:
   source:
     url: {{slack-webhook-url}}
 
+- name: sqlclient-oracle-basiclite
+  type: s3-iam
+  source:
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/instantclient-basiclite-(.*).zip
+    bucket: {{cg-s3-binaries-bucket}}
+
+- name: sqlclient-oracle-sqlplus
+  type: s3-iam
+  source:
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/instantclient-sqlplus-(.*).zip
+    bucket: {{cg-s3-binaries-bucket}}
+
+- name: sqlclient-postgres
+  type: s3-iam
+  source:
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/psql-(.*)-ubuntu-(.*).tar.gz
+    bucket: {{cg-s3-binaries-bucket}}
+
+- name: sqlclient-mysql
+  type: s3-iam
+  source:
+    region_name: {{binaries-aws-region}}
+    regexp: sql-client-binaries\/mysql-(.*).gz
+    bucket: {{cg-s3-binaries-bucket}}
+
 resource_types:
 - name: slack-notification
   type: docker-image
   source:
     repository: cfcommunity/slack-notification-resource
 
+- name: s3-iam
+  type: docker-image
+  source:
+    repository: 18fgsa/s3-resource
+
 staging-cf-creds: &staging-cf-creds
   CF_API_URL: {{staging-cf-api-url}}
-  CF_DEPLOY_USERNAME: {{staging-cf-deploy-username}}
-  CF_DEPLOY_PASSWORD: {{staging-cf-deploy-password}}
+  CF_USERNAME: {{staging-cf-deploy-username}}
+  CF_PASSWORD: {{staging-cf-deploy-password}}
   CF_ORGANIZATION: {{staging-cf-organization}}
   CF_SPACE: {{staging-cf-space}}
 
 prod-cf-creds: &prod-cf-creds
   CF_API_URL: {{prod-cf-api-url}}
-  CF_DEPLOY_USERNAME: {{prod-cf-deploy-username}}
-  CF_DEPLOY_PASSWORD: {{prod-cf-deploy-password}}
+  CF_USERNAME: {{prod-cf-deploy-username}}
+  CF_PASSWORD: {{prod-cf-deploy-password}}
   CF_ORGANIZATION: {{prod-cf-organization}}
   CF_SPACE: {{prod-cf-space}}

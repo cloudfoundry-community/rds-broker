@@ -23,6 +23,8 @@ meta:
     subnet_group: `terraform output -state stack.tfstate rds_subnet_group`
     postgres_security_group: `terraform output -state=stack.tfstate rds_postgres_security_group`
     mysql_security_group: `terraform output -state=stack.tfstate rds_mysql_security_group`
+    oracle_security_group: `terraform output -state=stack.tfstate rds_oracle_security_group`
+    mssql_security_group: `terraform output -state=stack.tfstate rds_mssql_security_group`
   shared_mysql:
     name: $RDS_SHARED_MYSQL_NAME
     username: $RDS_SHARED_MYSQL_USERNAME
