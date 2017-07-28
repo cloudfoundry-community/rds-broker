@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/18F/aws-broker",
-	"GoVersion": "go1.6",
+	"GoVersion": "go1.8",
 	"GodepVersion": "v67",
 	"Packages": [
 		"./..."
