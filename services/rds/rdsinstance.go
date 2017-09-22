@@ -81,12 +81,13 @@ func (i *RDSInstance) getPassword(key string) (string, error) {
 }
 
 func (i *RDSInstance) getCredentials(password string) (map[string]string, error) {
+	var dbScheme string
 	var credentials map[string]string
 	switch i.DbType {
 	case "postgres", "mysql":
-		dbScheme := i.DbType
+		dbScheme = i.DbType
 	case "oracle-se1", "oracle-se2", "oracle-ee":
-		dbScheme := "oracle"
+		dbScheme = "oracle"
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
 	}
