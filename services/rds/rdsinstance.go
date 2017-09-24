@@ -81,58 +81,31 @@ func (i *RDSInstance) getPassword(key string) (string, error) {
 }
 
 func (i *RDSInstance) getCredentials(password string) (map[string]string, error) {
-	/*
-		What is the correct format for Oracle?
-			https://msdn.microsoft.com/en-us/library/dd787819.aspx
-			oracledb://User=[USER_NAME];Password=[PASSWORD]@[NET_SERVICE_NAME]?PollingId=[POLLING_ID]
-			http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ConnectToOracleInstance.html
-			'mydbusr@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=<dns name of db instance>)
-			(PORT=<listener port>))(CONNECT_DATA=(SID=<database name>)))
-
-			sqlplus 'mydbusr@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=<dns name of db instance>)(PORT=<listener port>))(CONNECT_DATA=(SID=<database name>)))'
-
-
-			https://www.connectionstrings.com/oracle/
-			SERVER=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=MyHost)(PORT=MyPort))(CONNECT_DATA=(SERVICE_NAME=MyOracleSID)));
-			uid=myUsername;pwd=myPassword;
-	*/
+	var dbScheme string
 	var credentials map[string]string
 	switch i.DbType {
 	case "postgres", "mysql":
-		uri := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
-			i.DbType,
-			i.Username,
-			password,
-			i.Host,
-			i.Port,
-			i.FormatDBName())
-
-		credentials = map[string]string{
-			"uri":      uri,
-			"username": i.Username,
-			"password": password,
-			"host":     i.Host,
-			"port":     strconv.FormatInt(i.Port, 10),
-			"db_name":  i.FormatDBName(),
-		}
+		dbScheme = i.DbType
 	case "oracle-se1", "oracle-se2", "oracle-ee":
-		uri := fmt.Sprintf("oracledb://User=%s;Password=%s@%s:%d/%s",
-			i.Username,
-			password,
-			i.Host,
-			i.Port,
-			i.FormatDBName())
-
-		credentials = map[string]string{
-			"uri":      uri,
-			"username": i.Username,
-			"password": password,
-			"host":     i.Host,
-			"port":     strconv.FormatInt(i.Port, 10),
-			"sid":      i.FormatDBName(),
-		}
+		dbScheme = "oracle"
 	default:
 		return nil, errors.New("Cannot generate credentials for unsupported db type: " + i.DbType)
+	}
+	uri := fmt.Sprintf("%s://%s:%s@%s:%d/%s",
+		dbScheme,
+		i.Username,
+		password,
+		i.Host,
+		i.Port,
+		i.FormatDBName())
+
+	credentials = map[string]string{
+		"uri":      uri,
+		"username": i.Username,
+		"password": password,
+		"host":     i.Host,
+		"port":     strconv.FormatInt(i.Port, 10),
+		"db_name":  i.FormatDBName(),
 	}
 	return credentials, nil
 }
