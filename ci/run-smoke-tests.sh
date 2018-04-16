@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e -u
+set -eux
 
 cf login -a $CF_API_URL -u $CF_USERNAME -p $CF_PASSWORD -o $CF_ORGANIZATION -s $CF_SPACE
 
@@ -15,13 +15,13 @@ cf create-service aws-rds $SERVICE_PLAN rds-smoke-tests-$SERVICE_PLAN
 cat << EOF > aws-broker-app/ci/smoke-tests/manifest.yml
 ---
 applications:
-- name: smoke-tests-$SERVICE_PLAN
+- name: smoke-tests-${SERVICE_PLAN}
   buildpack: binary_buildpack
   command: ./smoke-tests.sh
   env:
-    DB_TYPE: $DB_TYPE
+    DB_TYPE: ${DB_TYPE}
   services:
-  - rds-smoke-tests-$SERVICE_PLAN
+  - rds-smoke-tests-${SERVICE_PLAN}
 EOF
 
 cp -R sqlclient-oracle-basiclite aws-broker-app/ci/smoke-tests/.
@@ -31,11 +31,11 @@ cp -R sqlclient-mysql aws-broker-app/ci/smoke-tests/.
 
 # Wait until service is available
 while true; do
-  if OUT=`cf push -f aws-broker-app/ci/smoke-tests/manifest.yml -p aws-broker-app/ci/smoke-tests` ; then
+  if out=$(cf push -f aws-broker-app/ci/smoke-tests/manifest.yml -p aws-broker-app/ci/smoke-tests 2>&1); then
     break
   fi
-  if ! echo $OUT | grep "Instance not available yet" ; then
-    echo $OUT
+  if ! [[ $out =~ "Instance not available yet" ]]; then
+    echo "${out}"
     exit 1
   fi
   sleep 90
