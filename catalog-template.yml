@@ -1,7 +1,3 @@
-meta:
-  environment: (( merge ))
-  aws_broker: (( merge ))
-
 rds:
   id: "ec0fd2fa-2aff-49ce-97f4-518d6937e365"
   name: "aws-rds"
@@ -34,10 +30,10 @@ rds:
       free: true
       adapter: shared
       dbType: postgres
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "1070028c-b5fb-4de8-989b-4e00d07ef5e8"
@@ -61,10 +57,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "ee75aef3-7697-4906-9330-fb1f83d719be"
@@ -88,10 +84,10 @@ rds:
       redundant: true
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "0201f24a-8e6d-4864-a597-f4752a2834f4"
@@ -115,10 +111,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "d81ef27e-a49e-465e-b3bb-ea8a4a2f5571"
@@ -142,10 +138,10 @@ rds:
       redundant: true
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "520b2cbf-588f-4324-bb34-474ea57304bb"
@@ -169,10 +165,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "3732a60e-f2a0-4112-9b64-87dd0cf10e78"
@@ -196,10 +192,10 @@ rds:
       redundant: true
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.postgres_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.postgres_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "57dd4bf0-465b-4e11-838d-2142caa6d763"
@@ -218,10 +214,10 @@ rds:
       free: true
       adapter: shared
       dbType: mysql
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "2ba54329-8264-486f-85bf-50c9f24085a9"
@@ -245,10 +241,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "30e19cab-8d4e-492a-ac2c-33dd59d436d8"
@@ -272,10 +268,10 @@ rds:
       redundant: true
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "29cc73ed-f9c9-4901-b12b-bd4890aedf30"
@@ -299,10 +295,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "a0246f47-aeae-4c08-ba22-1d188bb51554"
@@ -326,10 +322,10 @@ rds:
       redundant: true
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "9e056262-33fe-4236-a200-30e2d435d583"
@@ -353,10 +349,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "e5da0850-0f48-4309-9b5f-dfe279fcd179"
@@ -380,10 +376,10 @@ rds:
       redundant: true
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mysql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mysql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "e7d65895-4fc3-4a66-8c61-68da4944c69b"
@@ -408,10 +404,10 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.oracle_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.oracle_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
     - id: "43b6954b-46c3-4a45-9ca3-995e552ef558"
@@ -436,9 +432,9 @@ rds:
       redundant: false
       encrypted: true
       storage_type: gp2
-      securityGroup: (( meta.aws_broker.mssql_security_group ))
-      subnetGroup: (( meta.aws_broker.subnet_group ))
+      securityGroup: (( grab meta.aws_broker.mssql_security_group ))
+      subnetGroup: (( grab meta.aws_broker.subnet_group ))
       tags:
-        environment: (( meta.environment ))
+        environment: (( grab meta.environment ))
         client: "paas-cf"
         service: "aws-broker"
