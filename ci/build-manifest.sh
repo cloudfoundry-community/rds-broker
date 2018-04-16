@@ -40,5 +40,5 @@ meta:
 EOF
 
 # Merge secrets into templates
-spiff merge aws-broker-app/secrets-template.yml built/credentials.yml > built/secrets.yml
-spiff merge aws-broker-app/catalog-template.yml built/credentials.yml > built/catalog.yml
+spruce merge aws-broker-app/secrets-template.yml built/credentials.yml > built/secrets.yml
+spruce merge aws-broker-app/catalog-template.yml built/credentials.yml > built/catalog.yml

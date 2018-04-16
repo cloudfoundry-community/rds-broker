@@ -8,6 +8,7 @@ module "rds_internal" {
     rds_instance_type = "${var.rds_internal_instance_type}"
     rds_db_size = "${var.rds_internal_db_size}"
     rds_db_name = "${var.rds_internal_db_name}"
+    rds_final_snapshot_identifier = "${var.base_stack}-${replace(var.rds_internal_db_name, "_", "-")}"
     rds_db_engine = "${var.rds_internal_db_engine}"
     rds_db_engine_version = "${var.rds_internal_db_engine_version}"
     rds_username = "${var.rds_internal_username}"
