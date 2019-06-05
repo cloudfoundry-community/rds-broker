@@ -15,6 +15,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 )
 
 type dbAdapter interface {
@@ -116,21 +117,18 @@ func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) 
 		Source:               aws.String("system"),
 	}
 
-	_, err := svc.DescribeDBParameters(input)
 	// If the db parameter group has already been created, we can return.
-	if err != nil {
+	_, err := svc.DescribeDBParameters(input)
+	if err == nil {
+		log.Printf("%s parameter group already exists", pgroupName)
 		return pgroupName, nil
 	}
 
 	// Otherwise, create a new parameter group in the proper family
-	pgroupFamily := i.DbType + i.DbVersion
-	switch i.DbType {
-	case "mysql":
-	case "postgres":
-	default:
-		return pgroupName, errors.New("unknown db type encountered while creating custom db parameters: " + i.DbType)
-	}
-	log.Printf("creating a parameter group named %s in the family of %s\n", pgroupName, pgroupFamily)
+	re := regexp.MustCompile(`^\d+\.*\d*`)
+	dbversion := re.Find([]byte(i.DbVersion))
+	pgroupFamily := i.DbType + string(dbversion)
+	log.Printf("creating a parameter group named %s in the family of %s", pgroupName, pgroupFamily)
 
 	createinput := &rds.CreateDBParameterGroupInput{
 		DBParameterGroupFamily: aws.String(pgroupFamily),
@@ -142,7 +140,7 @@ func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) 
 		return pgroupName, err
 	}
 
-	// iterate through the options and plug them in
+	// iterate through the options and plug them into the parameter list
 	parameters := []*rds.Parameter{}
 	for k, v := range s.CustomRDSParameters[i.DbType] {
 		parameters = append(parameters, &rds.Parameter{
@@ -152,7 +150,7 @@ func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) 
 		})
 	}
 
-	// modify the parameter group we just created with the options list
+	// modify the parameter group we just created with the parameter list
 	modifyinput := &rds.ModifyDBParameterGroupInput{
 		DBParameterGroupName: aws.String(pgroupName),
 		Parameters:           parameters,
