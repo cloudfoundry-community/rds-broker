@@ -121,23 +121,22 @@ func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) 
 	_, err := svc.DescribeDBParameters(input)
 	if err == nil {
 		log.Printf("%s parameter group already exists", pgroupName)
-		return pgroupName, nil
-	}
+	} else {
+		// Otherwise, create a new parameter group in the proper family
+		re := regexp.MustCompile(`^\d+\.*\d*`)
+		dbversion := re.Find([]byte(i.DbVersion))
+		pgroupFamily := i.DbType + string(dbversion)
+		log.Printf("creating a parameter group named %s in the family of %s", pgroupName, pgroupFamily)
 
-	// Otherwise, create a new parameter group in the proper family
-	re := regexp.MustCompile(`^\d+\.*\d*`)
-	dbversion := re.Find([]byte(i.DbVersion))
-	pgroupFamily := i.DbType + string(dbversion)
-	log.Printf("creating a parameter group named %s in the family of %s", pgroupName, pgroupFamily)
-
-	createinput := &rds.CreateDBParameterGroupInput{
-		DBParameterGroupFamily: aws.String(pgroupFamily),
-		DBParameterGroupName:   aws.String(pgroupName),
-		Description:            aws.String("aws broker parameter group for " + pgroupFamily),
-	}
-	_, err = svc.CreateDBParameterGroup(createinput)
-	if err != nil {
-		return pgroupName, err
+		createinput := &rds.CreateDBParameterGroupInput{
+			DBParameterGroupFamily: aws.String(pgroupFamily),
+			DBParameterGroupName:   aws.String(pgroupName),
+			Description:            aws.String("aws broker parameter group for " + pgroupFamily),
+		}
+		_, err = svc.CreateDBParameterGroup(createinput)
+		if err != nil {
+			return pgroupName, err
+		}
 	}
 
 	// iterate through the options and plug them into the parameter list
@@ -192,7 +191,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		StorageEncrypted:        aws.Bool(d.Plan.Encrypted),
 		StorageType:             aws.String(d.Plan.StorageType),
 		Tags:                    rdsTags,
-		PubliclyAccessible:      aws.Bool(false),
+		PubliclyAccessible:      aws.Bool(d.settings.PubliclyAccessible),
 		BackupRetentionPeriod:   aws.Int64(i.BackupRetentionPeriod),
 		DBSubnetGroupName:       &i.DbSubnetGroup,
 		VpcSecurityGroupIds: []*string{
@@ -213,9 +212,6 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 			return base.InstanceNotCreated, nil
 		}
 		params.DBParameterGroupName = aws.String(pgroupName)
-
-		// XXX turn this to false when done, tspencer!
-		params.PubliclyAccessible = aws.Bool(true)
 	}
 
 	resp, err := svc.CreateDBInstance(params)

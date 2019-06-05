@@ -18,6 +18,7 @@ type Settings struct {
 	Environment         string
 	Region              string
 	CustomRDSParameters map[string]map[string]string
+	PubliclyAccessible  bool
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -82,16 +83,22 @@ func (s *Settings) LoadFromEnv() error {
 		s.MaxAllocatedStorage = 1024
 	}
 
+	// Feature flag to allow RDS to be publicly available (needed for testing)
+	if _, ok := os.LookupEnv("PUBLICLY_ACCESSIBLE"); ok {
+		s.PubliclyAccessible = true
+	} else {
+		s.PubliclyAccessible = false
+	}
+
 	// Create the custom parameters map
 	s.CustomRDSParameters = make(map[string]map[string]string)
+	s.CustomRDSParameters["mysql"] = make(map[string]string)
 
-	// Feature flag for enabling functions.
+	// Feature flag for enabling functions in mysql with the custom parameters map.
 	if _, ok := os.LookupEnv("ENABLE_FUNCTIONS"); ok {
-		if _, ok := s.CustomRDSParameters["mysql"]; !ok {
-			// create the mysql map if it does not exist
-			s.CustomRDSParameters["mysql"] = make(map[string]string)
-		}
 		s.CustomRDSParameters["mysql"]["log_bin_trust_function_creators"] = "1"
+	} else {
+		s.CustomRDSParameters["mysql"]["log_bin_trust_function_creators"] = "0"
 	}
 
 	return nil
