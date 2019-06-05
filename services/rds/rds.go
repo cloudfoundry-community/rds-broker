@@ -105,6 +105,66 @@ type dedicatedDBAdapter struct {
 	settings config.Settings
 }
 
+// This function will return the a custom parameter group with whatever custom parameters
+// have been requested.  If there is no custom parameter group, it will be created.
+func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) (string, error) {
+	svc := rds.New(session.New(), aws.NewConfig().WithRegion(s.Region))
+
+	input := &rds.DescribeDBParametersInput{
+		DBParameterGroupName: aws.String(pgroupName),
+		MaxRecords:           aws.Int64(20),
+		Source:               aws.String("system"),
+	}
+
+	_, err := svc.DescribeDBParameters(input)
+	// If the db parameter group has already been created, we can return.
+	if err != nil {
+		return pgroupName, nil
+	}
+
+	// Otherwise, create a new parameter group in the proper family
+	pgroupFamily := i.DbType + i.DbVersion
+	switch i.DbType {
+	case "mysql":
+	case "postgres":
+	default:
+		return pgroupName, errors.New("unknown db type encountered while creating custom db parameters: " + i.DbType)
+	}
+	log.Printf("creating a parameter group named %s in the family of %s\n", pgroupName, pgroupFamily)
+
+	createinput := &rds.CreateDBParameterGroupInput{
+		DBParameterGroupFamily: aws.String(pgroupFamily),
+		DBParameterGroupName:   aws.String(pgroupName),
+		Description:            aws.String("aws broker parameter group for " + pgroupFamily),
+	}
+	_, err = svc.CreateDBParameterGroup(createinput)
+	if err != nil {
+		return pgroupName, err
+	}
+
+	// iterate through the options and plug them in
+	parameters := []*rds.Parameter{}
+	for k, v := range s.CustomRDSParameters[i.DbType] {
+		parameters = append(parameters, &rds.Parameter{
+			ApplyMethod:    aws.String("immediate"),
+			ParameterName:  aws.String(k),
+			ParameterValue: aws.String(v),
+		})
+	}
+
+	// modify the parameter group we just created with the options list
+	modifyinput := &rds.ModifyDBParameterGroupInput{
+		DBParameterGroupName: aws.String(pgroupName),
+		Parameters:           parameters,
+	}
+	_, err = svc.ModifyDBParameterGroup(modifyinput)
+	if err != nil {
+		return pgroupName, err
+	}
+
+	return pgroupName, nil
+}
+
 func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.InstanceState, error) {
 	svc := rds.New(session.New(), aws.NewConfig().WithRegion(d.settings.Region))
 	var rdsTags []*rds.Tag
@@ -146,6 +206,18 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 	}
 	if i.LicenseModel != "" {
 		params.LicenseModel = aws.String(i.LicenseModel)
+	}
+	// create/get custom parameter group if there are custom parameters.
+	if _, ok := d.settings.CustomRDSParameters[i.DbType]; ok {
+		pgroupName, err := customParameterGroup("awsbroker-pgroup-"+i.DbType, i, d.settings)
+		if err != nil {
+			log.Println(err.Error())
+			return base.InstanceNotCreated, nil
+		}
+		params.DBParameterGroupName = aws.String(pgroupName)
+
+		// XXX turn this to false when done, tspencer!
+		params.PubliclyAccessible = aws.Bool(true)
 	}
 
 	resp, err := svc.CreateDBInstance(params)

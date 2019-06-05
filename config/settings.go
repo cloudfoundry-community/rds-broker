@@ -17,6 +17,7 @@ type Settings struct {
 	DbConfig            *common.DBConfig
 	Environment         string
 	Region              string
+	CustomRDSParameters map[string]map[string]string
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -79,6 +80,18 @@ func (s *Settings) LoadFromEnv() error {
 		}
 	} else {
 		s.MaxAllocatedStorage = 1024
+	}
+
+	// Create the custom parameters map
+	s.CustomRDSParameters = make(map[string]map[string]string)
+
+	// Feature flag for enabling functions.
+	if _, ok := os.LookupEnv("ENABLE_FUNCTIONS"); ok {
+		if _, ok := s.CustomRDSParameters["mysql"]; !ok {
+			// create the mysql map if it does not exist
+			s.CustomRDSParameters["mysql"] = make(map[string]string)
+		}
+		s.CustomRDSParameters["mysql"]["log_bin_trust_function_creators"] = "1"
 	}
 
 	return nil
