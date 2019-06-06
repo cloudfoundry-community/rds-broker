@@ -11,14 +11,14 @@ import (
 
 // Settings stores settings used to run the application
 type Settings struct {
-	EncryptionKey       string
-	DbNamePrefix        string
-	MaxAllocatedStorage int64
-	DbConfig            *common.DBConfig
-	Environment         string
-	Region              string
-	CustomRDSParameters map[string]map[string]string
-	PubliclyAccessible  bool
+	EncryptionKey             string
+	DbNamePrefix              string
+	MaxAllocatedStorage       int64
+	DbConfig                  *common.DBConfig
+	Environment               string
+	Region                    string
+	PubliclyAccessibleFeature bool
+	EnableFunctionsFeature    bool
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -85,20 +85,16 @@ func (s *Settings) LoadFromEnv() error {
 
 	// Feature flag to allow RDS to be publicly available (needed for testing)
 	if _, ok := os.LookupEnv("PUBLICLY_ACCESSIBLE"); ok {
-		s.PubliclyAccessible = true
+		s.PubliclyAccessibleFeature = true
 	} else {
-		s.PubliclyAccessible = false
+		s.PubliclyAccessibleFeature = false
 	}
 
-	// Create the custom parameters map
-	s.CustomRDSParameters = make(map[string]map[string]string)
-	s.CustomRDSParameters["mysql"] = make(map[string]string)
-
-	// Feature flag for enabling functions in mysql with the custom parameters map.
-	if _, ok := os.LookupEnv("ENABLE_FUNCTIONS"); ok {
-		s.CustomRDSParameters["mysql"]["log_bin_trust_function_creators"] = "1"
+	// Feature flag to allow mysql to be provisioned with log_bin_trust_function_creators=1
+	if _, ok := os.LookupEnv("PUBLICLY_ACCESSIBLE"); ok {
+		s.EnableFunctionsFeature = true
 	} else {
-		s.CustomRDSParameters["mysql"]["log_bin_trust_function_creators"] = "0"
+		s.EnableFunctionsFeature = false
 	}
 
 	return nil

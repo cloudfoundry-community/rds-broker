@@ -108,9 +108,7 @@ type dedicatedDBAdapter struct {
 
 // This function will return the a custom parameter group with whatever custom parameters
 // have been requested.  If there is no custom parameter group, it will be created.
-func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) (string, error) {
-	svc := rds.New(session.New(), aws.NewConfig().WithRegion(s.Region))
-
+func customParameterGroup(pgroupName string, i *RDSInstance, customparams map[string]map[string]string, svc *rds.RDS) (string, error) {
 	input := &rds.DescribeDBParametersInput{
 		DBParameterGroupName: aws.String(pgroupName),
 		MaxRecords:           aws.Int64(20),
@@ -141,7 +139,7 @@ func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) 
 
 	// iterate through the options and plug them into the parameter list
 	parameters := []*rds.Parameter{}
-	for k, v := range s.CustomRDSParameters[i.DbType] {
+	for k, v := range customparams[i.DbType] {
 		parameters = append(parameters, &rds.Parameter{
 			ApplyMethod:    aws.String("immediate"),
 			ParameterName:  aws.String(k),
@@ -160,6 +158,18 @@ func customParameterGroup(pgroupName string, i *RDSInstance, s config.Settings) 
 	}
 
 	return pgroupName, nil
+}
+
+// This is here because the check is kinda big and ugly
+func needCustomParameters(i *RDSInstance, s config.Settings) bool {
+	// Currently, we only have one custom parameter for mysql, but if
+	// we ever need to apply more, you can add them in here.
+	if i.EnableFunctions &&
+		s.EnableFunctionsFeature &&
+		(i.DbType == "mysql") {
+		return true
+	}
+	return false
 }
 
 func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.InstanceState, error) {
@@ -191,7 +201,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		StorageEncrypted:        aws.Bool(d.Plan.Encrypted),
 		StorageType:             aws.String(d.Plan.StorageType),
 		Tags:                    rdsTags,
-		PubliclyAccessible:      aws.Bool(d.settings.PubliclyAccessible),
+		PubliclyAccessible:      aws.Bool(d.settings.PubliclyAccessibleFeature && i.PubliclyAccessible),
 		BackupRetentionPeriod:   aws.Int64(i.BackupRetentionPeriod),
 		DBSubnetGroupName:       &i.DbSubnetGroup,
 		VpcSecurityGroupIds: []*string{
@@ -204,9 +214,25 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 	if i.LicenseModel != "" {
 		params.LicenseModel = aws.String(i.LicenseModel)
 	}
-	// create/get custom parameter group if there are custom parameters.
-	if _, ok := d.settings.CustomRDSParameters[i.DbType]; ok {
-		pgroupName, err := customParameterGroup("awsbroker-pgroup-"+i.DbType, i, d.settings)
+
+	// If a custom parameter has been requested, and the feature is enabled,
+	// create/update a custom parameter group for our custom parameters.
+	if needCustomParameters(i, d.settings) {
+		customRDSParameters := make(map[string]map[string]string)
+
+		// enable functions
+		customRDSParameters["mysql"] = make(map[string]string)
+		if i.EnableFunctions && d.settings.EnableFunctionsFeature {
+			customRDSParameters["mysql"]["log_bin_trust_function_creators"] = "1"
+		} else {
+			customRDSParameters["mysql"]["log_bin_trust_function_creators"] = "0"
+		}
+
+		// Currently, we only have one custom parameter for mysql, but if
+		// we ever need to apply more, you can add them in here.
+
+		// apply parameter group
+		pgroupName, err := customParameterGroup("awsbroker-pgroup-"+i.FormatDBName(), i, customRDSParameters, svc)
 		if err != nil {
 			log.Println(err.Error())
 			return base.InstanceNotCreated, nil
@@ -285,6 +311,27 @@ func (d *dedicatedDBAdapter) bindDBToApp(i *RDSInstance, password string) (map[s
 	return i.getCredentials(password)
 }
 
+func deleteCustomParameterGroup(pgroupName string, i *RDSInstance, svc *rds.RDS) error {
+	input := &rds.DescribeDBParametersInput{
+		DBParameterGroupName: aws.String(pgroupName),
+		MaxRecords:           aws.Int64(20),
+		Source:               aws.String("system"),
+	}
+
+	// If the db parameter group exists, delete it!
+	_, err := svc.DescribeDBParameters(input)
+	if err == nil {
+		log.Printf("deleting %s parameter group", pgroupName)
+
+		deleteinput := &rds.DeleteDBParameterGroupInput{
+			DBParameterGroupName: aws.String(pgroupName),
+		}
+		_, err := svc.DeleteDBParameterGroup(deleteinput)
+		return err
+	}
+	return nil
+}
+
 func (d *dedicatedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error) {
 	svc := rds.New(session.New(), aws.NewConfig().WithRegion(d.settings.Region))
 	params := &rds.DeleteDBInstanceInput{
@@ -295,8 +342,14 @@ func (d *dedicatedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error
 	resp, err := svc.DeleteDBInstance(params)
 	// Pretty-print the response data.
 	fmt.Println(awsutil.StringValue(resp))
+
 	// Decide if AWS service call was successful
 	if yes := d.didAwsCallSucceed(err); yes {
+		// clean up a custom parameter group that it might have been using
+		err := deleteCustomParameterGroup("awsbroker-pgroup-"+i.FormatDBName(), i, svc)
+		if err != nil {
+			log.Printf("could not delete the awsbroker-pgroup-%s custom parameter group!  You may need to delete it by hand. The error was: %s", i.FormatDBName(), err.Error())
+		}
 		return base.InstanceGone, nil
 	}
 	return base.InstanceNotGone, nil

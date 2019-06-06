@@ -37,12 +37,12 @@ There are important environment variables that should be overriden inside the `m
 #### Optional Environment Variables
 
 There are some feature flags that you can turn on as well:
-1. `ENABLE_FUNCTIONS`:  This will enable users to create mysql databases like 
-   `cf create-service _servicename_ production my-mysql-service -c '{"enable_functions": "true"}'`,
+1. `ENABLE_FUNCTIONS`:  If this environment variable exists, it will enable users to create mysql databases like 
+   `cf create-service _servicename_ production my-mysql-service -c '{"enable_functions": true}'`,
    which will set the `log_bin_trust_function_creators=1` parameter for their db,
    enabling the creation of functions in their databases.
-1. `PUBLICLY_ACCESSIBLE`:  If this environment variable exists, databases that are created by the broker
-   will be created with `PubliclyAccessible: true`.  This is probably not something you want to set unless
+1. `PUBLICLY_ACCESSIBLE`:  If this environment variable exists, it will enable users to create databases with 
+   `PubliclyAccessible: true`.  This is probably not something you want to set unless
    you really know what you are doing.
 
 #### Catalog.yaml

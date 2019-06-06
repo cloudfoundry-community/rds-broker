@@ -15,7 +15,9 @@ import (
 )
 
 type RDSOptions struct {
-	AllocatedStorage int64 `json:"storage"`
+	AllocatedStorage   int64 `json:"storage"`
+	EnableFunctions    bool  `json:"enable_functions"`
+	PubliclyAccessible bool  `json:"publicly_accessible"`
 }
 
 func (r RDSOptions) Validate(settings *config.Settings) error {
