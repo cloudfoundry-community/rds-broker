@@ -91,7 +91,7 @@ func (s *Settings) LoadFromEnv() error {
 	}
 
 	// Feature flag to allow mysql to be provisioned with log_bin_trust_function_creators=1
-	if _, ok := os.LookupEnv("PUBLICLY_ACCESSIBLE"); ok {
+	if _, ok := os.LookupEnv("ENABLE_FUNCTIONS"); ok {
 		s.EnableFunctionsFeature = true
 	} else {
 		s.EnableFunctionsFeature = false
