@@ -106,6 +106,9 @@ type dedicatedDBAdapter struct {
 	settings config.Settings
 }
 
+// This is the prefix for all pgroups created by the broker.
+const PgroupPrefix = "awsbroker-pgroup-"
+
 // This function will return the a custom parameter group with whatever custom parameters
 // have been requested.  If there is no custom parameter group, it will be created.
 func customParameterGroup(pgroupName string, i *RDSInstance, customparams map[string]map[string]string, svc *rds.RDS) (string, error) {
@@ -232,7 +235,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		// we ever need to apply more, you can add them in here.
 
 		// apply parameter group
-		pgroupName, err := customParameterGroup("awsbroker-pgroup-"+i.FormatDBName(), i, customRDSParameters, svc)
+		pgroupName, err := customParameterGroup(PgroupPrefix+i.FormatDBName(), i, customRDSParameters, svc)
 		if err != nil {
 			log.Println(err.Error())
 			return base.InstanceNotCreated, nil
@@ -311,25 +314,38 @@ func (d *dedicatedDBAdapter) bindDBToApp(i *RDSInstance, password string) (map[s
 	return i.getCredentials(password)
 }
 
-func deleteCustomParameterGroup(pgroupName string, i *RDSInstance, svc *rds.RDS) error {
-	input := &rds.DescribeDBParametersInput{
-		DBParameterGroupName: aws.String(pgroupName),
-		MaxRecords:           aws.Int64(20),
-		Source:               aws.String("system"),
+// search out all the parameter groups that we created and try to clean them up
+func cleanupCustomParameterGroups(svc *rds.RDS) {
+	input := &rds.DescribeDBParameterGroupsInput{}
+	err := svc.DescribeDBParameterGroupsPages(input,
+		func(pgroups *rds.DescribeDBParameterGroupsOutput, lastPage bool) bool {
+			// If the pgroup matches the prefix, then try to delete it.
+			// If it's in use, it will fail, so ignore that.
+			for _, pgroup := range pgroups.DBParameterGroups {
+				if matched, _ := regexp.Match("^"+PgroupPrefix, []byte(*pgroup.DBParameterGroupName)); matched {
+					deleteinput := &rds.DeleteDBParameterGroupInput{
+						DBParameterGroupName: aws.String(*pgroup.DBParameterGroupName),
+					}
+					_, err := svc.DeleteDBParameterGroup(deleteinput)
+					if err == nil {
+						log.Printf("cleaned up %s parameter group", *pgroup.DBParameterGroupName)
+					} else {
+						// If you can't delete it because it's in use, that is fine.
+						// The db takes a while to delete, so we will clean it up the
+						// next time this is called.  Otherwise there is some sort of AWS error
+						// and we should log that.
+						if err.(awserr.Error).Code() != "InvalidDBParameterGroupState" {
+							log.Printf("There was an error cleaning up the %s parameter group.  The error was: %s", *pgroup.DBParameterGroupName, err.Error())
+						}
+					}
+				}
+			}
+			return true
+		})
+	if err != nil {
+		log.Printf("Could not retrieve list of parameter groups while cleaning up: %s", err.Error())
+		return
 	}
-
-	// If the db parameter group exists, delete it!
-	_, err := svc.DescribeDBParameters(input)
-	if err == nil {
-		log.Printf("deleting %s parameter group", pgroupName)
-
-		deleteinput := &rds.DeleteDBParameterGroupInput{
-			DBParameterGroupName: aws.String(pgroupName),
-		}
-		_, err := svc.DeleteDBParameterGroup(deleteinput)
-		return err
-	}
-	return nil
 }
 
 func (d *dedicatedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error) {
@@ -345,11 +361,8 @@ func (d *dedicatedDBAdapter) deleteDB(i *RDSInstance) (base.InstanceState, error
 
 	// Decide if AWS service call was successful
 	if yes := d.didAwsCallSucceed(err); yes {
-		// clean up a custom parameter group that it might have been using
-		err := deleteCustomParameterGroup("awsbroker-pgroup-"+i.FormatDBName(), i, svc)
-		if err != nil {
-			log.Printf("could not delete the awsbroker-pgroup-%s custom parameter group!  You may need to delete it by hand. The error was: %s", i.FormatDBName(), err.Error())
-		}
+		// clean up custom parameter groups
+		cleanupCustomParameterGroups(svc)
 		return base.InstanceGone, nil
 	}
 	return base.InstanceNotGone, nil
