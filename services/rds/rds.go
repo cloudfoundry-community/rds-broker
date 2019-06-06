@@ -111,7 +111,7 @@ const PgroupPrefix = "awsbroker-pgroup-"
 
 // This function will return the a custom parameter group with whatever custom parameters
 // have been requested.  If there is no custom parameter group, it will be created.
-func customParameterGroup(pgroupName string, i *RDSInstance, customparams map[string]map[string]string, svc *rds.RDS) (string, error) {
+func getCustomParameterGroup(pgroupName string, i *RDSInstance, customparams map[string]map[string]string, svc *rds.RDS) (string, error) {
 	input := &rds.DescribeDBParametersInput{
 		DBParameterGroupName: aws.String(pgroupName),
 		MaxRecords:           aws.Int64(20),
@@ -132,7 +132,7 @@ func customParameterGroup(pgroupName string, i *RDSInstance, customparams map[st
 		createinput := &rds.CreateDBParameterGroupInput{
 			DBParameterGroupFamily: aws.String(pgroupFamily),
 			DBParameterGroupName:   aws.String(pgroupName),
-			Description:            aws.String("aws broker parameter group for " + pgroupFamily),
+			Description:            aws.String("aws broker parameter group for " + i.FormatDBName()),
 		}
 		_, err = svc.CreateDBParameterGroup(createinput)
 		if err != nil {
@@ -235,7 +235,7 @@ func (d *dedicatedDBAdapter) createDB(i *RDSInstance, password string) (base.Ins
 		// we ever need to apply more, you can add them in here.
 
 		// apply parameter group
-		pgroupName, err := customParameterGroup(PgroupPrefix+i.FormatDBName(), i, customRDSParameters, svc)
+		pgroupName, err := getCustomParameterGroup(PgroupPrefix+i.FormatDBName(), i, customRDSParameters, svc)
 		if err != nil {
 			log.Println(err.Error())
 			return base.InstanceNotCreated, nil

@@ -42,8 +42,9 @@ There are some feature flags that you can turn on as well:
    which will set the `log_bin_trust_function_creators=1` parameter for their db,
    enabling the creation of functions in their databases.
 1. `PUBLICLY_ACCESSIBLE`:  If this environment variable exists, it will enable users to create databases with 
-   `PubliclyAccessible: true`.  This is probably not something you want to set unless
-   you really know what you are doing.
+   `PubliclyAccessible: true` by doing something like
+   `cf create-service _servicename_ production my-mysql-service -c '{"publicly_accessible": true}'`.
+   This is probably not something you want to set unless you really know what you are doing.
 
 #### Catalog.yaml
 
