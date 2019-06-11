@@ -20,6 +20,7 @@ applications:
   command: ./smoke-tests.sh
   env:
     DB_TYPE: ${DB_TYPE}
+    ENABLE_FUNCTIONS: true
   services:
   - rds-smoke-tests-${SERVICE_PLAN}
 EOF
