@@ -322,7 +322,11 @@ func cleanupCustomParameterGroups(svc *rds.RDS) {
 			// If the pgroup matches the prefix, then try to delete it.
 			// If it's in use, it will fail, so ignore that.
 			for _, pgroup := range pgroups.DBParameterGroups {
-				if matched, _ := regexp.Match("^"+PgroupPrefix, []byte(*pgroup.DBParameterGroupName)); matched {
+				matched, err := regexp.Match("^"+PgroupPrefix, []byte(*pgroup.DBParameterGroupName))
+				if err != nil {
+					log.Printf("error trying to match %s in %s: %s", PgroupPrefix, *pgroup.DBParameterGroupName, err.Error())
+				}
+				if matched {
 					deleteinput := &rds.DeleteDBParameterGroupInput{
 						DBParameterGroupName: aws.String(*pgroup.DBParameterGroupName),
 					}
