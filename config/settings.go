@@ -11,12 +11,14 @@ import (
 
 // Settings stores settings used to run the application
 type Settings struct {
-	EncryptionKey       string
-	DbNamePrefix        string
-	MaxAllocatedStorage int64
-	DbConfig            *common.DBConfig
-	Environment         string
-	Region              string
+	EncryptionKey             string
+	DbNamePrefix              string
+	MaxAllocatedStorage       int64
+	DbConfig                  *common.DBConfig
+	Environment               string
+	Region                    string
+	PubliclyAccessibleFeature bool
+	EnableFunctionsFeature    bool
 }
 
 // LoadFromEnv loads settings from environment variables
@@ -79,6 +81,20 @@ func (s *Settings) LoadFromEnv() error {
 		}
 	} else {
 		s.MaxAllocatedStorage = 1024
+	}
+
+	// Feature flag to allow RDS to be publicly available (needed for testing)
+	if _, ok := os.LookupEnv("PUBLICLY_ACCESSIBLE"); ok {
+		s.PubliclyAccessibleFeature = true
+	} else {
+		s.PubliclyAccessibleFeature = false
+	}
+
+	// Feature flag to allow mysql to be provisioned with log_bin_trust_function_creators=1
+	if _, ok := os.LookupEnv("ENABLE_FUNCTIONS"); ok {
+		s.EnableFunctionsFeature = true
+	} else {
+		s.EnableFunctionsFeature = false
 	}
 
 	return nil

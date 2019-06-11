@@ -21,6 +21,7 @@ elif [ $DB_TYPE = "mysql" ] ; then
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "create table smoke (id integer, name text);" $MYSQL_DB
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "insert into smoke values (1, 'smoke');" $MYSQL_DB
   ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "drop table smoke;" $MYSQL_DB
+  ./mysql -h $MYSQL_HOST -u $MYSQL_USER -p$MYSQL_PASS -e "create function hello(id INT) returns CHAR(50) return 'foobar';" $MYSQL_DB
 elif [ $DB_TYPE = "oracle-se1" ] || [ $DB_TYPE = "oracle-se2" ] || [ $DB_TYPE = "oracle-ee" ] ; then
   unzip $(find sqlclient-oracle-basiclite -type f -name "instantclient*")
   unzip $(find sqlclient-oracle-sqlplus -type f -name "instantclient*")

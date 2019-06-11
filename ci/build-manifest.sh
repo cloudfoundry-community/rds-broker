@@ -13,6 +13,7 @@ cat << EOF >> built/manifest.yml
 env:
   DB_URL: `terraform output -state=$STATE_FILE -module=rds_internal rds_host`
   DB_PORT: `terraform output -state=$STATE_FILE -module=rds_internal rds_port`
+  ENABLE_FUNCTIONS: true
 EOF
 
 # Build secrets for merging into templates
