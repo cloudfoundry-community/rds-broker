@@ -31,6 +31,8 @@ type RDSInstance struct {
 	DbSubnetGroup         string            `sql:"-"`
 	AllocatedStorage      int64             `sql:"-"`
 	SecGroup              string            `sql:"-"`
+	EnableFunctions       bool              `sql:"-"`
+	PubliclyAccessible    bool              `sql:"-"`
 
 	Adapter string `sql:"size(255)"`
 
@@ -159,6 +161,8 @@ func (i *RDSInstance) init(uuid string,
 	if i.AllocatedStorage == 0 {
 		i.AllocatedStorage = plan.AllocatedStorage
 	}
+	i.EnableFunctions = options.EnableFunctions
+	i.PubliclyAccessible = options.PubliclyAccessible
 
 	return nil
 }

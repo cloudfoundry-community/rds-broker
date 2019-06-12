@@ -3,3 +3,5 @@ applications:
 - name: aws-broker
   buildpack: go_buildpack
   memory: 256M
+  env:
+    GOVERSION: go1.12
