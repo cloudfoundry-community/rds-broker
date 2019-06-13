@@ -9,16 +9,12 @@ cf delete -f smoke-tests-$SERVICE_PLAN
 cf delete-service -f rds-smoke-tests-$SERVICE_PLAN
 
 # Create service
-if echo "$SERVICE_PLAN" | grep mysql >/dev/null ; then
-  # test out the enable_functions stuff, which only works under mysql
+if echo "$SERVICE_PLAN" | grep -v shared | grep mysql >/dev/null ; then
+  # test out the enable_functions stuff, which only works on non-shared mysql databases
   cf create-service aws-rds "$SERVICE_PLAN" "rds-smoke-tests-$SERVICE_PLAN" -c '{"enable_functions": true}'
-else
-  # create a regular instance
-  cf create-service aws-rds "$SERVICE_PLAN" "rds-smoke-tests-$SERVICE_PLAN"
-fi
 
-# Write manifest
-cat << EOF > aws-broker-app/ci/smoke-tests/manifest.yml
+  # Write manifest with ENABLE_FUNCTIONS set so that we can test for it
+  cat << EOF > aws-broker-app/ci/smoke-tests/manifest.yml
 ---
 applications:
 - name: smoke-tests-${SERVICE_PLAN}
@@ -30,6 +26,25 @@ applications:
   services:
   - rds-smoke-tests-${SERVICE_PLAN}
 EOF
+else
+  # create a regular instance
+  cf create-service aws-rds "$SERVICE_PLAN" "rds-smoke-tests-$SERVICE_PLAN"
+
+  # Write manifest
+  cat << EOF > aws-broker-app/ci/smoke-tests/manifest.yml
+---
+applications:
+- name: smoke-tests-${SERVICE_PLAN}
+  buildpack: binary_buildpack
+  command: ./smoke-tests.sh
+  env:
+    DB_TYPE: ${DB_TYPE}
+  services:
+  - rds-smoke-tests-${SERVICE_PLAN}
+EOF
+fi
+
+
 
 cp -R sqlclient-oracle-basiclite aws-broker-app/ci/smoke-tests/.
 cp -R sqlclient-oracle-sqlplus aws-broker-app/ci/smoke-tests/.
