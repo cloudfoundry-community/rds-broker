@@ -107,7 +107,7 @@ type dedicatedDBAdapter struct {
 }
 
 // This is the prefix for all pgroups created by the broker.
-const PgroupPrefix = "awsbroker-pgroup-"
+const PgroupPrefix = "cg-aws-broker-"
 
 // This function will return the a custom parameter group with whatever custom parameters
 // have been requested.  If there is no custom parameter group, it will be created.
