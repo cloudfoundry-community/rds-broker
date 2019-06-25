@@ -4,14 +4,11 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: 18fgsa/concourse-task
+    repository: 18fgsa/sql-clients
 
 inputs:
 - name: aws-broker-app
-- name: sqlclient-oracle-basiclite
-- name: sqlclient-oracle-sqlplus
-- name: sqlclient-postgres
-- name: sqlclient-mysql
+- name: aws-db-test
 
 run:
   path: aws-broker-app/ci/run-smoke-tests.sh

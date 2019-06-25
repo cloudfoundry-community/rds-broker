@@ -2,12 +2,11 @@
 jobs:
 - name: deploy-aws-broker-development
   plan:
-  - aggregate:
+  - in_parallel:
     - get: aws-broker-app
       resource: aws-broker-app-development
       trigger: true
     - get: pipeline-tasks
-
   - task: run_tests
     file: aws-broker-app/ci/run_tests.yml
 
@@ -113,7 +112,11 @@ jobs:
   - task: update-broker
     file: pipeline-tasks/register-service-broker.yml
     params:
-      <<: *development-cf-creds
+      CF_API_URL: {{development-cf-api-url}}
+      CF_USERNAME: {{development-cf-deploy-username}}
+      CF_PASSWORD: {{development-cf-deploy-password}}
+      CF_ORGANIZATION: {{development-cf-organization}}
+      CF_SPACE: {{development-cf-space}}
       BROKER_NAME: {{development-broker-name}}
       AUTH_USER: {{development-auth-user}}
       AUTH_PASS: {{development-auth-pass}}
@@ -122,7 +125,11 @@ jobs:
   - task: update-broker-enterprise
     file: pipeline-tasks/register-service-broker.yml
     params:
-      <<: *development-cf-creds
+      CF_API_URL: {{development-cf-api-url}}
+      CF_USERNAME: {{development-cf-deploy-username}}
+      CF_PASSWORD: {{development-cf-deploy-password}}
+      CF_ORGANIZATION: {{development-cf-organization}}
+      CF_SPACE: {{development-cf-space}}
       BROKER_NAME: {{development-broker-name}}
       AUTH_USER: {{development-auth-user}}
       AUTH_PASS: {{development-auth-pass}}
@@ -135,46 +142,62 @@ jobs:
     resource: aws-broker-app-development
     passed: [deploy-aws-broker-development]
     trigger: true
-  - aggregate:
-    - get: sqlclient-oracle-basiclite
-    - get: sqlclient-oracle-sqlplus
-    - get: sqlclient-postgres
-    - get: sqlclient-mysql
-  - aggregate:
-    - task: smoke-tests-postgres
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *development-cf-creds
-        SERVICE_PLAN: medium-psql
-        DB_TYPE: postgres
+  - in_parallel:
+      steps:
+      - task: smoke-tests-postgres
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{development-cf-api-url}}
+          CF_USERNAME: {{development-cf-deploy-username}}
+          CF_PASSWORD: {{development-cf-deploy-password}}
+          CF_ORGANIZATION: {{development-cf-organization}}
+          CF_SPACE: {{development-cf-space}}
+          SERVICE_PLAN: medium-psql
+          DB_TYPE: postgres
 
-    - task: smoke-tests-shared-postgres
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *development-cf-creds
-        SERVICE_PLAN: shared-psql
-        DB_TYPE: postgres
+      - task: smoke-tests-shared-postgres
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{development-cf-api-url}}
+          CF_USERNAME: {{development-cf-deploy-username}}
+          CF_PASSWORD: {{development-cf-deploy-password}}
+          CF_ORGANIZATION: {{development-cf-organization}}
+          CF_SPACE: {{development-cf-space}}
+          SERVICE_PLAN: shared-psql
+          DB_TYPE: postgres
 
-    - task: smoke-tests-mysql
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *development-cf-creds
-        SERVICE_PLAN: medium-mysql
-        DB_TYPE: mysql
+      - task: smoke-tests-mysql
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{development-cf-api-url}}
+          CF_USERNAME: {{development-cf-deploy-username}}
+          CF_PASSWORD: {{development-cf-deploy-password}}
+          CF_ORGANIZATION: {{development-cf-organization}}
+          CF_SPACE: {{development-cf-space}}
+          SERVICE_PLAN: medium-mysql
+          DB_TYPE: mysql
 
-    - task: smoke-tests-shared-mysql
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *development-cf-creds
-        SERVICE_PLAN: shared-mysql
-        DB_TYPE: mysql
+      - task: smoke-tests-shared-mysql
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{development-cf-api-url}}
+          CF_USERNAME: {{development-cf-deploy-username}}
+          CF_PASSWORD: {{development-cf-deploy-password}}
+          CF_ORGANIZATION: {{development-cf-organization}}
+          CF_SPACE: {{development-cf-space}}
+          SERVICE_PLAN: shared-mysql
+          DB_TYPE: mysql
 
-    - task: smoke-tests-oracle
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *development-cf-creds
-        SERVICE_PLAN: medium-oracle-se2
-        DB_TYPE: oracle-se2
+      - task: smoke-tests-oracle
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{development-cf-api-url}}
+          CF_USERNAME: {{development-cf-deploy-username}}
+          CF_PASSWORD: {{development-cf-deploy-password}}
+          CF_ORGANIZATION: {{development-cf-organization}}
+          CF_SPACE: {{development-cf-space}}
+          SERVICE_PLAN: medium-oracle-se2
+          DB_TYPE: oracle-se2
   on_success:
     put: slack
     params:
@@ -196,11 +219,10 @@ jobs:
 
 - name: deploy-aws-broker-staging
   plan:
-  - aggregate:
+  - in_parallel:
     - get: aws-broker-app
       trigger: true
     - get: pipeline-tasks
-
   - task: run_tests
     file: aws-broker-app/ci/run_tests.yml
 
@@ -306,7 +328,11 @@ jobs:
   - task: update-broker
     file: pipeline-tasks/register-service-broker.yml
     params:
-      <<: *staging-cf-creds
+      CF_API_URL: {{staging-cf-api-url}}
+      CF_USERNAME: {{staging-cf-deploy-username}}
+      CF_PASSWORD: {{staging-cf-deploy-password}}
+      CF_ORGANIZATION: {{staging-cf-organization}}
+      CF_SPACE: {{staging-cf-space}}
       BROKER_NAME: {{staging-broker-name}}
       AUTH_USER: {{staging-auth-user}}
       AUTH_PASS: {{staging-auth-pass}}
@@ -315,7 +341,11 @@ jobs:
   - task: update-broker-enterprise
     file: pipeline-tasks/register-service-broker.yml
     params:
-      <<: *staging-cf-creds
+      CF_API_URL: {{staging-cf-api-url}}
+      CF_USERNAME: {{staging-cf-deploy-username}}
+      CF_PASSWORD: {{staging-cf-deploy-password}}
+      CF_ORGANIZATION: {{staging-cf-organization}}
+      CF_SPACE: {{staging-cf-space}}
       BROKER_NAME: {{staging-broker-name}}
       AUTH_USER: {{staging-auth-user}}
       AUTH_PASS: {{staging-auth-pass}}
@@ -324,49 +354,67 @@ jobs:
 
 - name: acceptance-tests-staging
   plan:
-  - get: aws-broker-app
-    passed: [deploy-aws-broker-staging]
-    trigger: true
-  - aggregate:
-    - get: sqlclient-oracle-basiclite
-    - get: sqlclient-oracle-sqlplus
-    - get: sqlclient-postgres
-    - get: sqlclient-mysql
-  - aggregate:
-    - task: smoke-tests-postgres
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *staging-cf-creds
-        SERVICE_PLAN: medium-psql
-        DB_TYPE: postgres
+  - in_parallel:
+    - get: aws-broker-app
+      passed: [deploy-aws-broker-staging]
+      trigger: true
+    - get: aws-db-test
+  - in_parallel:
+      steps:
+      - task: smoke-tests-postgres
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{staging-cf-api-url}}
+          CF_USERNAME: {{staging-cf-deploy-username}}
+          CF_PASSWORD: {{staging-cf-deploy-password}}
+          CF_ORGANIZATION: {{staging-cf-organization}}
+          CF_SPACE: {{staging-cf-space}}
+          SERVICE_PLAN: medium-psql
+          DB_TYPE: postgres
 
-    - task: smoke-tests-shared-postgres
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *staging-cf-creds
-        SERVICE_PLAN: shared-psql
-        DB_TYPE: postgres
+      - task: smoke-tests-shared-postgres
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{staging-cf-api-url}}
+          CF_USERNAME: {{staging-cf-deploy-username}}
+          CF_PASSWORD: {{staging-cf-deploy-password}}
+          CF_ORGANIZATION: {{staging-cf-organization}}
+          CF_SPACE: {{staging-cf-space}}
+          SERVICE_PLAN: shared-psql
+          DB_TYPE: postgres
 
-    - task: smoke-tests-mysql
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *staging-cf-creds
-        SERVICE_PLAN: medium-mysql
-        DB_TYPE: mysql
+      - task: smoke-tests-mysql
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{staging-cf-api-url}}
+          CF_USERNAME: {{staging-cf-deploy-username}}
+          CF_PASSWORD: {{staging-cf-deploy-password}}
+          CF_ORGANIZATION: {{staging-cf-organization}}
+          CF_SPACE: {{staging-cf-space}}
+          SERVICE_PLAN: medium-mysql
+          DB_TYPE: mysql
 
-    - task: smoke-tests-shared-mysql
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *staging-cf-creds
-        SERVICE_PLAN: shared-mysql
-        DB_TYPE: mysql
+      - task: smoke-tests-shared-mysql
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{staging-cf-api-url}}
+          CF_USERNAME: {{staging-cf-deploy-username}}
+          CF_PASSWORD: {{staging-cf-deploy-password}}
+          CF_ORGANIZATION: {{staging-cf-organization}}
+          CF_SPACE: {{staging-cf-space}}
+          SERVICE_PLAN: shared-mysql
+          DB_TYPE: mysql
 
-    - task: smoke-tests-oracle
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *staging-cf-creds
-        SERVICE_PLAN: medium-oracle-se2
-        DB_TYPE: oracle-se2
+      - task: smoke-tests-oracle
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{staging-cf-api-url}}
+          CF_USERNAME: {{staging-cf-deploy-username}}
+          CF_PASSWORD: {{staging-cf-deploy-password}}
+          CF_ORGANIZATION: {{staging-cf-organization}}
+          CF_SPACE: {{staging-cf-space}}
+          SERVICE_PLAN: medium-oracle-se2
+          DB_TYPE: oracle-se2
   on_success:
     put: slack
     params:
@@ -387,7 +435,7 @@ jobs:
       icon_url: {{slack-icon-url}}
 - name: deploy-aws-broker-prod
   plan:
-  - aggregate:
+  - in_parallel:
     - get: aws-broker-app
       passed: [acceptance-tests-staging]
       trigger: true
@@ -495,7 +543,11 @@ jobs:
   - task: update-broker
     file: pipeline-tasks/register-service-broker.yml
     params:
-      <<: *prod-cf-creds
+      CF_API_URL: {{prod-cf-api-url}}
+      CF_USERNAME: {{prod-cf-deploy-username}}
+      CF_PASSWORD: {{prod-cf-deploy-password}}
+      CF_ORGANIZATION: {{prod-cf-organization}}
+      CF_SPACE: {{prod-cf-space}}
       BROKER_NAME: {{prod-broker-name}}
       AUTH_USER: {{prod-auth-user}}
       AUTH_PASS: {{prod-auth-pass}}
@@ -504,7 +556,11 @@ jobs:
   - task: update-broker-enterprise
     file: pipeline-tasks/register-service-broker.yml
     params:
-      <<: *prod-cf-creds
+      CF_API_URL: {{prod-cf-api-url}}
+      CF_USERNAME: {{prod-cf-deploy-username}}
+      CF_PASSWORD: {{prod-cf-deploy-password}}
+      CF_ORGANIZATION: {{prod-cf-organization}}
+      CF_SPACE: {{prod-cf-space}}
       BROKER_NAME: {{prod-broker-name}}
       AUTH_USER: {{prod-auth-user}}
       AUTH_PASS: {{prod-auth-pass}}
@@ -513,49 +569,67 @@ jobs:
 
 - name: acceptance-tests-prod
   plan:
-  - get: aws-broker-app
-    passed: [deploy-aws-broker-prod]
-    trigger: true
-  - aggregate:
-    - get: sqlclient-oracle-basiclite
-    - get: sqlclient-oracle-sqlplus
-    - get: sqlclient-postgres
-    - get: sqlclient-mysql
-  - aggregate:
-    - task: smoke-tests-postgres
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *prod-cf-creds
-        SERVICE_PLAN: medium-psql
-        DB_TYPE: postgres
+  - in_parallel: 
+    - get: aws-broker-app
+      passed: [deploy-aws-broker-prod]
+      trigger: true
+    - get: aws-db-test
+  - in_parallel:
+      steps:
+      - task: smoke-tests-postgres
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{prod-cf-api-url}}
+          CF_USERNAME: {{prod-cf-deploy-username}}
+          CF_PASSWORD: {{prod-cf-deploy-password}}
+          CF_ORGANIZATION: {{prod-cf-organization}}
+          CF_SPACE: {{prod-cf-space}}
+          SERVICE_PLAN: medium-psql
+          DB_TYPE: postgres
 
-    - task: smoke-tests-shared-postgres
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *prod-cf-creds
-        SERVICE_PLAN: shared-psql
-        DB_TYPE: postgres
+      - task: smoke-tests-shared-postgres
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{prod-cf-api-url}}
+          CF_USERNAME: {{prod-cf-deploy-username}}
+          CF_PASSWORD: {{prod-cf-deploy-password}}
+          CF_ORGANIZATION: {{prod-cf-organization}}
+          CF_SPACE: {{prod-cf-space}}
+          SERVICE_PLAN: shared-psql
+          DB_TYPE: postgres
 
-    - task: smoke-tests-mysql
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *prod-cf-creds
-        SERVICE_PLAN: medium-mysql
-        DB_TYPE: mysql
+      - task: smoke-tests-mysql
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{prod-cf-api-url}}
+          CF_USERNAME: {{prod-cf-deploy-username}}
+          CF_PASSWORD: {{prod-cf-deploy-password}}
+          CF_ORGANIZATION: {{prod-cf-organization}}
+          CF_SPACE: {{prod-cf-space}}
+          SERVICE_PLAN: medium-mysql
+          DB_TYPE: mysql
 
-    - task: smoke-tests-shared-mysql
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *prod-cf-creds
-        SERVICE_PLAN: shared-mysql
-        DB_TYPE: mysql
+      - task: smoke-tests-shared-mysql
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{prod-cf-api-url}}
+          CF_USERNAME: {{prod-cf-deploy-username}}
+          CF_PASSWORD: {{prod-cf-deploy-password}}
+          CF_ORGANIZATION: {{prod-cf-organization}}
+          CF_SPACE: {{prod-cf-space}}
+          SERVICE_PLAN: shared-mysql
+          DB_TYPE: mysql
 
-    - task: smoke-tests-oracle
-      file: aws-broker-app/ci/run-smoke-tests.yml
-      params:
-        <<: *prod-cf-creds
-        SERVICE_PLAN: medium-oracle-se2
-        DB_TYPE: oracle-se2
+      - task: smoke-tests-oracle
+        file: aws-broker-app/ci/run-smoke-tests.yml
+        params:
+          CF_API_URL: {{prod-cf-api-url}}
+          CF_USERNAME: {{prod-cf-deploy-username}}
+          CF_PASSWORD: {{prod-cf-deploy-password}}
+          CF_ORGANIZATION: {{prod-cf-organization}}
+          CF_SPACE: {{prod-cf-space}}
+          SERVICE_PLAN: medium-oracle-se2
+          DB_TYPE: oracle-se2
   on_success:
     put: slack
     params:
@@ -594,6 +668,12 @@ resources:
     uri: {{aws-broker-url-development}}
     branch: {{aws-broker-branch-development}}
 
+- name: aws-db-test
+  type: git
+  source:
+    uri: {{aws-db-test-git-url}}
+    branch: {{aws-db-test-git-branch}}
+
 - name: deploy-aws-broker-development
   type: cf
   source:
@@ -629,34 +709,6 @@ resources:
   source:
     url: {{slack-webhook-url}}
 
-- name: sqlclient-oracle-basiclite
-  type: s3-iam
-  source:
-    region_name: {{binaries-aws-region}}
-    regexp: sql-client-binaries\/instantclient-basiclite-(.*).zip
-    bucket: {{cg-s3-binaries-bucket}}
-
-- name: sqlclient-oracle-sqlplus
-  type: s3-iam
-  source:
-    region_name: {{binaries-aws-region}}
-    regexp: sql-client-binaries\/instantclient-sqlplus-(.*).zip
-    bucket: {{cg-s3-binaries-bucket}}
-
-- name: sqlclient-postgres
-  type: s3-iam
-  source:
-    region_name: {{binaries-aws-region}}
-    regexp: sql-client-binaries\/psql-(.*)-ubuntu-(.*).tar.gz
-    bucket: {{cg-s3-binaries-bucket}}
-
-- name: sqlclient-mysql
-  type: s3-iam
-  source:
-    region_name: {{binaries-aws-region}}
-    regexp: sql-client-binaries\/mysql-(.*).gz
-    bucket: {{cg-s3-binaries-bucket}}
-
 resource_types:
 - name: slack-notification
   type: docker-image
@@ -667,24 +719,3 @@ resource_types:
   type: docker-image
   source:
     repository: 18fgsa/s3-resource
-
-development-cf-creds: &development-cf-creds
-  CF_API_URL: {{development-cf-api-url}}
-  CF_USERNAME: {{development-cf-deploy-username}}
-  CF_PASSWORD: {{development-cf-deploy-password}}
-  CF_ORGANIZATION: {{development-cf-organization}}
-  CF_SPACE: {{development-cf-space}}
-
-staging-cf-creds: &staging-cf-creds
-  CF_API_URL: {{staging-cf-api-url}}
-  CF_USERNAME: {{staging-cf-deploy-username}}
-  CF_PASSWORD: {{staging-cf-deploy-password}}
-  CF_ORGANIZATION: {{staging-cf-organization}}
-  CF_SPACE: {{staging-cf-space}}
-
-prod-cf-creds: &prod-cf-creds
-  CF_API_URL: {{prod-cf-api-url}}
-  CF_USERNAME: {{prod-cf-deploy-username}}
-  CF_PASSWORD: {{prod-cf-deploy-password}}
-  CF_ORGANIZATION: {{prod-cf-organization}}
-  CF_SPACE: {{prod-cf-space}}
