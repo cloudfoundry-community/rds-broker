@@ -35,6 +35,11 @@ func InitRedisBroker(brokerDB *gorm.DB, settings *config.Settings) base.Broker {
 func initializeAdapter(plan catalog.RedisPlan, s *config.Settings, c *catalog.Catalog) (redisAdapter, response.Response) {
 
 	var redisAdapter redisAdapter
+
+	redisAdapter = &dedicatedRedisAdapter{
+		Plan:     plan,
+		settings: *s,
+	}
 	return redisAdapter, nil
 }
 
@@ -81,8 +86,8 @@ func (broker *redisBroker) CreateInstance(c *catalog.Catalog, id string, createR
 	if adapterErr != nil {
 		return adapterErr
 	}
-	// Create the database instance.
-	status, err := adapter.createRedis(&newInstance, newInstance.Password)
+	// Create the redis instance.
+	status, err := adapter.createRedis(&newInstance, newInstance.ClearPassword)
 	if status == base.InstanceNotCreated {
 		desc := "There was an error creating the instance."
 		if err != nil {

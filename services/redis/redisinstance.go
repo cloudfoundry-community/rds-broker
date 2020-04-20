@@ -1,10 +1,14 @@
 package redis
 
 import (
+	"crypto/aes"
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/18F/aws-broker/base"
+	"github.com/18F/aws-broker/helpers"
 
 	"github.com/18F/aws-broker/catalog"
 	"github.com/18F/aws-broker/config"
@@ -14,36 +18,66 @@ import (
 type RedisInstance struct {
 	base.Instance
 
-	Username string `sql:"size(255)"`
-	Password string `sql:"size(255)"`
+	Description string `sql:"size(255)"`
 
-	Tags            map[string]string `sql:"-"`
-	DbSubnetGroup   string            `sql:"-"`
-	SecGroup        string            `sql:"-"`
-	EnableFunctions bool              `sql:"-"`
+	Password string `sql:"size(255)"`
+	Salt     string `sql:"size(255)"`
+
+	ClearPassword string `sql:"-"`
+
+	EngineVersion    string `sql:"size(255)"`
+	ClusterID        string `sql:"size(255)"`
+	CacheNodeType    string `sql:"size(255)"`
+	NumCacheClusters int    `sql:"size(255)"`
+
+	Tags          map[string]string `sql:"-"`
+	DbSubnetGroup string            `sql:"-"`
+	SecGroup      string            `sql:"-"`
 }
 
 func (i *RedisInstance) setPassword(password, key string) error {
-	i.Password = password
+	if i.Salt == "" {
+		return errors.New("Salt has to be set before writing the password")
+	}
+
+	iv, _ := base64.StdEncoding.DecodeString(i.Salt)
+
+	encrypted, err := helpers.Encrypt(password, key, iv)
+	if err != nil {
+		return err
+	}
+
+	i.Password = encrypted
+	i.ClearPassword = password
+
 	return nil
 }
 
 func (i *RedisInstance) getPassword(key string) (string, error) {
-	return i.Password, nil
+	if i.Salt == "" || i.Password == "" {
+		return "", errors.New("Salt and password has to be set before writing the password")
+	}
+
+	iv, _ := base64.StdEncoding.DecodeString(i.Salt)
+
+	decrypted, err := helpers.Decrypt(i.Password, key, iv)
+	if err != nil {
+		return "", err
+	}
+
+	return decrypted, nil
 }
 
 func (i *RedisInstance) getCredentials(password string) (map[string]string, error) {
 	var credentials map[string]string
 
-	uri := fmt.Sprintf("redis://%s:%s@%s:%d",
-		i.Username,
+	uri := fmt.Sprintf("redis://:%s@%s:%d",
 		password,
 		i.Host,
 		i.Port)
 
 	credentials = map[string]string{
 		"uri":      uri,
-		"username": i.Username,
 		"password": password,
 		"host":     i.Host,
 		"port":     strconv.FormatInt(i.Port, 10),
@@ -71,6 +105,18 @@ func (i *RedisInstance) init(uuid string,
 
 	// Load tags
 	i.Tags = plan.Tags
+	i.Description = plan.Description
+
+	i.ClusterID = s.DbNamePrefix + "-redis-" + helpers.RandStr(15)
+	i.Salt = helpers.GenerateSalt(aes.BlockSize)
+	password := helpers.RandStr(25)
+	if err := i.setPassword(password, s.EncryptionKey); err != nil {
+		return err
+	}
+
+	i.EngineVersion = plan.EngineVersion
+	i.NumCacheClusters = plan.NumCacheClusters
+	i.CacheNodeType = plan.CacheNodeType
 
 	// Tag instance with broker details
 	i.Tags["Instance GUID"] = uuid

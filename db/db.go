@@ -1,11 +1,13 @@
 package db
 
 import (
+	"log"
+
 	"github.com/18F/aws-broker/base"
 	"github.com/18F/aws-broker/common"
 	"github.com/18F/aws-broker/services/rds"
+	"github.com/18F/aws-broker/services/redis"
 	"github.com/jinzhu/gorm"
-	"log"
 )
 
 // InternalDBInit initializes the internal database connection that the service broker will use.
@@ -17,7 +19,7 @@ func InternalDBInit(dbConfig *common.DBConfig) (*gorm.DB, error) {
 		log.Println("Migrating")
 		// db.LogMode(true)
 		// Automigrate!
-		db.AutoMigrate(&rds.RDSInstance{}, &base.Instance{}) // Add all your models here to help setup the database tables
+		db.AutoMigrate(&rds.RDSInstance{}, &redis.RedisInstance{}, &base.Instance{}) // Add all your models here to help setup the database tables
 		log.Println("Migrated")
 	}
 	return db, err

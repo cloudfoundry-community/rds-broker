@@ -1,6 +1,8 @@
 package redis
 
 import (
+	"errors"
+
 	"github.com/18F/aws-broker/base"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -39,7 +41,7 @@ func (d *sharedRedisAdapter) deleteRedis(i *RedisInstance) (base.InstanceState, 
 }
 
 type dedicatedRedisAdapter struct {
-	Plan     catalog.RDSPlan
+	Plan     catalog.RedisPlan
 	settings config.Settings
 }
 
@@ -60,21 +62,29 @@ func (d *dedicatedRedisAdapter) createRedis(i *RedisInstance, password string) (
 		redisTags = append(redisTags, &tag)
 	}
 
+	var securityGroups []*string
+
+	securityGroups = append(securityGroups, &i.SecGroup)
+
 	// Standard parameters
-	params := &elasticache.CreateCacheClusterInput{
-		AutoMinorVersionUpgrade:   aws.Bool(true),
-		CacheClusterId:            aws.String("aws-broker-redis-test"),
-		CacheNodeType:             aws.String("cache.t3.micro"),
-		CacheSubnetGroupName:      aws.String("default"),
-		Engine:                    aws.String("redis"),
-		EngineVersion:             aws.String("5.0.6"),
-		NumCacheNodes:             aws.Int64(1),
-		Port:                      aws.Int64(6379),
-		PreferredAvailabilityZone: aws.String("us-gov-west-1"),
-		SnapshotRetentionLimit:    aws.Int64(7),
+	params := &elasticache.CreateReplicationGroupInput{
+		AtRestEncryptionEnabled:     aws.Bool(true),
+		TransitEncryptionEnabled:    aws.Bool(true),
+		AutoMinorVersionUpgrade:     aws.Bool(true),
+		ReplicationGroupDescription: aws.String(i.Description),
+		AuthToken:                   &password,
+		ReplicationGroupId:          aws.String(i.ClusterID),
+		CacheNodeType:               aws.String(i.CacheNodeType),
+		CacheSubnetGroupName:        aws.String(i.DbSubnetGroup),
+		SecurityGroupIds:            securityGroups,
+		Engine:                      aws.String("redis"),
+		EngineVersion:               aws.String(i.EngineVersion),
+		NumCacheClusters:            aws.Int64(int64(i.NumCacheClusters)),
+		Port:                        aws.Int64(6379),
+		SnapshotRetentionLimit:      aws.Int64(7),
 	}
 
-	resp, err := svc.CreateCacheCluster(params)
+	resp, err := svc.CreateReplicationGroup(params)
 	// Pretty-print the response data.
 	log.Println(awsutil.StringValue(resp))
 	// Decide if AWS service call was successful
@@ -89,11 +99,11 @@ func (d *dedicatedRedisAdapter) bindRedisToApp(i *RedisInstance, password string
 	// Only search for details if the instance was not indicated as ready.
 	if i.State != base.InstanceReady {
 		svc := elasticache.New(session.New(), aws.NewConfig().WithRegion(d.settings.Region))
-		params := &elasticache.DescribeCacheClustersInput{
-			CacheClusterId: aws.String("aws-broker-redis-test"), // Required
+		params := &elasticache.DescribeReplicationGroupsInput{
+			ReplicationGroupId: aws.String(i.ClusterID), // Required
 		}
 
-		resp, err := svc.DescribeCacheClusters(params)
+		resp, err := svc.DescribeReplicationGroups(params)
 		if err != nil {
 			if awsErr, ok := err.(awserr.Error); ok {
 				// Generic AWS error with Code, Message, and original error (if any)
@@ -112,17 +122,40 @@ func (d *dedicatedRedisAdapter) bindRedisToApp(i *RedisInstance, password string
 
 		// Pretty-print the response data.
 		fmt.Println(awsutil.StringValue(resp))
+
+		numOfInstances := len(resp.ReplicationGroups)
+		if numOfInstances > 0 {
+			for _, value := range resp.ReplicationGroups {
+				// First check that the instance is up.
+				if value.Status != nil && *(value.Status) == "available" {
+					if value.NodeGroups[0].PrimaryEndpoint != nil && value.NodeGroups[0].PrimaryEndpoint.Address != nil && value.NodeGroups[0].PrimaryEndpoint.Port != nil {
+						fmt.Printf("host: %s port: %d \n", *(value.NodeGroups[0].PrimaryEndpoint.Address), *(value.NodeGroups[0].PrimaryEndpoint.Port))
+						i.Port = *(value.NodeGroups[0].PrimaryEndpoint.Port)
+						i.Host = *(value.NodeGroups[0].PrimaryEndpoint.Address)
+						i.State = base.InstanceReady
+						// Should only be one regardless. Just return now.
+						break
+					} else {
+						// Something went horribly wrong. Should never get here.
+						return nil, errors.New("Invalid memory for endpoint and/or endpoint members.")
+					}
+				} else {
+					// Instance not up yet.
+					return nil, errors.New("Instance not available yet. Please wait and try again..")
+				}
+			}
+		}
 	}
 	// If we get here that means the instance is up and we have the information for it.
 	return i.getCredentials(password)
 }
 
-func (d *dedicatedRedisAdapter) deleteDB(i *RedisInstance) (base.InstanceState, error) {
+func (d *dedicatedRedisAdapter) deleteRedis(i *RedisInstance) (base.InstanceState, error) {
 	svc := elasticache.New(session.New(), aws.NewConfig().WithRegion(d.settings.Region))
-	params := &elasticache.DeleteCacheClusterInput{
-		CacheClusterId: aws.String("aws-broker-redis-test"), // Required
+	params := &elasticache.DeleteReplicationGroupInput{
+		ReplicationGroupId: aws.String(i.ClusterID), // Required
 	}
-	resp, err := svc.DeleteCacheCluster(params)
+	resp, err := svc.DeleteReplicationGroup(params)
 	// Pretty-print the response data.
 	fmt.Println(awsutil.StringValue(resp))
 

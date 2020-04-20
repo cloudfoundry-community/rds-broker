@@ -29,6 +29,9 @@ redis:
         displayName: "Free redis"
       free: true
       securityGroup: sg-123456
+      engineVersion: 5.0.3
+      numberCluster: 5
+      nodeType: cache.t3.micro
       subnetGroup: subnet-group
       tags:
         environment: "cf-env-dev"

@@ -109,13 +109,15 @@ func (s RedisService) FetchPlan(planID string) (RedisPlan, response.Response) {
 	return RedisPlan{}, response.NewErrorResponse(http.StatusBadRequest, ErrNoPlanFound.Error())
 }
 
-// RedisPlan inherits from a plan and adds fiels needed for AWS Redis.
+// RedisPlan inherits from a plan and adds fields needed for AWS Redis.
 type RedisPlan struct {
-	Plan          `yaml:",inline" validate:"required"`
-	Tags          map[string]string `yaml:"tags" json:"-" validate:"required"`
-	EngineVersion string            `yaml:"engineVersion" json:"-"`
-	SubnetGroup   string            `yaml:"subnetGroup" json:"-" validate:"required"`
-	SecurityGroup string            `yaml:"securityGroup" json:"-" validate:"required"`
+	Plan             `yaml:",inline" validate:"required"`
+	Tags             map[string]string `yaml:"tags" json:"-" validate:"required"`
+	EngineVersion    string            `yaml:"engineVersion" json:"-" validate:"required"`
+	SubnetGroup      string            `yaml:"subnetGroup" json:"-" validate:"required"`
+	SecurityGroup    string            `yaml:"securityGroup" json:"-" validate:"required"`
+	CacheNodeType    string            `yaml:"nodeType" json:"-" validate:"required"`
+	NumCacheClusters int               `yaml:"numberCluster" json:"-" validate:"required"`
 }
 
 // Catalog struct holds a collections of services
