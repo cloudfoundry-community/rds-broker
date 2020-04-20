@@ -1,3 +1,42 @@
+redis:
+  id: "cda65825-e357-4a93-a24b-9ab138d97815"
+  name: "redis"
+  description: "redis Broker"
+  bindable: true
+  tags:
+    - "redis"
+  metadata:
+    displayName: Redis Broker
+    imageUrl:
+    longDescription:
+    providerDisplayName: Redis
+    documentationUrl:
+    supportUrl:
+  plans:
+    -
+      id: "475e36bf-387f-44c1-9b81-575fec2ee443"
+      name: "test-aws-redis"
+      description: "Redis Test"
+      metadata:
+        bullets:
+          - "Redis"
+          - "on AWS!"
+        costs:
+          -
+            amount:
+              usd: 0
+            unit: "MONTHLY"
+        displayName: "Free redis"
+      free: true
+      securityGroup: sg-123456
+      engineVersion: 5.0.3
+      numberCluster: 5
+      nodeType: cache.t3.micro
+      subnetGroup: subnet-group
+      tags:
+        environment: "cf-env-dev"
+        client: "the client"
+        service: "aws-broker"
 rds:
   id: "db80ca29-2d1b-4fbc-aad3-d03c0bfa7593"
   name: "rds"
