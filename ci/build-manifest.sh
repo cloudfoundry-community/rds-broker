@@ -38,6 +38,9 @@ meta:
     password: $RDS_SHARED_POSTGRES_PASSWORD
     url: `terraform output -state=$STATE_FILE -module=rds_shared_postgres rds_host`
     port: `terraform output -state=$STATE_FILE -module=rds_shared_postgres rds_port`
+  redis: 
+    subnet_group: `terraform output -state stack.tfstate elasticache_subnet_group`
+    security_group: `terraform output -state stack.tfstate elasticache_redis_security_group`
 EOF
 
 # Merge secrets into templates
