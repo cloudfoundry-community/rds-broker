@@ -25,10 +25,14 @@ type RedisInstance struct {
 
 	ClearPassword string `sql:"-"`
 
-	EngineVersion    string `sql:"size(255)"`
-	ClusterID        string `sql:"size(255)"`
-	CacheNodeType    string `sql:"size(255)"`
-	NumCacheClusters int    `sql:"size(255)"`
+	EngineVersion              string `sql:"size(255)"`
+	ClusterID                  string `sql:"size(255)"`
+	CacheNodeType              string `sql:"size(255)"`
+	NumCacheClusters           int    `sql:"size(255)"`
+	ParameterGroup             string `sql:"size(255)"`
+	PreferredMaintenanceWindow string `sql:"size(255)"`
+	SnapshotWindow             string `sql:"size(255)"`
+	SnapshotRetentionLimit     int    `sql:"size(255)"`
 
 	Tags          map[string]string `sql:"-"`
 	DbSubnetGroup string            `sql:"-"`
@@ -117,6 +121,10 @@ func (i *RedisInstance) init(uuid string,
 	i.EngineVersion = plan.EngineVersion
 	i.NumCacheClusters = plan.NumCacheClusters
 	i.CacheNodeType = plan.CacheNodeType
+	i.ParameterGroup = plan.ParameterGroup
+	i.PreferredMaintenanceWindow = plan.PreferredMaintenanceWindow
+	i.SnapshotWindow = plan.SnapshotWindow
+	i.SnapshotRetentionLimit = plan.SnapshotRetentionLimit
 
 	// Tag instance with broker details
 	i.Tags["Instance GUID"] = uuid

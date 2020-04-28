@@ -73,6 +73,7 @@ func (d *dedicatedRedisAdapter) createRedis(i *RedisInstance, password string) (
 		AutoMinorVersionUpgrade:     aws.Bool(true),
 		ReplicationGroupDescription: aws.String(i.Description),
 		AuthToken:                   &password,
+		AutomaticFailoverEnabled:    aws.Bool(true),
 		ReplicationGroupId:          aws.String(i.ClusterID),
 		CacheNodeType:               aws.String(i.CacheNodeType),
 		CacheSubnetGroupName:        aws.String(i.DbSubnetGroup),
@@ -81,7 +82,10 @@ func (d *dedicatedRedisAdapter) createRedis(i *RedisInstance, password string) (
 		EngineVersion:               aws.String(i.EngineVersion),
 		NumCacheClusters:            aws.Int64(int64(i.NumCacheClusters)),
 		Port:                        aws.Int64(6379),
-		SnapshotRetentionLimit:      aws.Int64(7),
+		CacheParameterGroupName:     aws.String(i.ParameterGroup),
+		PreferredMaintenanceWindow:  aws.String(i.PreferredMaintenanceWindow),
+		SnapshotWindow:              aws.String(i.SnapshotWindow),
+		SnapshotRetentionLimit:      aws.Int64(int64(i.SnapshotRetentionLimit)),
 	}
 
 	resp, err := svc.CreateReplicationGroup(params)
