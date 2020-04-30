@@ -475,7 +475,7 @@ redis:
     supportUrl:
   plans:
     - id: "475e36bf-387f-44c1-9b81-575fec2ee443"
-      name: "BETA-redis-single""
+      name: "BETA-redis-single"
       description: "BETA AWS Elasticache Redis 5.0.3 Single node non-prod use only"
       metadata:
         bullets:
