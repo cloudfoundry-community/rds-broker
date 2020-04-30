@@ -504,7 +504,7 @@ redis:
         client: "paas-cf"
         service: "aws-broker"
     - id: "3nd336bf-387f-44c1-9b81-575fel966443"
-      name: "BETA-redis-3node""
+      name: "BETA-redis-3node"
       description: "BETA AWS Elasticache Redis 5.0.3 Three node"
       metadata:
         bullets:
@@ -533,7 +533,7 @@ redis:
         client: "paas-cf"
         service: "aws-broker"
     - id: "5nd336bf-0k7f-44c1-9b81-575fp3k764r6"
-      name: "BETA-redis-3node""
+      name: "BETA-redis-3node"
       description: "BETA AWS Elasticache Redis 5.0.3 Three node"
       metadata:
         bullets:
