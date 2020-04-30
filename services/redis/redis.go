@@ -73,7 +73,7 @@ func (d *dedicatedRedisAdapter) createRedis(i *RedisInstance, password string) (
 		AutoMinorVersionUpgrade:     aws.Bool(true),
 		ReplicationGroupDescription: aws.String(i.Description),
 		AuthToken:                   &password,
-		AutomaticFailoverEnabled:    aws.Bool(true),
+		AutomaticFailoverEnabled:    aws.Bool(i.AutomaticFailoverEnabled),
 		ReplicationGroupId:          aws.String(i.ClusterID),
 		CacheNodeType:               aws.String(i.CacheNodeType),
 		CacheSubnetGroupName:        aws.String(i.DbSubnetGroup),

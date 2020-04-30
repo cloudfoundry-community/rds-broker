@@ -113,7 +113,7 @@ func (s RedisService) FetchPlan(planID string) (RedisPlan, response.Response) {
 type RedisPlan struct {
 	Plan                       `yaml:",inline" validate:"required"`
 	Tags                       map[string]string `yaml:"tags" json:"-" validate:"required"`
-	EngineVersion              string            `yaml:"engineVersion" json:"-" validate:"required"`
+	EngineVersion              string            `yaml:"engineVersion" json:"-"`
 	SubnetGroup                string            `yaml:"subnetGroup" json:"-" validate:"required"`
 	SecurityGroup              string            `yaml:"securityGroup" json:"-" validate:"required"`
 	CacheNodeType              string            `yaml:"nodeType" json:"-" validate:"required"`
@@ -121,7 +121,8 @@ type RedisPlan struct {
 	ParameterGroup             string            `yaml:"parameterGroup" json:"-" validate:"required"`
 	PreferredMaintenanceWindow string            `yaml:"preferredMaintenanceWindow" json:"-" validate:"required"`
 	SnapshotWindow             string            `yaml:"snapshotWindow" json:"-" validate:"required"`
-	SnapshotRetentionLimit     int               `yaml:"snapshotRetentionLimit" json:"-" validate:"required"`
+	SnapshotRetentionLimit     int               `yaml:"snapshotRetentionLimit" json:"-"`
+	AutomaticFailoverEnabled   bool              `yaml:"automaticFailoverEnabled" json:"-"`
 }
 
 // Catalog struct holds a collections of services
