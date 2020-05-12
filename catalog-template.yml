@@ -475,7 +475,7 @@ redis:
     supportUrl:
   plans:
     - id: "475e36bf-387f-44c1-9b81-575fec2ee443"
-      name: "BETA-redis-single"
+      name: "BETA-redis-dev"
       description: "BETA AWS Elasticache Redis 5.0.6 Single node non-prod use only"
       metadata:
         bullets:
@@ -515,10 +515,10 @@ redis:
         costs:
           -
             amount:
-              usd: 99.99
+              usd: 0
             unit: "MONTHLY"
         displayName: "3 node redis5.0.6, persistent storage, 512Mb memory limit"
-      free: false
+      free: true
       securityGroup: (( grab meta.redis.security_group ))
       engineVersion: 5.0.6
       numberCluster: 3
@@ -544,10 +544,10 @@ redis:
         costs:
           -
             amount:
-              usd: 199.99
+              usd: 0
             unit: "MONTHLY"
         displayName: "5 node redis5.0.6, persistent storage, 512Mb memory limit"
-      free: false
+      free: true
       securityGroup: (( grab meta.redis.security_group ))
       engineVersion: 5.0.6
       numberCluster: 5
