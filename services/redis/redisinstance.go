@@ -112,7 +112,7 @@ func (i *RedisInstance) init(uuid string,
 	i.Tags = plan.Tags
 	i.Description = plan.Description
 
-	i.ClusterID = s.DbNamePrefix + "-redis-" + helpers.RandStr(12)
+	i.ClusterID = s.DbShorthandPrefix + "-" + serviceID
 	i.Salt = helpers.GenerateSalt(aes.BlockSize)
 	password := helpers.RandStr(25)
 	if err := i.setPassword(password, s.EncryptionKey); err != nil {
