@@ -86,6 +86,7 @@ jobs:
       current_app_name: aws-broker
       environment_variables:
         DB_PREFIX: ((development-db-name-prefix))
+        DB_SHORTHAND_PREFIX: dev
         AUTH_PASS: ((development-auth-pass))
         AUTH_USER: ((development-auth-user))
         AWS_DEFAULT_REGION: ((development-aws-default-region))
@@ -312,6 +313,7 @@ jobs:
       current_app_name: aws-broker
       environment_variables:
         DB_PREFIX: ((staging-db-name-prefix))
+        DB_SHORTHAND_PREFIX: stg
         AUTH_PASS: ((staging-auth-pass))
         AUTH_USER: ((staging-auth-user))
         AWS_DEFAULT_REGION: ((staging-aws-default-region))
@@ -591,6 +593,7 @@ jobs:
       current_app_name: aws-broker
       environment_variables:
         DB_PREFIX: ((prod-db-name-prefix))
+        DB_SHORTHAND_PREFIX: prd
         AUTH_PASS: ((prod-auth-pass))
         AUTH_USER: ((prod-auth-user))
         AWS_DEFAULT_REGION: ((prod-aws-default-region))

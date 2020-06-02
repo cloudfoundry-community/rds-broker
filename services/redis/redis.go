@@ -50,6 +50,8 @@ const PgroupPrefix = "cg-redis-broker-"
 
 func (d *dedicatedRedisAdapter) createRedis(i *RedisInstance, password string) (base.InstanceState, error) {
 	svc := elasticache.New(session.New(), aws.NewConfig().WithRegion(d.settings.Region))
+
+	// Elasticache Redis does not currently support custom tags (possibly in the future)
 	var redisTags []*elasticache.Tag
 
 	for k, v := range i.Tags {
